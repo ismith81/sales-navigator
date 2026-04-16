@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import initialCases from '../data/cases.json';
 import initialTopics from '../data/topics.json';
-import { DEFAULT_FILTERS, TAB_CONFIG } from '../data/filters';
+import { DEFAULT_FILTERS, DEFAULT_PAINPOINTS, TAB_CONFIG } from '../data/filters';
 import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
@@ -10,6 +10,7 @@ import Instructies from './Instructies';
 const CASES_KEY = 'salesNavigatorCases';
 const TOPICS_KEY = 'salesNavigatorTopics';
 const FILTERS_KEY = 'salesNavigatorFilters';
+const PAINPOINTS_KEY = 'salesNavigatorPainpoints';
 
 function loadJSON(key, fallback) {
   try {
@@ -23,6 +24,7 @@ export default function Navigator() {
   const [cases, setCases] = useState(() => loadJSON(CASES_KEY, initialCases));
   const [topics, setTopics] = useState(() => loadJSON(TOPICS_KEY, initialTopics));
   const [filters, setFilters] = useState(() => loadJSON(FILTERS_KEY, DEFAULT_FILTERS));
+  const [painpoints, setPainpoints] = useState(() => loadJSON(PAINPOINTS_KEY, DEFAULT_PAINPOINTS));
   const [view, setView] = useState('navigator');
   const [activeTab, setActiveTab] = useState('doelen');
   const [activeFilter, setActiveFilter] = useState(null);
@@ -33,6 +35,7 @@ export default function Navigator() {
   useEffect(() => { localStorage.setItem(CASES_KEY, JSON.stringify(cases)); }, [cases]);
   useEffect(() => { localStorage.setItem(TOPICS_KEY, JSON.stringify(topics)); }, [topics]);
   useEffect(() => { localStorage.setItem(FILTERS_KEY, JSON.stringify(filters)); }, [filters]);
+  useEffect(() => { localStorage.setItem(PAINPOINTS_KEY, JSON.stringify(painpoints)); }, [painpoints]);
 
   // Toast auto-hide
   useEffect(() => {
@@ -85,6 +88,10 @@ export default function Navigator() {
     showToast(`"${name}" toegevoegd`);
   };
 
+  const handleUpdatePainpoint = (behoefte, html) => {
+    setPainpoints(prev => ({ ...prev, [behoefte]: html }));
+  };
+
   const handleRenameFilter = (category, oldName, newName) => {
     setFilters(prev => ({
       ...prev,
@@ -113,6 +120,14 @@ export default function Navigator() {
         ),
       },
     })));
+    if (category === 'behoeften') {
+      setPainpoints(prev => {
+        if (!(oldName in prev)) return prev;
+        const next = { ...prev, [newName]: prev[oldName] };
+        delete next[oldName];
+        return next;
+      });
+    }
     if (activeFilter === oldName && activeTab === category) {
       setActiveFilter(newName);
     }
@@ -129,6 +144,14 @@ export default function Navigator() {
       delete catTopics[name];
       return { ...prev, [category]: catTopics };
     });
+    if (category === 'behoeften') {
+      setPainpoints(prev => {
+        if (!(name in prev)) return prev;
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
     if (activeFilter === name && activeTab === category) {
       setActiveFilter(null);
     }
@@ -137,7 +160,7 @@ export default function Navigator() {
 
   // Backup / Restore
   const handleBackup = () => {
-    const data = { cases, topics, filters, exportedAt: new Date().toISOString() };
+    const data = { cases, topics, filters, painpoints, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -158,6 +181,7 @@ export default function Navigator() {
         if (data.cases) setCases(data.cases);
         if (data.topics) setTopics(data.topics);
         if (data.filters) setFilters(data.filters);
+        if (data.painpoints) setPainpoints(data.painpoints);
         showToast('Backup hersteld');
       } catch {
         showToast('Ongeldig backup-bestand');
@@ -205,6 +229,7 @@ export default function Navigator() {
         <>
           <FilterBar
             filters={filters}
+            painpoints={painpoints}
             activeTab={activeTab}
             activeFilter={activeFilter}
             onTabChange={handleTabChange}
@@ -235,12 +260,14 @@ export default function Navigator() {
         <CaseManager
           cases={cases}
           filters={filters}
+          painpoints={painpoints}
           onUpdate={handleUpdateCase}
           onImport={handleImport}
           onRemove={handleRemove}
           onAddFilter={handleAddFilter}
           onRenameFilter={handleRenameFilter}
           onDeleteFilter={handleDeleteFilter}
+          onUpdatePainpoint={handleUpdatePainpoint}
           onBackup={handleBackup}
           onRestore={() => fileRef.current?.click()}
         />

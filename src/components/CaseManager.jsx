@@ -7,7 +7,7 @@ import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function CaseManager({ cases, filters, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onBackup, onRestore }) {
+export default function CaseManager({ cases, filters, painpoints, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdatePainpoint, onBackup, onRestore }) {
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -154,9 +154,11 @@ export default function CaseManager({ cases, filters, onUpdate, onImport, onRemo
       <FilterManager
         filters={filters}
         cases={cases}
+        painpoints={painpoints}
         onAdd={onAddFilter}
         onRename={onRenameFilter}
         onDelete={onDeleteFilter}
+        onUpdatePainpoint={onUpdatePainpoint}
       />
 
       {/* Backup / Restore */}
