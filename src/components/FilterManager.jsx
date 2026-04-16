@@ -123,7 +123,7 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
                           </span>
                         )}
                         {category === 'behoeften' && painpoints[name] && (
-                          <span className="fm-pain-indicator" title="Heeft pijnpunten">⚠</span>
+                          <span className="fm-pain-indicator" title="Heeft pijnpunten">💬</span>
                         )}
                         <div className="fm-item-actions">
                           {category === 'behoeften' && (
@@ -132,7 +132,7 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
                               onClick={() => setExpandedPain(expandedPain === name ? null : name)}
                               title="Pijnpunten bewerken"
                             >
-                              ⚠
+                              💬
                             </button>
                           )}
                           <button
