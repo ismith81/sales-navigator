@@ -864,6 +864,32 @@ body::before {
   gap: 0.3rem;
 }
 
+.cm-table-header .cm-col-tags {
+  gap: 0.75rem;
+}
+
+.cm-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cm-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cm-legend-dot.doel { background: var(--accent); }
+.cm-legend-dot.behoefte { background: var(--teal); }
+.cm-legend-dot.dienst { background: var(--orange); }
+
 .tag.small {
   font-size: 0.6rem;
   padding: 0.15rem 0.5rem;
