@@ -1,7 +1,7 @@
 import React from 'react';
 import { TAB_CONFIG } from '../data/filters';
 
-export default function FilterBar({ filters, activeTab, activeFilter, onTabChange, onFilterChange }) {
+export default function FilterBar({ filters, painpoints = {}, activeTab, activeFilter, onTabChange, onFilterChange }) {
   const tabs = Object.keys(TAB_CONFIG);
 
   return (
@@ -19,15 +19,24 @@ export default function FilterBar({ filters, activeTab, activeFilter, onTabChang
       </div>
 
       <div className="button-grid">
-        {(filters[activeTab] || []).map(filter => (
-          <button
-            key={filter}
-            className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}
-            onClick={() => onFilterChange(filter)}
-          >
-            {filter}
-          </button>
-        ))}
+        {(filters[activeTab] || []).map(filter => {
+          const hint = activeTab === 'behoeften' ? painpoints[filter] : null;
+          return (
+            <button
+              key={filter}
+              className={`filter-btn ${activeFilter === filter ? 'active' : ''} ${hint ? 'has-hint' : ''}`}
+              onClick={() => onFilterChange(filter)}
+            >
+              <span className="filter-btn-label">{filter}</span>
+              {hint && (
+                <span
+                  className="filter-btn-hint"
+                  dangerouslySetInnerHTML={{ __html: hint }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
     </>
   );

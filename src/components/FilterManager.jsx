@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { TAB_CONFIG } from '../data/filters';
+import RichTextEditor from './RichTextEditor';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function FilterManager({ filters, cases, onAdd, onRename, onDelete }) {
+export default function FilterManager({ filters, cases, painpoints = {}, onAdd, onRename, onDelete, onUpdatePainpoint }) {
   const [editingItem, setEditingItem] = useState(null); // { category, name }
   const [editValue, setEditValue] = useState('');
   const [addingTo, setAddingTo] = useState(null); // category key
   const [addValue, setAddValue] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null); // { category, name }
+  const [expandedPain, setExpandedPain] = useState(null); // behoefte name
 
   // Check if a filter item is referenced by any case
   const getReferencingCases = (category, name) => {
@@ -112,30 +114,56 @@ export default function FilterManager({ filters, cases, onAdd, onRename, onDelet
                       <button className="fm-btn cancel" onClick={handleCancelEdit} title="Annuleren">✕</button>
                     </div>
                   ) : (
-                    <div className="fm-display-row">
-                      <span className={`tag ${TAG_CLASS[category]}`}>{name}</span>
-                      {refCount > 0 && (
-                        <span className="fm-ref-count" title={`Gebruikt door ${refCount} case(s)`}>
-                          {refCount} case{refCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                      <div className="fm-item-actions">
-                        <button
-                          className="fm-btn edit"
-                          onClick={() => handleStartEdit(category, name)}
-                          title="Hernoemen"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          className={`fm-btn delete ${refCount > 0 ? 'disabled' : ''}`}
-                          onClick={() => handleDeleteClick(category, name)}
-                          title={refCount > 0 ? `Kan niet verwijderen: ${refCount} case(s) verwijzen hiernaar` : 'Verwijderen'}
-                        >
-                          🗑
-                        </button>
+                    <>
+                      <div className="fm-display-row">
+                        <span className={`tag ${TAG_CLASS[category]}`}>{name}</span>
+                        {refCount > 0 && (
+                          <span className="fm-ref-count" title={`Gebruikt door ${refCount} case(s)`}>
+                            {refCount} case{refCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {category === 'behoeften' && painpoints[name] && (
+                          <span className="fm-pain-indicator" title="Heeft pijnpunten">⚠</span>
+                        )}
+                        <div className="fm-item-actions">
+                          {category === 'behoeften' && (
+                            <button
+                              className={`fm-btn pain ${expandedPain === name ? 'active' : ''}`}
+                              onClick={() => setExpandedPain(expandedPain === name ? null : name)}
+                              title="Pijnpunten bewerken"
+                            >
+                              ⚠
+                            </button>
+                          )}
+                          <button
+                            className="fm-btn edit"
+                            onClick={() => handleStartEdit(category, name)}
+                            title="Hernoemen"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            className={`fm-btn delete ${refCount > 0 ? 'disabled' : ''}`}
+                            onClick={() => handleDeleteClick(category, name)}
+                            title={refCount > 0 ? `Kan niet verwijderen: ${refCount} case(s) verwijzen hiernaar` : 'Verwijderen'}
+                          >
+                            🗑
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                      {category === 'behoeften' && expandedPain === name && (
+                        <div className="fm-pain-editor">
+                          <label className="fm-pain-label">
+                            Pijnpunten <span className="fm-pain-hint">— hoe een klant dit kan verwoorden (bv. "Excel is onhoudbaar")</span>
+                          </label>
+                          <RichTextEditor
+                            value={painpoints[name] || ''}
+                            onChange={(html) => onUpdatePainpoint(name, html)}
+                            placeholder={`Pijnpunten bij "${name}"...`}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               );
