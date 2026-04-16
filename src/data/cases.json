@@ -88,5 +88,47 @@
         "Data kwaliteit": "Alerting, schema-drift detectie en incrementele laadstrategieën."
       }
     }
+  },
+  {
+    "id": "westland-kaas",
+    "name": "Westland Kaas",
+    "subtitle": "Familiebedrijf en wereldwijde speler op de kaasmarkt (Old Amsterdam, Maaslander, Westlite, Trenta)",
+    "logoText": "WK",
+    "logoColor": "#D4A017",
+    "situatie": "Westland Kaas werkt met een complex landschap van ERP, productie- en supply chain-systemen. Data lag verspreid over silo's, rapportages liepen achter en er was geen uniform fundament voor sturing of AI-initiatieven.",
+    "doel": "Een moderne, wendbare dataomgeving neerzetten die snel inzicht geeft in productie, logistiek en verkoop — en die klaar is voor AI en voorspellende modellen.",
+    "oplossing": "Gefaseerde modernisatie naar een centraal dataplatform met duidelijke datadomeinen, kwaliteitscontroles en herbruikbare datamodellen. Ingericht voor snelle doorontwikkeling en AI-gebruik.",
+    "resultaat": "Sneller inzicht voor productie en sales, betrouwbaardere rapportages en een basis waarop voorspellende modellen en AI-cases concreet opgepakt kunnen worden.",
+    "keywords": ["Dataplatform", "Microsoft Fabric", "Data kwaliteit", "AI ready", "Supply chain"],
+    "businessImpact": "Betere beschikbaarheid en betrouwbaarheid van stuurinformatie bij een internationaal opererend FMCG-bedrijf; fundament voor AI- en forecasting-use cases.",
+    "mapping": {
+      "doelen": ["Meer waarde halen uit data"],
+      "behoeften": ["Wendbaar", "AI ready"],
+      "diensten": ["Data modernisatie", "Data kwaliteit"]
+    },
+    "talkingPoints": [
+      "FMCG-case: productie, logistiek en sales samengebracht op één platform.",
+      "Van versnipperde bronnen naar herbruikbare datamodellen per domein.",
+      "Datakwaliteit geborgd met controles en alerting — cijfers die kloppen.",
+      "Klaar voor AI: forecasting en voorspellende modellen bovenop hetzelfde fundament."
+    ],
+    "followUps": [
+      "Hoe krijgen jullie vandaag grip op productie- en salesdata uit verschillende systemen?",
+      "Waar lopen jullie tegen traagheid of onbetrouwbare cijfers aan?",
+      "Welke AI- of forecasting-ambities hebben jullie — en is het datafundament daar al klaar voor?"
+    ],
+    "matchReasons": {
+      "doelen": {
+        "Meer waarde halen uit data": "Bestaande data uit ERP, productie en supply chain omgezet in bruikbare stuurinformatie."
+      },
+      "behoeften": {
+        "Wendbaar": "Modulair dataplatform met domeingedreven modellen — nieuwe vragen snel te beantwoorden.",
+        "AI ready": "Fundament ingericht voor forecasting en AI-cases bovenop betrouwbare data."
+      },
+      "diensten": {
+        "Data modernisatie": "Gefaseerde migratie naar een centraal, modern dataplatform.",
+        "Data kwaliteit": "Controles, alerting en duidelijke datadomeinen voor betrouwbare cijfers."
+      }
+    }
   }
 ]
