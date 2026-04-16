@@ -1704,8 +1704,10 @@ body::before {
   .filter-btn { font-size: 0.85rem; padding: 0.55rem 1rem; }
   .ce-bottom-actions { flex-wrap: wrap; }
   .ce-bottom-actions .btn { flex: 1 1 45%; }
-  .fm-display-row { flex-wrap: wrap; }
-  .fm-item-actions { margin-left: auto; }
+  .fm-item-actions {
+    margin-left: auto;
+    opacity: 1;
+  }
   .cm-backup-bar { flex-wrap: wrap; }
   .btn-icon { width: 26px; height: 26px; font-size: 0.8rem; }
   .cm-col-actions { gap: 0.2rem; }
