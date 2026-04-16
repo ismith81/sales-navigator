@@ -1,6 +1,6 @@
 # Sales Navigator
 
-Interactief belscript-tool voor sales. Klik op doelen, behoeften of diensten om direct relevante klantcases, talking points en vervolgvragen te zien.
+Interactief belscript-tool voor sales. Klik op doelen, behoeften of diensten om direct relevante klantcases, talking points en vervolgvragen te zien...
 
 ## Quickstart
 
