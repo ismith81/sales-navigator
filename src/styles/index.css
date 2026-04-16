@@ -1478,6 +1478,143 @@ body::before {
   color: var(--accent);
 }
 
+/* ---- Instructies ---- */
+.instructies {
+  max-width: 820px;
+  margin: 0 auto;
+  animation: fadeUp 0.3s ease;
+}
+
+.ins-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ins-header h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 0.25rem;
+}
+
+.ins-header p {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.ins-section {
+  margin-bottom: 2.5rem;
+}
+
+.ins-section h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ins-section p {
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.ins-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.ins-section ul li {
+  padding: 0.5rem 0 0.5rem 1.5rem;
+  position: relative;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.ins-section ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.ins-section code {
+  background: var(--bg-soft);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+.ins-section.highlight {
+  background: linear-gradient(135deg, rgba(49,183,185,0.05), rgba(237,23,75,0.03));
+  border: 1px solid rgba(49,183,185,0.2);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+
+.ins-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.ins-flow-step {
+  display: flex;
+  gap: 1rem;
+  background: white;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.ins-step-num {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.ins-flow-step strong {
+  display: block;
+  color: var(--navy);
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.ins-flow-step p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.ins-warning {
+  background: rgba(237,23,75,0.06);
+  border-left: 3px solid var(--accent);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  margin-top: 1rem !important;
+}
+
 /* ---- Toast Notification ---- */
 .toast {
   position: fixed;
