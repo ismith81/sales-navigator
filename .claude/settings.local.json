@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e ':*)",
+      "Bash(node -e \"const mammoth = require\\('mammoth'\\); const fs = require\\('fs'\\); const buf = fs.readFileSync\\(String.raw\\\\`C:\\\\Users\\\\ian_s\\\\Downloads\\\\case-Westland-Kaas.docx\\\\`\\); mammoth.extractRawText\\({ buffer: buf }\\).then\\(r => console.log\\(r.value\\)\\);\")",
+      "Bash(node debug-parse.js)",
+      "Bash(mv \"C:\\\\Users\\\\ian_s\\\\repos\\\\creates\\\\Sales Navigator\\\\debug-parse.js\" \"C:\\\\Users\\\\ian_s\\\\repos\\\\creates\\\\Sales Navigator\\\\debug-parse.cjs\")",
+      "Bash(node debug-parse.cjs)",
+      "Bash(gh --version)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)"
+    ]
+  }
+}

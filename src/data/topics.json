@@ -1,0 +1,130 @@
+{
+  "doelen": {
+    "Meer waarde halen uit data": {
+      "talkingPoints": [
+        "Veel organisaties verzamelen enorm veel data, maar de vraag is: hoe vertaal je dat naar betere beslissingen en concrete resultaten?",
+        "Wij helpen bedrijven om van ruwe data naar actionable insights te komen — sneller, betrouwbaarder en schaalbaar.",
+        "Denk aan snellere rapportages, betere forecasting, en besluitvorming op basis van feiten in plaats van onderbuikgevoel.",
+        "Of het nu gaat om een modernisering van je huidige dataplatform of een compleet nieuw inzichtenmodel — wij pakken het pragmatisch aan."
+      ],
+      "followUps": [
+        "Hoe gebruiken jullie data momenteel voor besluitvorming?",
+        "Waar lopen jullie tegen aan als het gaat om snelheid of betrouwbaarheid van rapportages?",
+        "Zijn er teams of afdelingen die nu onvoldoende toegang hebben tot de data die ze nodig hebben?"
+      ]
+    },
+    "Data als business model": {
+      "talkingPoints": [
+        "Steeds meer bedrijven ontdekken dat hun data niet alleen intern waardevol is, maar ook als product of dienst aan klanten of partners kan worden aangeboden.",
+        "Data als business model betekent: je data inzetten om nieuwe omzetstromen te creëren of je bestaande propositie te versterken.",
+        "Dat kan variëren van een klantportaal met real-time inzichten tot een volledig data-gedreven SaaS-product.",
+        "Wij begeleiden organisaties van idee tot schaalbaar platform — technisch én strategisch."
+      ],
+      "followUps": [
+        "Hebben jullie data die ook waardevol zou zijn voor jullie klanten of partners?",
+        "Hoe zien jullie de rol van data in jullie klantpropositie over 2-3 jaar?",
+        "Zijn er al ideeën om data te monetariseren of als dienst aan te bieden?"
+      ]
+    }
+  },
+  "behoeften": {
+    "Veilig en betrouwbaar": {
+      "talkingPoints": [
+        "Data-security en betrouwbaarheid zijn de basis — zonder vertrouwen in je data kun je er niet op sturen.",
+        "Wij implementeren governance, RBAC, audit logging en encryption als standaard onderdeel van elk dataplatform.",
+        "Compliance-eisen zoals AVG/GDPR worden meegenomen vanaf dag één, niet als afterthought."
+      ],
+      "followUps": [
+        "Hoe is de governance rondom jullie data nu geregeld?",
+        "Hebben jullie te maken met compliance-eisen die impact hebben op hoe jullie data opslaan en verwerken?",
+        "Is er zicht op wie toegang heeft tot welke data binnen jullie organisatie?"
+      ]
+    },
+    "Wendbaar": {
+      "talkingPoints": [
+        "Een wendbaar dataplatform betekent dat je snel kunt inspelen op nieuwe vragen, bronnen of use cases.",
+        "Wij bouwen met modulaire architecturen — zodat je niet elke keer het wiel opnieuw hoeft uit te vinden.",
+        "Metadata-gestuurde pipelines en Infrastructure as Code zorgen dat aanpassingen in dagen gebeuren, niet in maanden."
+      ],
+      "followUps": [
+        "Hoe lang duurt het nu gemiddeld om een nieuwe databron aan te sluiten of een nieuw rapport op te leveren?",
+        "Hebben jullie last van rigide systemen die moeilijk aan te passen zijn?",
+        "Is er behoefte om sneller te kunnen experimenteren met data?"
+      ]
+    },
+    "AI ready": {
+      "talkingPoints": [
+        "AI en machine learning zijn pas waardevol als je datafundament op orde is — schone data, de juiste structuur, en een schaalbare omgeving.",
+        "Wij maken organisaties AI-ready door hun dataplatform in te richten met ML-workloads in gedachten.",
+        "Denk aan Databricks, Spark, feature stores en vector databases — klaar voor zowel klassieke analytics als generative AI."
+      ],
+      "followUps": [
+        "Hebben jullie plannen om AI of machine learning in te zetten op jullie data?",
+        "Is jullie huidige dataplatform geschikt om ML-modellen op te trainen en te deployen?",
+        "Zijn er al concrete AI use cases geïdentificeerd binnen jullie organisatie?"
+      ]
+    },
+    "Realtime data": {
+      "talkingPoints": [
+        "Real-time data stelt je in staat om direct te reageren op wat er nu gebeurt — in plaats van te kijken naar wat gisteren was.",
+        "Van event-driven architecturen tot streaming pipelines: wij bouwen real-time verwerking die schaalbaar en betrouwbaar is.",
+        "Toepassingen variëren van live dashboards en alerting tot operationele besluitvorming op basis van actuele data."
+      ],
+      "followUps": [
+        "Werken jullie al met real-time dataverwerking, of is dat iets wat jullie overwegen?",
+        "Zijn er processen waarbij snellere beschikbaarheid van data direct impact zou hebben?",
+        "Hoe actueel is de data waarmee jullie nu beslissingen nemen?"
+      ]
+    }
+  },
+  "diensten": {
+    "Data modernisatie": {
+      "talkingPoints": [
+        "Veel organisaties zitten vast aan verouderde dataplatformen die niet meer meekomen met de groeiende informatiebehoefte.",
+        "Data modernisatie betekent: migreren naar een modern, schaalbaar cloudplatform zonder dataverlies of downtime.",
+        "Wij hebben ervaring met grootschalige migraties — van legacy warehouses naar platforms als Microsoft Fabric, Databricks en Azure Synapse."
+      ],
+      "followUps": [
+        "Hoe oud is jullie huidige dataplatform en voldoet het nog aan de groeiende behoefte?",
+        "Hebben jullie te maken met legacy-systemen die de groei remmen?",
+        "Is er een ambitie om naar een modern cloudplatform te migreren?"
+      ]
+    },
+    "Governance": {
+      "talkingPoints": [
+        "Goede data governance zorgt dat je weet wat je data is, waar het staat, wie erbij kan, en of je het mag gebruiken.",
+        "Wij implementeren governance-frameworks met tools als Unity Catalog, Purview en custom metadata-oplossingen.",
+        "Het doel: vertrouwen in je data, compliance, en de basis voor verantwoord gebruik van AI."
+      ],
+      "followUps": [
+        "Hoe goed is het overzicht over jullie datalandschap op dit moment?",
+        "Zijn er initiatieven rondom data catalogus of metadata management?",
+        "Hoe borgen jullie nu de kwaliteit en betrouwbaarheid van jullie data?"
+      ]
+    },
+    "Data kwaliteit": {
+      "talkingPoints": [
+        "Slechte datakwaliteit kost organisaties gemiddeld 15-25% van hun omzet — door foute beslissingen, handmatig herstelwerk en gemist vertrouwen.",
+        "Wij helpen met geautomatiseerde kwaliteitschecks, alerting bij afwijkingen, en schema-validatie in je pipelines.",
+        "Datakwaliteit is geen eenmalig project maar een continu proces — wij richten dat structureel in."
+      ],
+      "followUps": [
+        "Hoe vertrouwen jullie erop dat de data in jullie rapporten klopt?",
+        "Zijn er bekende datakwaliteitsissues die impact hebben op besluitvorming?",
+        "Is er een proces voor het monitoren en verbeteren van datakwaliteit?"
+      ]
+    },
+    "Training": {
+      "talkingPoints": [
+        "Technologie is maar de helft — je mensen moeten ermee kunnen werken. Wij bieden hands-on trainingen op maat.",
+        "Van data engineering met Databricks en Fabric tot data governance best practices — op elk niveau.",
+        "Trainingen zijn praktijkgericht: we werken met jullie eigen data en use cases, niet met standaard slideshows."
+      ],
+      "followUps": [
+        "Hoe is het kennisniveau rondom data en analytics binnen jullie team?",
+        "Zijn er specifieke tools of platforms waar jullie team meer ervaring mee wil opdoen?",
+        "Is er behoefte aan een opleidingstraject om jullie datateam naar het volgende niveau te tillen?"
+      ]
+    }
+  }
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "akzonobel",
+    "name": "AkzoNobel",
+    "subtitle": "Refinish+ Insights — Wereldwijde verf- & coatingsproducent",
+    "logoText": "AN",
+    "logoColor": "#1a6baa",
+    "situatie": "AkzoNobel wilde het Refinish+ platform uitbreiden met een data-gedreven insights-module voor bodyshops en schadeherstelbedrijven.",
+    "doel": "Het realiseren van de Refinish+ Insights-module — een schaalbare data-oplossing die bodyshops voorziet van actionable KPI's en analytics.",
+    "oplossing": "Lambda-architectuur op Azure met een real-time én batch verwerkingslaag: Speed Layer (API Management, Event Hubs, Azure Functions, Stream Analytics), Batch Layer (Data Factory, Databricks), Storage (Data Lake Gen2), Serving Layer (Cosmos DB, Unity Catalog, Power BI / Grafana), Custom Portal met SSO.",
+    "resultaat": "Een schaalbaar dataplatform dat bodyshops wereldwijd voorziet van real-time en historische inzichten, geïntegreerd in het Refinish+ ecosysteem.",
+    "keywords": ["Lambda Architecture", "Real-time Data", "Azure", "Databricks", "Cosmos DB", "Data Lake", "Custom Portal", "IoT", "API Management", "SSO", "Power BI"],
+    "businessImpact": "Hogere efficiëntie en winstgevendheid voor bodyshops. Voor AkzoNobel: hogere klantwaarde, sterkere digitale propositie en lock-in via het Refinish+ platform.",
+    "mapping": {
+      "doelen": ["Meer waarde halen uit data", "Data als business model"],
+      "behoeften": ["Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"],
+      "diensten": ["Data modernisatie", "Governance", "Data kwaliteit"]
+    },
+    "talkingPoints": [
+      "AkzoNobel heeft data letterlijk als product ingezet — hun Refinish+ platform biedt bodyshops real-time inzichten over hun operationele prestaties.",
+      "Ze hebben een Lambda-architectuur op Azure gebouwd: real-time verwerking via Event Hubs en Stream Analytics, plus een batch-laag met Databricks.",
+      "Het resultaat is een schaalbaar platform dat wereldwijd is uitgerold — bodyshops optimaliseren nu actief hun efficiëntie en winstgevendheid op basis van data.",
+      "Voor AkzoNobel zelf: hogere klantwaarde, sterkere digitale propositie, en lock-in via het Refinish+ ecosysteem."
+    ],
+    "followUps": [
+      "Hebben jullie data die je nu intern gebruikt, maar die ook waardevol zou zijn voor jullie klanten?",
+      "Hoe zien jullie de rol van data in jullie klantpropositie over 2-3 jaar?",
+      "Werken jullie al met real-time dataverwerking, of is dat iets wat jullie overwegen?"
+    ],
+    "matchReasons": {
+      "doelen": {
+        "Meer waarde halen uit data": "AkzoNobel haalt meer waarde uit data door bodyshops real-time inzichten te bieden — maar gaat verder: data is hier ook het business model.",
+        "Data als business model": "Refinish+ Insights is letterlijk data als product — AkzoNobel biedt bodyshops een data-gedreven dienst die klantwaarde en lock-in creëert."
+      },
+      "behoeften": {
+        "Veilig en betrouwbaar": "SSO, Unity Catalog en gestructureerde governance.",
+        "Wendbaar": "Lambda-architectuur maakt snel toevoegen van nieuwe inzichten mogelijk.",
+        "AI ready": "Databricks met Spark/ML workloads op Data Lake Gen2.",
+        "Realtime data": "Event Hubs + Stream Analytics voor low-latency real-time verwerking."
+      },
+      "diensten": {
+        "Data modernisatie": "Greenfield: cloud-native Lambda-architectuur op Azure gebouwd.",
+        "Governance": "Unity Catalog, API Management en SSO-structuur opgezet.",
+        "Data kwaliteit": "ETL via Data Factory met gestructureerde serving layer (Cosmos DB)."
+      }
+    }
+  },
+  {
+    "id": "cito",
+    "name": "CITO",
+    "subtitle": "Dataplatform Modernisatie — Toets- & exameninstituut",
+    "logoText": "CI",
+    "logoColor": "#e65100",
+    "situatie": "Het bestaande dataplatform van CITO was verouderd en niet toegerust op de groeiende informatiebehoefte. Rapportages waren traag en onvoldoende schaalbaar.",
+    "doel": "Het volledige datalandschap moderniseren door migratie naar Microsoft Fabric, zodat rapportages sneller, betrouwbaarder en schaalbaarder worden.",
+    "oplossing": "Grootschalige migratie naar Fabric Warehouse & Lakehouse: 600+ SQL-objecten en 5TB+ data gemigreerd via metadata-gestuurde orkestratie, custom Python-scripts voor automatische pipeline-conversie, Delta-partitionering, Infrastructure as Code met RBAC en audit logging.",
+    "resultaat": "Performancewinst van meer dan 8 uur op dataloads, een toekomstbestendig dataplatform op Fabric, en geborgde datakwaliteit en security.",
+    "keywords": ["Microsoft Fabric", "Data Migratie", "Lakehouse", "Warehouse", "Delta Lake", "Infrastructure as Code", "Pipeline Automatisering", "T-SQL", "Spark", "Azure DevOps"],
+    "businessImpact": "Drastisch snellere rapportages (8+ uur winst), hogere betrouwbaarheid van data, en een solide basis voor toekomstige groei in informatiebehoefte.",
+    "mapping": {
+      "doelen": ["Meer waarde halen uit data"],
+      "behoeften": ["Veilig en betrouwbaar", "Wendbaar", "AI ready"],
+      "diensten": ["Data modernisatie", "Governance", "Data kwaliteit"]
+    },
+    "talkingPoints": [
+      "CITO had een verouderd dataplatform dat niet meer meekon — rapportages duurden te lang en waren niet schaalbaar.",
+      "Wij hebben 600+ SQL-objecten en meer dan 5TB data gemigreerd naar Microsoft Fabric, met metadata-gestuurde orkestratie en custom Python-scripts.",
+      "Resultaat: 8+ uur performancewinst op dataloads. Van traag en fragiel naar een toekomstbestendig platform.",
+      "Security en governance zijn geborgd via Infrastructure as Code, RBAC, least-privilege principes en audit logging."
+    ],
+    "followUps": [
+      "Hoe tevreden zijn jullie met de snelheid en betrouwbaarheid van jullie huidige rapportages?",
+      "Hebben jullie te maken met legacy-systemen die de groei remmen?",
+      "Is er een ambitie om naar een modern cloudplatform zoals Fabric te migreren?"
+    ],
+    "matchReasons": {
+      "doelen": {
+        "Meer waarde halen uit data": "CITO haalt nu drastisch meer waarde uit data — 8+ uur snellere dataloads betekent dat analisten en beslissers veel sneller bij hun inzichten kunnen."
+      },
+      "behoeften": {
+        "Veilig en betrouwbaar": "RBAC, least-privilege, Key Vault en audit logging via Infrastructure as Code.",
+        "Wendbaar": "Metadata-gestuurde orkestratie en custom pipeline-conversie voor snelle aanpassing.",
+        "AI ready": "Fabric Lakehouse met Delta Lake en Spark — klaar voor ML workloads."
+      },
+      "diensten": {
+        "Data modernisatie": "Migratie: 600+ objecten en 5TB+ naar Microsoft Fabric verhuisd.",
+        "Governance": "Infrastructure as Code met RBAC, least-privilege en kostenmonitoring.",
+        "Data kwaliteit": "Alerting, schema-drift detectie en incrementele laadstrategieën."
+      }
+    }
+  }
+]
