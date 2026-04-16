@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FILTERS } from '../data/filters';
+import { FILTERS as DEFAULT_FILTERS } from '../data/filters';
 import RichTextEditor from './RichTextEditor';
 import { exportCaseToDocx } from '../utils/exportCase';
+import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 const CATEGORY_LABELS = { doelen: 'Doelen', behoeften: 'Behoeften', diensten: 'Diensten' };
@@ -14,7 +15,8 @@ const RICH_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function CaseEditor({ caseData, onSave, onCancel }) {
+export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, onCancel }) {
+  const FILTERS = dynamicFilters || DEFAULT_FILTERS;
   const [form, setForm] = useState({
     subtitle: caseData.subtitle || '',
     situatie: caseData.situatie || '',
@@ -206,6 +208,7 @@ export default function CaseEditor({ caseData, onSave, onCancel }) {
       <div className="ce-bottom-actions">
         <button className="btn btn-primary" onClick={handleSave}>✓ Opslaan</button>
         <button className="btn btn-secondary" onClick={() => exportCaseToDocx({ ...caseData, ...form })}>📄 Exporteer .docx</button>
+        <button className="btn btn-secondary" onClick={() => exportCaseToPptx({ ...caseData, ...form })}>📊 Exporteer .pptx</button>
         <button className="btn btn-danger" onClick={onCancel}>✕ Annuleren</button>
       </div>
     </div>

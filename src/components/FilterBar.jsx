@@ -1,7 +1,7 @@
 import React from 'react';
-import { FILTERS, TAB_CONFIG } from '../data/filters';
+import { TAB_CONFIG } from '../data/filters';
 
-export default function FilterBar({ activeTab, activeFilter, onTabChange, onFilterChange }) {
+export default function FilterBar({ filters, activeTab, activeFilter, onTabChange, onFilterChange }) {
   const tabs = Object.keys(TAB_CONFIG);
 
   return (
@@ -19,7 +19,7 @@ export default function FilterBar({ activeTab, activeFilter, onTabChange, onFilt
       </div>
 
       <div className="button-grid">
-        {FILTERS[activeTab].map(filter => (
+        {(filters[activeTab] || []).map(filter => (
           <button
             key={filter}
             className={`filter-btn ${activeFilter === filter ? 'active' : ''}`}

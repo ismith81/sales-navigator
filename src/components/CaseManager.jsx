@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { FILTERS } from '../data/filters';
 import CaseEditor from './CaseEditor';
 import ImportCase from './ImportCase';
+import FilterManager from './FilterManager';
 import { exportCaseToDocx } from '../utils/exportCase';
+import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
+export default function CaseManager({ cases, filters, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onBackup, onRestore }) {
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -29,6 +30,7 @@ export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
       <div className="case-manager">
         <CaseEditor
           caseData={editingCase}
+          filters={filters}
           onSave={handleSave}
           onCancel={() => setEditingId(null)}
         />
@@ -39,7 +41,7 @@ export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
   return (
     <div className="case-manager">
       <div className="cm-header">
-        <h2>Case Beheer</h2>
+        <h2>Beheer</h2>
         <p>Beheer, bewerk en importeer cases.</p>
       </div>
 
@@ -48,12 +50,13 @@ export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
           className={`btn ${showImport ? 'btn-danger' : 'btn-primary'}`}
           onClick={() => setShowImport(prev => !prev)}
         >
-          {showImport ? '✕ Sluiten' : '📥 Case importeren'}
+          {showImport ? '✕ Sluiten' : 'Case importeren'}
         </button>
       </div>
 
       {showImport && <ImportCase onImport={handleImport} />}
 
+      {/* Cases table */}
       <div className="cm-table">
         <div className="cm-table-header">
           <div className="cm-col-name">Case</div>
@@ -112,6 +115,13 @@ export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
                   📄
                 </button>
                 <button
+                  className="btn-icon"
+                  onClick={(e) => { e.stopPropagation(); exportCaseToPptx(c); }}
+                  title="Exporteren als PowerPoint"
+                >
+                  📊
+                </button>
+                <button
                   className="btn-icon danger"
                   onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(c.id); }}
                   title="Verwijderen"
@@ -128,6 +138,25 @@ export default function CaseManager({ cases, onUpdate, onImport, onRemove }) {
             Nog geen cases. Importeer een case via het template.
           </div>
         )}
+      </div>
+
+      {/* Filter Manager */}
+      <FilterManager
+        filters={filters}
+        cases={cases}
+        onAdd={onAddFilter}
+        onRename={onRenameFilter}
+        onDelete={onDeleteFilter}
+      />
+
+      {/* Backup / Restore */}
+      <div className="cm-backup-bar">
+        <button className="btn btn-secondary" onClick={onBackup}>
+          Backup downloaden
+        </button>
+        <button className="btn btn-secondary" onClick={onRestore}>
+          Backup herstellen
+        </button>
       </div>
 
       {/* Delete confirmation modal */}
