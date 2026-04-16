@@ -60,7 +60,17 @@ export default function CaseManager({ cases, filters, onUpdate, onImport, onRemo
       <div className="cm-table">
         <div className="cm-table-header">
           <div className="cm-col-name">Case</div>
-          <div className="cm-col-tags">Doelen / Behoeften / Diensten</div>
+          <div className="cm-col-tags">
+            <span className="cm-legend">
+              <span className="cm-legend-dot doel"></span>Doelen
+            </span>
+            <span className="cm-legend">
+              <span className="cm-legend-dot behoefte"></span>Behoeften
+            </span>
+            <span className="cm-legend">
+              <span className="cm-legend-dot dienst"></span>Diensten
+            </span>
+          </div>
           <div className="cm-col-status">Status</div>
           <div className="cm-col-actions"></div>
         </div>
