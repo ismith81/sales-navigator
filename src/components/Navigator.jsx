@@ -5,6 +5,7 @@ import { DEFAULT_FILTERS, TAB_CONFIG } from '../data/filters';
 import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
+import Instructies from './Instructies';
 
 const CASES_KEY = 'salesNavigatorCases';
 const TOPICS_KEY = 'salesNavigatorTopics';
@@ -189,10 +190,18 @@ export default function Navigator() {
           >
             Beheer
           </button>
+          <button
+            className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
+            onClick={() => setView('instructies')}
+          >
+            Instructies
+          </button>
         </div>
       </header>
 
-      {view === 'navigator' ? (
+      {view === 'instructies' ? (
+        <Instructies />
+      ) : view === 'navigator' ? (
         <>
           <FilterBar
             filters={filters}
