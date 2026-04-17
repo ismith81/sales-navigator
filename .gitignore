@@ -3,3 +3,4 @@ dist/
 .DS_Store
 *.local
 _potx_unpacked/
+supabase.txt
