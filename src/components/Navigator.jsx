@@ -1,41 +1,65 @@
 import React, { useState, useEffect, useRef } from 'react';
-import initialCases from '../data/cases.json';
-import initialTopics from '../data/topics.json';
-import { DEFAULT_FILTERS, DEFAULT_PAINPOINTS, TAB_CONFIG } from '../data/filters';
+import { TAB_CONFIG } from '../data/filters';
+import { loadAll, saveCases, saveConfig } from '../lib/store';
 import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
 import Instructies from './Instructies';
 
-const CASES_KEY = 'salesNavigatorCases';
-const TOPICS_KEY = 'salesNavigatorTopics';
-const FILTERS_KEY = 'salesNavigatorFilters';
-const PAINPOINTS_KEY = 'salesNavigatorPainpoints';
-
-function loadJSON(key, fallback) {
-  try {
-    const saved = localStorage.getItem(key);
-    if (saved) return JSON.parse(saved);
-  } catch { /* ignore */ }
-  return fallback;
+function useDebouncedSave(value, hydratedRef, saver, label) {
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const handle = setTimeout(() => {
+      Promise.resolve(saver(value)).catch(err =>
+        console.error(`Supabase save error (${label}):`, err)
+      );
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [value]);
 }
 
 export default function Navigator() {
-  const [cases, setCases] = useState(() => loadJSON(CASES_KEY, initialCases));
-  const [topics, setTopics] = useState(() => loadJSON(TOPICS_KEY, initialTopics));
-  const [filters, setFilters] = useState(() => loadJSON(FILTERS_KEY, DEFAULT_FILTERS));
-  const [painpoints, setPainpoints] = useState(() => loadJSON(PAINPOINTS_KEY, DEFAULT_PAINPOINTS));
+  const [cases, setCases] = useState([]);
+  const [topics, setTopics] = useState({});
+  const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
+  const [painpoints, setPainpoints] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('navigator');
   const [activeTab, setActiveTab] = useState('doelen');
   const [activeFilter, setActiveFilter] = useState(null);
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
+  const hydrated = useRef(false);
 
-  // Persist
-  useEffect(() => { localStorage.setItem(CASES_KEY, JSON.stringify(cases)); }, [cases]);
-  useEffect(() => { localStorage.setItem(TOPICS_KEY, JSON.stringify(topics)); }, [topics]);
-  useEffect(() => { localStorage.setItem(FILTERS_KEY, JSON.stringify(filters)); }, [filters]);
-  useEffect(() => { localStorage.setItem(PAINPOINTS_KEY, JSON.stringify(painpoints)); }, [painpoints]);
+  // Initial load vanuit Supabase
+  useEffect(() => {
+    let cancelled = false;
+    loadAll()
+      .then(data => {
+        if (cancelled) return;
+        setCases(data.cases);
+        setTopics(data.topics);
+        setFilters(data.filters);
+        setPainpoints(data.painpoints);
+        setLoading(false);
+        // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
+        setTimeout(() => { hydrated.current = true; }, 0);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('Supabase load error:', err);
+        setLoadError(err.message || 'Kon data niet laden');
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Debounced save per slice — schrijft alleen na initial hydrate.
+  useDebouncedSave(cases, hydrated, (v) => saveCases(v), 'cases');
+  useDebouncedSave(topics, hydrated, (v) => saveConfig('topics', v), 'topics');
+  useDebouncedSave(filters, hydrated, (v) => saveConfig('filters', v), 'filters');
+  useDebouncedSave(painpoints, hydrated, (v) => saveConfig('painpoints', v), 'painpoints');
 
   // Toast auto-hide
   useEffect(() => {
@@ -192,6 +216,29 @@ export default function Navigator() {
   };
 
   const currentTopic = activeFilter ? topics[activeTab]?.[activeFilter] : null;
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="empty-state">
+          <div className="icon-large">⏳</div>
+          <p>Data laden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="app">
+        <div className="empty-state">
+          <div className="icon-large">⚠️</div>
+          <p>Kon data niet laden: {loadError}</p>
+          <button className="btn" onClick={() => window.location.reload()}>Opnieuw proberen</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
