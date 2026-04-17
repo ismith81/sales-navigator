@@ -107,16 +107,26 @@ export default function ImportCase({ onImport }) {
 
           <div className="preview-field">
             <div className="label">Situatie</div>
-            <div className={`value ${!preview.situatie ? 'empty' : ''}`}>
-              {preview.situatie || 'Niet ingevuld'}
-            </div>
+            {preview.situatie ? (
+              <div
+                className="value rich-text"
+                dangerouslySetInnerHTML={{ __html: preview.situatie }}
+              />
+            ) : (
+              <div className="value empty">Niet ingevuld</div>
+            )}
           </div>
 
           <div className="preview-field">
             <div className="label">Resultaat</div>
-            <div className={`value ${!preview.resultaat ? 'empty' : ''}`}>
-              {preview.resultaat || 'Niet ingevuld'}
-            </div>
+            {preview.resultaat ? (
+              <div
+                className="value rich-text"
+                dangerouslySetInnerHTML={{ __html: preview.resultaat }}
+              />
+            ) : (
+              <div className="value empty">Niet ingevuld</div>
+            )}
           </div>
 
           <div className="preview-field">

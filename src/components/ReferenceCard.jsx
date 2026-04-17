@@ -37,7 +37,10 @@ export default function ReferenceCard({ caseData, matchReason }) {
             caseData[key] ? (
               <div key={key} className="detail-field">
                 <div className="detail-label">{label}</div>
-                <div className="detail-value">{caseData[key]}</div>
+                <div
+                  className="detail-value rich-text"
+                  dangerouslySetInnerHTML={{ __html: caseData[key] }}
+                />
               </div>
             ) : null
           )}

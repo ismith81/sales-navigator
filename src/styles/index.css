@@ -696,6 +696,14 @@ body::before {
   color: var(--text);
 }
 
+.rich-text p { margin: 0 0 0.4rem 0; }
+.rich-text p:last-child { margin-bottom: 0; }
+.rich-text ul,
+.rich-text ol { margin: 0.25rem 0 0.5rem 1.25rem; padding: 0; }
+.rich-text li { margin-bottom: 0.2rem; }
+.rich-text strong { font-weight: 700; }
+.rich-text em { font-style: italic; }
+
 .detail-keywords {
   display: flex;
   flex-wrap: wrap;
