@@ -8,8 +8,8 @@ const DETAIL_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function ReferenceCard({ caseData, matchReason }) {
-  const [expanded, setExpanded] = useState(false);
+export default function ReferenceCard({ caseData, matchReason, defaultExpanded = false }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
     <div className="ref-card">

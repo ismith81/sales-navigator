@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReferenceCard from './ReferenceCard';
 
-export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTopic }) {
+export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTopic, hideReferences = false, hideTitle = false }) {
   const [editingTP, setEditingTP] = useState(null);
   const [editingFU, setEditingFU] = useState(null);
   const [addingTP, setAddingTP] = useState(false);
@@ -65,10 +65,10 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
 
   return (
     <div className="topic-view" key={topicKey}>
-      <h2 className="topic-title">{topicKey}</h2>
+      {!hideTitle && <h2 className="topic-title">{topicKey}</h2>}
 
       {/* Talking Points */}
-      <div className="section-title">💬 Talking Points</div>
+      <div className="section-title section-title--talking">Talking Points</div>
       {talkingPoints.map((tp, i) => (
         <div key={i} className="topic-item">
           {editingTP === i ? (
@@ -83,7 +83,7 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
             </div>
           ) : (
             <div className="talking-point">
-              <span className="bullet">▸</span>
+              <span className="bullet">•</span>
               <span
                 className="topic-text clickable"
                 onClick={() => setEditingTP(i)}
@@ -115,7 +115,7 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
       )}
 
       {/* Follow-ups */}
-      <div className="section-title">❓ Vervolgvragen</div>
+      <div className="section-title section-title--followup">Vervolgvragen</div>
       {followUps.map((q, i) => (
         <div key={i} className="topic-item">
           {editingFU === i ? (
@@ -130,7 +130,7 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
             </div>
           ) : (
             <div className="followup-question">
-              <span className="qmark">?</span>
+              <span className="bullet">•</span>
               <span
                 className="topic-text clickable"
                 onClick={() => setEditingFU(i)}
@@ -162,7 +162,7 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
       )}
 
       {/* Reference cases */}
-      {matchedCases.length > 0 && (
+      {!hideReferences && matchedCases.length > 0 && (
         <>
           <div className="section-title">📎 Referenties ({matchedCases.length})</div>
           <div className="reference-list">

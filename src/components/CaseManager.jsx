@@ -47,7 +47,29 @@ export default function CaseManager({ cases, filters, painpoints, onUpdate, onIm
 
       <div className="cm-actions">
         <button
-          className={`btn ${showImport ? 'btn-danger' : 'btn-primary'}`}
+          className="btn btn-teal"
+          onClick={() => {
+            const id = `nieuwe-case-${Date.now()}`;
+            onImport({
+              id,
+              name: 'Nieuwe case',
+              subtitle: '',
+              logoText: 'NC',
+              logoColor: '#1a6baa',
+              situatie: '', doel: '', oplossing: '', resultaat: '',
+              keywords: [],
+              businessImpact: '',
+              mapping: { doelen: [], behoeften: [], diensten: [] },
+              talkingPoints: [], followUps: [],
+              matchReasons: { doelen: {}, behoeften: {}, diensten: {} },
+            });
+            setEditingId(id);
+          }}
+        >
+          Nieuwe case
+        </button>
+        <button
+          className={`btn ${showImport ? 'btn-danger' : 'btn-teal'}`}
           onClick={() => setShowImport(prev => !prev)}
         >
           {showImport ? '✕ Sluiten' : 'Case importeren'}

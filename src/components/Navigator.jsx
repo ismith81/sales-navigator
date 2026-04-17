@@ -5,6 +5,7 @@ import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
 import Instructies from './Instructies';
+import CasesOverview from './CasesOverview';
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function Navigator() {
   const [view, setView] = useState('navigator');
   const [activeTab, setActiveTab] = useState('doelen');
   const [activeFilter, setActiveFilter] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -245,9 +247,24 @@ export default function Navigator() {
       {/* Compact sticky header */}
       <header className="topbar">
         <div className="topbar-left">
-          <img src="/creates-logo.png" alt="Creates" className="topbar-logo" />
-          <span className="topbar-title">Sales <span>Navigator</span></span>
+          <div className="topbar-brand">
+            <span className="topbar-title">Sales <span>Navigator</span></span>
+            <img src="/creates-logo.png" alt="Creates" className="topbar-logo" />
+          </div>
         </div>
+        {view === 'navigator' && (
+          <div className="topbar-search">
+            <input
+              type="text"
+              placeholder="Zoek een case, klant of trefwoord..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
+            )}
+          </div>
+        )}
         <div className="view-toggle">
           <button
             className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
@@ -283,24 +300,65 @@ export default function Navigator() {
             onFilterChange={handleFilterChange}
           />
 
-          {!activeFilter ? (
-            <div className="empty-state">
-              <div className="icon-large">👆</div>
-              <p>Kies een {TAB_CONFIG[activeTab].singular} hierboven om te starten</p>
-            </div>
-          ) : currentTopic ? (
-            <TopicView
-              topicKey={activeFilter}
-              tab={activeTab}
-              topicData={currentTopic}
-              cases={cases}
-              onUpdateTopic={handleUpdateTopic}
-            />
+          {searchQuery.trim() ? (
+            <>
+              <div className="active-filter-bar">
+                <span className="active-filter-chip">
+                  <span className="afc-label">Zoekopdracht:</span>
+                  <strong>{searchQuery}</strong>
+                </span>
+                <button
+                  className="btn-clear-filter"
+                  onClick={() => setSearchQuery('')}
+                >
+                  ← Terug naar totaal overzicht
+                </button>
+              </div>
+              <CasesOverview
+                cases={cases}
+                searchQuery={searchQuery}
+                heading={`Zoekresultaten voor "${searchQuery}"`}
+              />
+            </>
           ) : (
-            <div className="empty-state">
-              <div className="icon-large">📋</div>
-              <p>Geen content voor "{activeFilter}". Voeg talking points toe via Beheer.</p>
-            </div>
+            <>
+              {activeFilter && (
+                <div className="active-filter-bar">
+                  <span className="active-filter-chip">
+                    <span className="afc-label">{TAB_CONFIG[activeTab].singular}:</span>
+                    <strong>{activeFilter}</strong>
+                  </span>
+                  <button
+                    className="btn-clear-filter"
+                    onClick={() => setActiveFilter(null)}
+                  >
+                    ← Terug naar totaal overzicht
+                  </button>
+                </div>
+              )}
+
+              {activeFilter && currentTopic && (
+                <TopicView
+                  topicKey={activeFilter}
+                  tab={activeTab}
+                  topicData={currentTopic}
+                  cases={cases}
+                  onUpdateTopic={handleUpdateTopic}
+                  hideReferences
+                  hideTitle
+                />
+              )}
+
+              <CasesOverview
+                cases={cases}
+                activeTab={activeTab}
+                activeFilter={activeFilter}
+                heading={activeFilter ? `Referenties voor "${activeFilter}"` : 'Alle cases'}
+                hint={activeFilter
+                  ? null
+                  : 'Klik op een case voor de details, of kies een filter hierboven om talking points te zien.'}
+              />
+            </>
           )}
         </>
       ) : (
