@@ -20,6 +20,94 @@ function stripHtml(html) {
 }
 
 /**
+ * Convert rich HTML (zoals opgeslagen door TipTap/mammoth) naar een reeks docx Paragraphs.
+ * Ondersteunt: <p>, <strong>/<b>, <em>/<i>, <ul>/<ol>/<li>, <br>.
+ */
+function htmlToDocxParagraphs(html, { placeholder = null } = {}) {
+  if (!html || !stripHtml(html).trim()) {
+    if (placeholder) {
+      return [new Paragraph({
+        spacing: { after: 100 },
+        children: [new TextRun({ text: placeholder, font: 'Arial', size: 20, italics: true, color: '999999' })],
+      })];
+    }
+    return [];
+  }
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const out = [];
+
+  function runsFromInline(node, style = {}) {
+    const runs = [];
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3) {
+        if (child.textContent) {
+          runs.push(new TextRun({ text: child.textContent, font: 'Arial', size: 20, ...style }));
+        }
+      } else if (child.nodeType === 1) {
+        const tag = child.tagName.toLowerCase();
+        if (tag === 'br') {
+          runs.push(new TextRun({ text: '', break: 1 }));
+          continue;
+        }
+        const next = { ...style };
+        if (tag === 'strong' || tag === 'b') next.bold = true;
+        if (tag === 'em' || tag === 'i') next.italics = true;
+        if (tag === 'u') next.underline = {};
+        runs.push(...runsFromInline(child, next));
+      }
+    }
+    return runs;
+  }
+
+  function walk(nodes, listLevel = 0) {
+    for (const node of nodes) {
+      if (node.nodeType !== 1) continue;
+      const tag = node.tagName.toLowerCase();
+
+      if (tag === 'p' || tag === 'div') {
+        const runs = runsFromInline(node);
+        if (runs.length) {
+          out.push(new Paragraph({ spacing: { after: 100 }, children: runs }));
+        }
+      } else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(node.children).filter(c => c.tagName.toLowerCase() === 'li');
+        items.forEach((li, idx) => {
+          const prefix = tag === 'ol' ? `${idx + 1}.  ` : '•  ';
+          // Inline runs van de li (exclusief geneste lijsten)
+          const inlineNode = li.cloneNode(true);
+          Array.from(inlineNode.querySelectorAll('ul, ol')).forEach(n => n.remove());
+          const runs = [new TextRun({ text: prefix, font: 'Arial', size: 20 }), ...runsFromInline(inlineNode)];
+          out.push(new Paragraph({
+            spacing: { after: 60 },
+            indent: { left: 360 * (listLevel + 1) },
+            children: runs,
+          }));
+          // Geneste lijsten
+          const nested = Array.from(li.children).filter(c => ['ul', 'ol'].includes(c.tagName.toLowerCase()));
+          walk(nested, listLevel + 1);
+        });
+      } else if (['section', 'article', 'blockquote'].includes(tag)) {
+        walk(Array.from(node.children), listLevel);
+      } else {
+        const runs = runsFromInline(node);
+        if (runs.length) out.push(new Paragraph({ spacing: { after: 100 }, children: runs }));
+      }
+    }
+  }
+
+  walk(Array.from(doc.body.children));
+
+  if (out.length === 0 && placeholder) {
+    return [new Paragraph({
+      spacing: { after: 100 },
+      children: [new TextRun({ text: placeholder, font: 'Arial', size: 20, italics: true, color: '999999' })],
+    })];
+  }
+  return out;
+}
+
+/**
  * Build a two-column info table (label | value).
  */
 function infoTable(rows) {
@@ -59,7 +147,7 @@ function sectionHeading(text) {
 }
 
 /**
- * Create a labeled content block.
+ * Create a labeled content block. Content mag rich HTML zijn (van TipTap/mammoth).
  */
 function contentBlock(label, content) {
   const paragraphs = [];
@@ -67,18 +155,7 @@ function contentBlock(label, content) {
     spacing: { before: 200, after: 60 },
     children: [new TextRun({ text: label, bold: true, font: 'Arial', size: 20 })],
   }));
-  const text = stripHtml(content);
-  if (text) {
-    paragraphs.push(new Paragraph({
-      spacing: { after: 100 },
-      children: [new TextRun({ text, font: 'Arial', size: 20 })],
-    }));
-  } else {
-    paragraphs.push(new Paragraph({
-      spacing: { after: 100 },
-      children: [new TextRun({ text: '[Nog in te vullen]', font: 'Arial', size: 20, italics: true, color: '999999' })],
-    }));
-  }
+  paragraphs.push(...htmlToDocxParagraphs(content, { placeholder: '[Nog in te vullen]' }));
   return paragraphs;
 }
 

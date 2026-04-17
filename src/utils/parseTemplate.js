@@ -1,17 +1,20 @@
 import mammoth from 'mammoth';
 
 /**
- * Parse an uploaded .docx case template into a structured case object.
- * 
- * Expected template sections:
- * - Bedrijfsnaam / Korte omschrijving (table row)
- * - Situatie, Doel, Oplossing, Resultaat, Keywords, Business Impact (text blocks)
- * - Mapping checkboxes: Doelen, Behoeften, Diensten
+ * Parse een .docx klantcase-template naar een gestructureerd case-object.
+ *
+ * We lezen de docx als HTML (niet als platte tekst) zodat bold/italic/bullets
+ * bewaard blijven voor de velden die vervolgens in TipTap bewerkt worden.
  */
 
-const SECTION_MARKERS = [
-  'situatie', 'doel', 'oplossing', 'resultaat', 'keywords', 'business impact'
-];
+const SECTION_LABEL_TO_KEY = {
+  'situatie': 'situatie',
+  'doel': 'doel',
+  'oplossing': 'oplossing',
+  'resultaat': 'resultaat',
+  'keywords': 'keywords',
+  'business impact': 'businessImpact',
+};
 
 const MAPPING_OPTIONS = {
   doelen: ['Meer waarde halen uit data', 'Data als business model'],
@@ -28,9 +31,7 @@ function generateId(name) {
 
 function generateLogoText(name) {
   const words = name.split(/\s+/);
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   return name.substring(0, 2).toUpperCase();
 }
 
@@ -39,129 +40,121 @@ function generateLogoColor() {
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
-function extractCheckedItems(text, options) {
-  const checked = [];
-  for (const option of options) {
-    // Match ☑ or ☒ or [x] or [X] followed by the option text
-    const patterns = [
-      new RegExp(`[☑☒✓✔]\\s*${escapeRegex(option)}`, 'i'),
-      new RegExp(`\\[x\\]\\s*${escapeRegex(option)}`, 'i'),
-      new RegExp(`\\[X\\]\\s*${escapeRegex(option)}`, 'i'),
-      // Also match if the option just appears on its own line without unchecked box
-    ];
-    
-    for (const pattern of patterns) {
-      if (pattern.test(text)) {
-        checked.push(option);
-        break;
-      }
-    }
-  }
-  return checked;
-}
-
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function extractSectionContent(lines, sectionName) {
-  let capturing = false;
-  let content = [];
-  
-  for (const line of lines) {
-    const lower = line.toLowerCase().trim();
-    
-    // Start capturing after section header
-    if (lower === sectionName || lower.startsWith(sectionName + ':') || lower.startsWith(sectionName + ' ')) {
-      if (!capturing) {
-        capturing = true;
-        // If there's content after the colon on the same line
-        const afterColon = line.split(':').slice(1).join(':').trim();
-        if (afterColon) content.push(afterColon);
-        continue;
-      }
-    }
-    
-    // Stop at next section
-    if (capturing && SECTION_MARKERS.some(m => lower === m || lower.startsWith(m + ':'))) {
-      if (lower !== sectionName) break;
-    }
-    
-    if (capturing) {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith('[') && !trimmed.startsWith('☐')) {
-        content.push(trimmed);
-      }
-    }
+function extractCheckedItems(text, options) {
+  const checked = [];
+  for (const option of options) {
+    const patterns = [
+      new RegExp(`[☑☒✓✔]\\s*${escapeRegex(option)}`, 'i'),
+      new RegExp(`\\[x\\]\\s*${escapeRegex(option)}`, 'i'),
+    ];
+    if (patterns.some(p => p.test(text))) checked.push(option);
   }
-  
-  return content.join(' ').trim();
+  return checked;
 }
 
-function extractTableField(text, fieldName) {
-  const lines = text.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const lower = lines[i].toLowerCase();
-    if (lower.includes(fieldName.toLowerCase())) {
-      // Check same line for value (table row format)
-      const parts = lines[i].split(/\t|  +/);
-      if (parts.length >= 2) {
-        const val = parts.slice(1).join(' ').trim();
-        if (val && !val.startsWith('[')) return val;
+function stripTags(html) {
+  if (!html) return '';
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return (d.textContent || '').trim();
+}
+
+/**
+ * Loop de HTML-body door. Labels (bv. "Situatie") staan in een <p>
+ * vlak boven een <table>, en de inhoud staat in de eerste <td> van die tabel.
+ */
+function extractSectionsFromHtml(body) {
+  const sections = {};
+  const children = Array.from(body.children);
+
+  for (let i = 0; i < children.length; i++) {
+    const el = children[i];
+    if (el.tagName !== 'P') continue;
+
+    const labelText = (el.textContent || '').trim().toLowerCase();
+    const key = SECTION_LABEL_TO_KEY[labelText];
+    if (!key) continue;
+
+    // Zoek de eerstvolgende <table> (skipping lege paragraphs).
+    for (let j = i + 1; j < children.length; j++) {
+      const next = children[j];
+      if (next.tagName === 'TABLE') {
+        const td = next.querySelector('td');
+        if (td) sections[key] = td.innerHTML.trim();
+        break;
       }
-      // Check next non-empty line (may skip blank lines)
-      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-        const next = lines[j].trim();
-        if (!next) continue; // skip blank lines
-        if (next.startsWith('[') || SECTION_MARKERS.some(m => next.toLowerCase().startsWith(m))) break;
-        return next;
+      if (next.tagName === 'P') {
+        const nextLabel = (next.textContent || '').trim().toLowerCase();
+        if (SECTION_LABEL_TO_KEY[nextLabel]) break; // volgende sectie — content ontbreekt
       }
     }
   }
-  return '';
+  return sections;
+}
+
+/**
+ * Info-tabel: bedrijfsnaam/korte omschrijving. Twee kolommen (label | value).
+ */
+function extractInfoFields(body) {
+  let bedrijfsnaam = '';
+  let omschrijving = '';
+  for (const row of body.querySelectorAll('tr')) {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 2) continue;
+    const label = (cells[0].textContent || '').trim().toLowerCase();
+    const value = (cells[1].textContent || '').trim();
+    if (label.includes('bedrijfsnaam') && value) bedrijfsnaam = value;
+    else if (label.includes('omschrijving') && value) omschrijving = value;
+  }
+  return { bedrijfsnaam, omschrijving };
 }
 
 export async function parseTemplate(file) {
   const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  const text = result.value;
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  
-  // Extract basic info
-  const bedrijfsnaam = extractTableField(text, 'Bedrijfsnaam') || 'Onbekend';
-  const omschrijving = extractTableField(text, 'Korte omschrijving') || '';
-  
-  // Extract sections
-  const situatie = extractSectionContent(lines, 'situatie');
-  const doel = extractSectionContent(lines, 'doel');
-  const oplossing = extractSectionContent(lines, 'oplossing');
-  const resultaat = extractSectionContent(lines, 'resultaat');
-  const keywordsRaw = extractSectionContent(lines, 'keywords');
-  const businessImpact = extractSectionContent(lines, 'business impact');
-  
-  // Parse keywords
-  const keywords = keywordsRaw
-    ? keywordsRaw.split(/[,;]/).map(k => k.trim()).filter(Boolean)
+
+  // HTML-variant voor rich content, platte tekst apart voor de mapping-checkboxes
+  // (mammoth rendert ☑/☐ wel als tekst, maar HTML is robuuster voor structuur).
+  const [{ value: html }, { value: rawText }] = await Promise.all([
+    mammoth.convertToHtml({ arrayBuffer }),
+    mammoth.extractRawText({ arrayBuffer }),
+  ]);
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const body = doc.body;
+
+  const { bedrijfsnaam, omschrijving } = extractInfoFields(body);
+  const sections = extractSectionsFromHtml(body);
+
+  // Keywords: platte tekst, komma-gescheiden
+  const keywordsText = stripTags(sections.keywords || '');
+  const keywords = keywordsText
+    ? keywordsText.split(/[,;]/).map(k => k.trim()).filter(Boolean)
     : [];
-  
-  // Extract mapping (checked items)
-  const mappingSection = text.substring(text.toLowerCase().indexOf('mapping'));
-  const doelen = extractCheckedItems(mappingSection, MAPPING_OPTIONS.doelen);
-  const behoeften = extractCheckedItems(mappingSection, MAPPING_OPTIONS.behoeften);
-  const diensten = extractCheckedItems(mappingSection, MAPPING_OPTIONS.diensten);
-  
+
+  // Mapping via platte tekst (checkboxes blijven als unicode chars behouden)
+  const mappingIdx = rawText.toLowerCase().indexOf('mapping');
+  const mappingText = mappingIdx >= 0 ? rawText.substring(mappingIdx) : rawText;
+  const doelen = extractCheckedItems(mappingText, MAPPING_OPTIONS.doelen);
+  const behoeften = extractCheckedItems(mappingText, MAPPING_OPTIONS.behoeften);
+  const diensten = extractCheckedItems(mappingText, MAPPING_OPTIONS.diensten);
+
+  const name = bedrijfsnaam || 'Onbekend';
   const caseData = {
-    id: generateId(bedrijfsnaam),
-    name: bedrijfsnaam,
-    subtitle: `${omschrijving}`,
-    logoText: generateLogoText(bedrijfsnaam),
+    id: generateId(name),
+    name,
+    subtitle: omschrijving,
+    logoText: generateLogoText(name),
     logoColor: generateLogoColor(),
-    situatie,
-    doel,
-    oplossing,
-    resultaat,
+    situatie: sections.situatie || '',
+    doel: sections.doel || '',
+    oplossing: sections.oplossing || '',
+    resultaat: sections.resultaat || '',
     keywords,
-    businessImpact,
+    businessImpact: sections.businessImpact || '',
     mapping: { doelen, behoeften, diensten },
     talkingPoints: [],
     followUps: [],
@@ -169,49 +162,36 @@ export async function parseTemplate(file) {
     _imported: true,
     _importDate: new Date().toISOString(),
   };
-  
-  return { caseData, rawText: text };
+
+  return { caseData, rawText };
 }
 
 export function generateDefaultTalkingPoints(caseData) {
   const points = [];
-  if (caseData.situatie) {
-    points.push(caseData.situatie);
-  }
-  if (caseData.oplossing) {
-    const short = caseData.oplossing.length > 200
-      ? caseData.oplossing.substring(0, 200) + '...'
-      : caseData.oplossing;
-    points.push(`Onze oplossing: ${short}`);
-  }
-  if (caseData.resultaat) {
-    points.push(`Resultaat: ${caseData.resultaat}`);
-  }
-  if (caseData.businessImpact) {
-    points.push(`Business impact: ${caseData.businessImpact}`);
-  }
+  const situatie = stripTags(caseData.situatie);
+  const oplossing = stripTags(caseData.oplossing);
+  const resultaat = stripTags(caseData.resultaat);
+  const businessImpact = stripTags(caseData.businessImpact);
+  if (situatie) points.push(situatie);
+  if (oplossing) points.push(`Onze oplossing: ${oplossing.length > 200 ? oplossing.substring(0, 200) + '...' : oplossing}`);
+  if (resultaat) points.push(`Resultaat: ${resultaat}`);
+  if (businessImpact) points.push(`Business impact: ${businessImpact}`);
   return points;
 }
 
 export function generateDefaultFollowUps(caseData) {
   const questions = [];
-  if (caseData.mapping.doelen.includes('Meer waarde halen uit data')) {
+  if (caseData.mapping.doelen.includes('Meer waarde halen uit data'))
     questions.push('Hoe gebruiken jullie data momenteel voor besluitvorming?');
-  }
-  if (caseData.mapping.doelen.includes('Data als business model')) {
+  if (caseData.mapping.doelen.includes('Data als business model'))
     questions.push('Zijn er mogelijkheden om jullie data als dienst aan te bieden aan klanten of partners?');
-  }
-  if (caseData.mapping.behoeften.includes('Realtime data')) {
+  if (caseData.mapping.behoeften.includes('Realtime data'))
     questions.push('Werken jullie al met real-time dataverwerking, of is dat iets wat jullie overwegen?');
-  }
-  if (caseData.mapping.behoeften.includes('AI ready')) {
+  if (caseData.mapping.behoeften.includes('AI ready'))
     questions.push('Hebben jullie plannen om AI of machine learning in te zetten op jullie data?');
-  }
-  if (caseData.mapping.diensten.includes('Data modernisatie')) {
+  if (caseData.mapping.diensten.includes('Data modernisatie'))
     questions.push('Hoe oud is jullie huidige dataplatform en voldoet het nog aan de groeiende behoefte?');
-  }
-  if (questions.length === 0) {
+  if (questions.length === 0)
     questions.push('Wat zijn jullie grootste uitdagingen op het gebied van data?');
-  }
   return questions;
 }
