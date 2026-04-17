@@ -68,18 +68,18 @@ export default function CaseCard({ caseData, matchReason }) {
         <div className="highlight-match" dangerouslySetInnerHTML={{ __html: matchReason }} />
       )}
 
-      <div className="section-title">💬 Talking Points</div>
+      <div className="section-title section-title--talking">Talking Points</div>
       {caseData.talkingPoints.map((tp, i) => (
         <div key={i} className="talking-point">
-          <span className="bullet">▸</span>
+          <span className="bullet">•</span>
           <span>{tp}</span>
         </div>
       ))}
 
-      <div className="section-title">❓ Vervolgvragen</div>
+      <div className="section-title section-title--followup">Vervolgvragen</div>
       {caseData.followUps.map((q, i) => (
         <div key={i} className="followup-question">
-          <span className="qmark">?</span>
+          <span className="bullet">•</span>
           <span>{q}</span>
         </div>
       ))}

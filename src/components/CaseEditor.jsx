@@ -18,6 +18,7 @@ const RICH_FIELDS = [
 export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, onCancel }) {
   const FILTERS = dynamicFilters || DEFAULT_FILTERS;
   const [form, setForm] = useState({
+    name: caseData.name || '',
     subtitle: caseData.subtitle || '',
     situatie: caseData.situatie || '',
     doel: caseData.doel || '',
@@ -87,7 +88,9 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
       }
       cleaned.matchReasons[category] = reasons;
     }
-    onSave({ ...caseData, ...cleaned });
+    const nextName = (cleaned.name || '').trim() || caseData.name || 'Nieuwe case';
+    const initials = nextName.split(/\s+/).map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '??';
+    onSave({ ...caseData, ...cleaned, name: nextName, logoText: caseData.logoText || initials });
   };
 
   return (
@@ -106,7 +109,12 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
         >
           {caseData.logoText}
         </div>
-        <h2>{caseData.name}</h2>
+        <input
+          className="ce-name-input"
+          value={form.name}
+          onChange={(e) => updateField('name', e.target.value)}
+          placeholder="Case naam..."
+        />
       </div>
 
       {/* Detail fields */}
