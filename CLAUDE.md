@@ -44,7 +44,7 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 
 ## Belangrijke bestanden
 ### Frontend
-- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies) én route-router (gids/assistent) binnen de navigator-view. Route onthouden in localStorage (`sn.route`), default `gids`. Rendert de segmented route-toggle (gecentreerd boven de content), de Gids-flow in een gecentreerde `.gids-route` wrapper, of het ChatPanel in `variant="inline"` als hoofdscherm.
+- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies) én route-router (gids/assistent) binnen de navigator-view. Route onthouden in localStorage (`sn.route`), default `gids`. One-time migratie via `sn.route.migration` version-key leegt oude `'assistent'`-defaults eenmalig zodat bestaande gebruikers naar de nieuwe default vallen. Loading-state gebruikt een stroke-SVG spinner in huisstijl (`.loading-spinner` + `@keyframes sn-spin`), géén emoji. Rendert de segmented route-toggle (gecentreerd boven de content), de Gids-flow in een `.gids-route` wrapper (neemt volledige .app-breedte over), of het ChatPanel in `variant="inline"` als hoofdscherm.
 - `src/components/HeroAssistant.jsx` — **niet meer in gebruik** sinds de twee-routes redesign. Blijft op schijf als reserve/referentie; niet meer geïmporteerd in Navigator. Dezelfde quick-prompts zitten nu in de chat-welcome.
 - `src/components/CasesOverview.jsx` — zoekbare case-overzichtspagina
 - `src/components/CaseCard.jsx` — case weergave met talking points + vervolgvragen
@@ -53,7 +53,7 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - `src/components/FilterBar.jsx` — tabs (doelen/behoeften/diensten) + filter knoppen
 - `src/components/PersonaKompas.jsx` / `PersonaManager.jsx` — persona-laag
 - `src/components/FilterManager.jsx` — beheer van topics/filters in `app_config`
-- `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback). Twee varianten via `variant`-prop: `'drawer'` (default, fixed side-panel met overlay + ESC-close) en `'inline'` (rendert als gewone pagina-content; witte header i.p.v. navy, geen overlay, geen close-knop — bedoeld voor Assistent-route als hoofdscherm). Accepteert `initialPrompt` voor auto-send bij openen.
+- `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback). Header toont **Nova** + subtitel "sales-assistent"; welkomsttekst introduceert Nova. Twee varianten via `variant`-prop: `'drawer'` (default, fixed side-panel met overlay + ESC-close) en `'inline'` (rendert als gewone pagina-content; witte header i.p.v. navy, geen overlay, geen close-knop — bedoeld voor Assistent-route als hoofdscherm). Accepteert `initialPrompt` voor auto-send bij openen.
 - `src/components/TopicView.jsx` — topic-detail (description/signals/talking points/follow-ups)
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
 - `src/components/Instructies.jsx` — handleiding-pagina
@@ -118,9 +118,11 @@ Hybride RAG-achtig patroon:
 - Tags kleur-gecodeerd: doelen=teal, behoeften=blauw, diensten=oranje
 - Iconen: stroke-SVG 2px lineCap round, currentColor (consistent door hele app — FilterBar, ChatPanel, route-toggle).
 - **Route-toggle** (`.route-toggle`): gecentreerde segmented pill boven de content, compact geformatteerd (font 0.82rem, kleine padding). Actieve knop krijgt witte bg + subtiele shadow; eerste knop (Gids) actief in teal, laatste (Assistent) in accent-rood.
-- **Gids-route** (`.gids-route`): max-width 900px, gecentreerd. `.context-strip--card` wrapt persona + filters in een witte card met border en zachte shadow — persona + tabs/filters + klantsignalen-toggle leven als één blok.
+- **Layout-breedtes:** `.app` is 1200px (centraal max-width voor topbar + content). `.gids-route` heeft géén eigen max-width meer en neemt .app-breedte over — zo lijnen brand (links), view-toggle (rechts), filter-card en case-grid op dezelfde gutters uit. `.chat-panel--inline` blijft bewust smaller (780px) voor leesbaarheid.
+- **Gids-route** (`.gids-route`): gecentreerd in .app. `.context-strip--card` wrapt persona + filters in een witte card met border en zachte shadow — persona + tabs/filters + klantsignalen-toggle leven als één blok.
 - **Assistent-route:** ChatPanel inline-variant (`.chat-panel--inline`) met witte header i.p.v. navy, zachte border, max-width 780px, gecentreerd.
-- **Topbar** mobiel/tablet (≤768px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop (>768px) behoudt inline zoekbalk. Breakpoint bewust op 768px zodat iPad-portrait en phones-in-landscape ook collapsed starten — de balk voelde daar "erg aanwezig". De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
+- **Topbar** mobiel/tablet (≤768px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop (>768px) behoudt inline zoekbalk. Breakpoint bewust op 768px zodat iPad-portrait en phones-in-landscape ook collapsed starten. Topbar-title heeft `overflow: hidden` + ellipsis als safety net tegen overlap met de search-icon op krappe schermen. De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
+- **CSS source-order let op:** display-regels voor `.topbar-search-row` en `.topbar-search-icon` zijn gescoped achter `@media (min-width: 769px)`. Als je base-defaults toevoegt met `display: flex/none/...`, plaats ze NIET ná het mobile @media-blok — dat overschrijft de collapse-logica. Bug-geschiedenis: drie keer gebeurd.
 
 ## Doelgroep
 Primaire gebruiker: sales (intern bij Creates)
@@ -137,6 +139,9 @@ De twee-routes redesign is live. Kern:
 - **Mobiele topbar één regel:** `[brand | 🔍 | view-toggle]`. Zoekbalk collapse't tot icon; tik → veld expandt naar rij 2.
 
 Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natuurlijk met "Assistent" (rolnaam ↔ rolnaam), draagt de "guided"-betekenis expliciet, en is kort genoeg voor een segmented toggle.
+
+## Werk-artefacten (niet committen)
+`tmp/` is in `.gitignore` en bedoeld voor lokale case-generator output (docx, fill-scripts, JSON-input). Niet commiten — de gegenereerde case-docx wordt handmatig in Beheer geïmporteerd via de case-template upload.
 
 ## Bekende verbeterpunten / backlog
 - Talking points en follow-ups van geïmporteerde cases zijn auto-gegenereerd en kunnen beter
