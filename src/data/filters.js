@@ -8,9 +8,9 @@ export const DEFAULT_FILTERS = {
 export const FILTERS = DEFAULT_FILTERS;
 
 export const TAB_CONFIG = {
-  doelen: { label: '🎯 Doelen', singular: 'doel' },
-  behoeften: { label: '💡 Behoeften', singular: 'behoefte' },
-  diensten: { label: '🔧 Diensten', singular: 'dienst' },
+  doelen: { label: 'Doelen', singular: 'doel' },
+  behoeften: { label: 'Behoeften', singular: 'behoefte' },
+  diensten: { label: 'Diensten', singular: 'dienst' },
 };
 
 // Voorbeeld-pijnpunten per behoefte (klanttaal tegenover de abstracte behoefte).
