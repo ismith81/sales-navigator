@@ -2945,8 +2945,8 @@ body::before {
 }
 .chat-quickprompt:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.chat-msg { display: flex; }
-.chat-msg--user { justify-content: flex-end; }
+.chat-msg { display: flex; flex-direction: column; align-items: flex-start; }
+.chat-msg--user { align-items: flex-end; }
 .chat-msg-bubble {
   max-width: 86%;
   padding: 0.6rem 0.85rem;
