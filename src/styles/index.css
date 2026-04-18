@@ -2047,42 +2047,73 @@ body::before {
 }
 
 @media (max-width: 640px) {
+  /* Compactere topbar: brand + view-toggle op 1 rij, search op 2e rij. */
   .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.6rem;
-    padding: 0.75rem 1rem;
-    margin: -1.25rem -1rem 1.25rem;
-  }
-  .topbar-left {
-    justify-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    margin: -1.25rem -1rem 1rem;
   }
-  .topbar-title { font-size: 1.3rem; white-space: nowrap; }
-  .topbar-logo { height: 14px; }
+  .topbar-left { flex: 0 0 auto; }
+  .topbar-brand { flex-direction: row; align-items: baseline; gap: 0.4rem; }
+  .topbar-title { font-size: 1.05rem; white-space: nowrap; }
+  .topbar-logo { display: none; } /* creates. weglaten op mobiel, winst in ruimte */
   .view-toggle {
-    width: 100%;
-    justify-content: space-between;
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0.15rem;
   }
   .view-toggle-btn {
-    flex: 1;
-    font-size: 0.78rem;
-    padding: 0.5rem 0.5rem;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.6rem;
     white-space: nowrap;
   }
+  .topbar-search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  .topbar-search input {
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  /* Context-strip: scheider weg en tabs full-width wanneer gewrapped. */
+  .context-strip { gap: 0.75rem; }
+  .context-strip .kompas--collapsed { padding-right: 0; }
+  .context-strip .kompas--collapsed::after { display: none; }
+
+  /* 'Terug naar totaal overzicht' redundant op mobiel — topic-chips staan erboven. */
+  .active-filter-bar--compact { display: none; }
+
   .case-card { padding: 1.25rem; }
   .app { padding: 1.25rem 1rem 3rem; }
   .import-actions { flex-direction: column; }
   .nav-tabs {
     gap: 0.4rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
   }
   .nav-tab { font-size: 0.85rem; padding: 0.5rem 0.9rem; }
+
+  /* Topic-knoppen compacter: padding + hint kleiner. */
   .button-grid {
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
-  .filter-btn { font-size: 0.85rem; padding: 0.55rem 1rem; }
+  .filter-btn {
+    font-size: 0.85rem;
+    padding: 0.55rem 0.9rem;
+    max-width: 100%;
+    width: 100%;
+  }
+  .filter-btn.has-hint { padding: 0.55rem 0.9rem; }
+  .filter-btn-label { font-size: 0.88rem; }
+  .filter-btn-hint { font-size: 0.72rem; margin-top: 0.15rem; line-height: 1.25; }
+  .filter-btn-hint ul { padding-left: 0.9rem; margin: 0; }
+  .filter-btn-hint li { margin-bottom: 0.1rem; }
   .ce-bottom-actions { flex-wrap: wrap; }
   .ce-bottom-actions .btn { flex: 1 1 45%; }
   .fm-item-actions {
