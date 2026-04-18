@@ -57,7 +57,9 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - `src/components/TopicView.jsx` — topic-detail (description/signals/talking points/follow-ups)
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
 - `src/components/Instructies.jsx` — handleiding-pagina
+- `src/components/Login.jsx` — login-scherm (wachtwoord, magic-link, reset + recovery-flow) dat voor de rest van de app rendert als er geen session is.
 - `src/lib/supabase.js` — Supabase client
+- `src/lib/auth.js` — auth-wrapper rond `supabase.auth`: `useAuthSession()` hook, `signInWithPassword/MagicLink`, `sendPasswordReset`, `updatePassword`, `signOut`, plus `authedFetch` die het access-token als `Authorization: Bearer …` meestuurt naar `/api/*`.
 - `src/lib/store.js` — data-laag bovenop Supabase
 - `src/utils/parseTemplate.js` — .docx → JSON conversielogica
 - `src/data/filters.js` — default-configuratie doelen/behoeften/diensten (fallback)
@@ -70,7 +72,15 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
   - `get_topic({tab, name})` — haalt talking points/follow-ups uit `app_config.topics`
   - `list_personas()` — haalt persona-coaching uit `app_config.personas`
   Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'done'|'error'}`.
-- `api/chat-feedback.js` — slaat 👍/👎 + context + tool-calls op in `chat_feedback` (RLS open-insert).
+- `api/chat-feedback.js` — slaat 👍/👎 + context + tool-calls op in `chat_feedback`. Context wordt verrijkt met `user_email` uit de JWT.
+- `api/_lib/auth.js` — `requireUser(req, res)` valideert de `Authorization: Bearer <jwt>`-header via `supabase.auth.getUser(token)`. Zowel `/api/chat` als `/api/chat-feedback` retourneren 401 zonder geldige sessie.
+
+### Auth & security
+- **Supabase Auth** (e-mail + wachtwoord + magic-link + password reset). Users worden invite-only aangemaakt via het Supabase dashboard — géén self-service signup.
+- **Client-gate:** `Navigator.jsx` controleert via `useAuthSession()`; zonder session wordt `<Login/>` gerendered. Data-load (`loadAll`) wacht op session om RLS-leegstand te voorkomen.
+- **Server-gate:** alle serverless endpoints valideren de JWT via `requireUser()`.
+- **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan en policies voor `authenticated` role. SQL-script staat in `supabase/auth-rls.sql`. Anon key mag client-side blijven; RLS doet het werk.
+- **Uitlogknop:** rechtsboven in de topbar (logout-icon), toont e-mail in tooltip.
 
 ## Case JSON-formaat (Supabase `cases` tabel, snake_case)
 ```json

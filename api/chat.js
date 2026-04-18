@@ -8,6 +8,7 @@
 
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
+import { requireUser } from './_lib/auth.js';
 
 const SYSTEM_PROMPT = `Je bent Nova, de sales-assistent voor Creates — een data & analytics consultancy.
 Je helpt de gebruiker (sales) om zich voor te bereiden op klantgesprekken.
@@ -173,6 +174,10 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  // Auth-check — zonder geldige sessie geen Gemini-calls.
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

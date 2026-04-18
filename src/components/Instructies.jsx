@@ -9,7 +9,35 @@ export default function Instructies() {
       </div>
 
       <section className="ins-section">
-        <h3>1. Twee routes: Gids en Assistent</h3>
+        <h3>1. Inloggen</h3>
+        <p>
+          De Sales Navigator is afgeschermd: je hebt een account nodig. Nieuwe collega's
+          krijgen een invite-mail vanuit Supabase; daarmee stel je je wachtwoord in.
+        </p>
+        <ul>
+          <li>
+            <strong>Wachtwoord</strong> — inloggen gaat standaard met e-mail + wachtwoord.
+          </li>
+          <li>
+            <strong>Magic link</strong> — geen wachtwoord paraat? Klik
+            "Stuur mij een login-link" op het loginscherm en klik door vanuit je mail.
+          </li>
+          <li>
+            <strong>Wachtwoord vergeten</strong> — via "Wachtwoord vergeten?" krijg je een
+            reset-link. Na klikken kun je meteen een nieuw wachtwoord instellen.
+          </li>
+          <li>
+            <strong>Uitloggen</strong> — het icoon rechtsboven in de balk.
+          </li>
+        </ul>
+        <p>
+          Je sessie blijft actief, ook na herladen. Na langere tijd van inactiviteit
+          moet je opnieuw inloggen.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>2. Twee routes: Gids en Assistent</h3>
         <p>
           Bovenaan de pagina staat een segmented toggle met twee routes. Kies wat bij jouw
           voorbereiding past — de keuze wordt onthouden voor de volgende keer.
@@ -34,7 +62,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>2. Assistent-route — chat met Nova</h3>
+        <h3>3. Assistent-route — chat met Nova</h3>
         <p>
           <strong>Nova</strong> is je AI-collega in deze app. Geen algemene chatbot: hij praat
           alleen over de cases, talking points en persona-coaching die hier staan. Feiten
@@ -67,7 +95,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>3. Gids-route — guided belscript</h3>
+        <h3>4. Gids-route — guided belscript</h3>
         <p>
           De Gids-route is de klikbare belscript-flow. Alles op één pagina, in één kaartje: persona,
           tabs en filter-knoppen.
@@ -104,7 +132,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>4. Beheer — cases, categorieën en persona's</h3>
+        <h3>5. Beheer — cases, categorieën en persona's</h3>
         <p>
           In <strong>Beheer</strong> (rechtsboven in de topbar) beheer je alle content die in beide
           routes verschijnt.
@@ -145,7 +173,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>5. Opslag &amp; synchronisatie</h3>
+        <h3>6. Opslag &amp; synchronisatie</h3>
         <p>
           De app werkt met een <strong>centrale database</strong> (Supabase). Alle cases, categorieën,
           talking points, persona's en feedback worden automatisch opgeslagen en zijn direct zichtbaar
@@ -158,7 +186,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>6. Lokale snapshot (optioneel)</h3>
+        <h3>7. Lokale snapshot (optioneel)</h3>
         <p>
           Onderaan in <em>Beheer</em> staan twee knoppen:
           <strong> Backup downloaden</strong> en <strong>Backup herstellen</strong>.
@@ -179,7 +207,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>7. Tips</h3>
+        <h3>8. Tips</h3>
         <ul>
           <li>
             <strong>Niet zeker waar te beginnen?</strong> Begin in de Assistent-route met een open

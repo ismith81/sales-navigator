@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TAB_CONFIG } from '../data/filters';
 import { loadAll, saveCases, saveConfig } from '../lib/store';
+import { useAuthSession, signOut } from '../lib/auth';
 import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
@@ -8,6 +9,7 @@ import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
+import Login from './Login';
 
 const ROUTE_KEY = 'sn.route'; // 'assistent' | 'gids'
 const ROUTE_MIGRATION_KEY = 'sn.route.migration'; // één-malig migreren naar nieuwe default
@@ -26,6 +28,7 @@ function useDebouncedSave(value, hydratedRef, saver, label) {
 }
 
 export default function Navigator() {
+  const { session, user, loading: authLoading } = useAuthSession();
   const [cases, setCases] = useState([]);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
@@ -59,8 +62,10 @@ export default function Navigator() {
   const fileRef = useRef(null);
   const hydrated = useRef(false);
 
-  // Initial load vanuit Supabase
+  // Initial load vanuit Supabase — pas laden als er een session is,
+  // anders blokkeert RLS alles en krijgen we lege data.
   useEffect(() => {
+    if (!session) return;
     let cancelled = false;
     loadAll()
       .then(data => {
@@ -81,7 +86,7 @@ export default function Navigator() {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [session]);
 
   // Debounced save per slice — schrijft alleen na initial hydrate.
   useDebouncedSave(cases, hydrated, (v) => saveCases(v), 'cases');
@@ -283,6 +288,24 @@ export default function Navigator() {
 
   const currentTopic = activeFilter ? topics[activeTab]?.[activeFilter] : null;
 
+  // Auth-gate: eerst wachten op session-check, dan Login tonen als niet ingelogd.
+  if (authLoading) {
+    return (
+      <div className="app">
+        <div className="empty-state">
+          <div className="icon-large loading-spinner" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!session) {
+    return <Login />;
+  }
+
   if (loading) {
     return (
       <div className="app">
@@ -375,6 +398,19 @@ export default function Navigator() {
             Instructies
           </button>
         </div>
+        <button
+          type="button"
+          className="topbar-logout"
+          onClick={() => signOut()}
+          title={user?.email ? `Uitloggen (${user.email})` : 'Uitloggen'}
+          aria-label="Uitloggen"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
       </header>
 
       {view === 'instructies' ? (
