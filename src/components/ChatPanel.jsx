@@ -53,7 +53,7 @@ export default function ChatPanel({ open, onClose, context = {} }) {
     setToolActivity(null);
 
     // Placeholder assistant-bericht dat we live bijwerken.
-    setMessages(m => [...m, { role: 'assistant', content: '' }]);
+    setMessages(m => [...m, { role: 'assistant', content: '', toolCalls: [], feedback: 0 }]);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -98,6 +98,16 @@ export default function ChatPanel({ open, onClose, context = {} }) {
             });
           } else if (parsed.type === 'tool') {
             setToolActivity(parsed.value?.join(', ') || null);
+            // Log welke tools gebruikt zijn — gaat mee als context bij feedback.
+            setMessages(m => {
+              const copy = m.slice();
+              const last = copy[copy.length - 1];
+              if (last && last.role === 'assistant') {
+                const merged = [...(last.toolCalls || []), ...(parsed.value || [])];
+                copy[copy.length - 1] = { ...last, toolCalls: merged };
+              }
+              return copy;
+            });
           } else if (parsed.type === 'error') {
             setMessages(m => {
               const copy = m.slice();
@@ -127,6 +137,40 @@ export default function ChatPanel({ open, onClose, context = {} }) {
       setBusy(false);
       setToolActivity(null);
       abortRef.current = null;
+    }
+  };
+
+  const sendFeedback = async (index, rating) => {
+    // Index in messages-array: we willen weten welk user-bericht er direct aan voorafging.
+    const assistant = messages[index];
+    if (!assistant || assistant.role !== 'assistant') return;
+    // Voorkom dubbel-klikken.
+    if (assistant.feedback === rating) return;
+
+    // Optimistic UI update — direct visueel reageren.
+    setMessages(m => m.map((msg, i) => i === index ? { ...msg, feedback: rating } : msg));
+
+    // Zoek het user-bericht dat dit antwoord triggerde (eerstvoorgaande role=user).
+    let userMessage = '';
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') { userMessage = messages[i].content; break; }
+    }
+
+    try {
+      await fetch('/api/chat-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating,
+          userMessage,
+          assistantMessage: assistant.content,
+          context,
+          toolCalls: assistant.toolCalls || [],
+        }),
+      });
+    } catch (e) {
+      // Feedback mag de UX niet breken — stil loggen.
+      console.warn('Feedback kon niet opgeslagen worden:', e);
     }
   };
 
@@ -173,17 +217,44 @@ export default function ChatPanel({ open, onClose, context = {} }) {
               </div>
             </div>
           )}
-          {messages.map((m, i) => (
-            <div key={i} className={`chat-msg chat-msg--${m.role}`}>
-              <div className="chat-msg-bubble">
-                {m.content ? (
-                  m.role === 'assistant'
-                    ? <ReactMarkdown>{m.content}</ReactMarkdown>
-                    : m.content
-                ) : (busy && i === messages.length - 1 ? <span className="chat-typing">●●●</span> : null)}
+          {messages.map((m, i) => {
+            const isAssistant = m.role === 'assistant';
+            const isLast = i === messages.length - 1;
+            const isStreaming = busy && isLast;
+            const hasContent = !!m.content;
+            // Feedback-knoppen pas tonen na afgeronde assistent-berichten met echte inhoud.
+            const showFeedback = isAssistant && hasContent && !isStreaming && !m.content.startsWith('⚠️');
+            return (
+              <div key={i} className={`chat-msg chat-msg--${m.role}`}>
+                <div className="chat-msg-bubble">
+                  {hasContent ? (
+                    isAssistant
+                      ? <ReactMarkdown>{m.content}</ReactMarkdown>
+                      : m.content
+                  ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
+                </div>
+                {showFeedback && (
+                  <div className="chat-feedback">
+                    <button
+                      type="button"
+                      className={`chat-feedback-btn ${m.feedback === 1 ? 'active' : ''}`}
+                      onClick={() => sendFeedback(i, 1)}
+                      title="Goed antwoord"
+                      aria-label="Goed antwoord"
+                    >👍</button>
+                    <button
+                      type="button"
+                      className={`chat-feedback-btn ${m.feedback === -1 ? 'active' : ''}`}
+                      onClick={() => sendFeedback(i, -1)}
+                      title="Slecht antwoord"
+                      aria-label="Slecht antwoord"
+                    >👎</button>
+                    {m.feedback !== 0 && <span className="chat-feedback-thanks">Dank je.</span>}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
           {toolActivity && (
             <div className="chat-tool-activity">🔎 zoekt in {toolActivity}…</div>
           )}
