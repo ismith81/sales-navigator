@@ -2223,14 +2223,18 @@ body::before {
   .cm-name, .cm-subtitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
-/* ---- Topbar search ---- */
-.topbar-search-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex: 1;
-  margin: 0 1.5rem;
-  min-width: 0;
+/* ---- Topbar search ----
+   display-regels scoped op >=769px zodat de mobiele collapse (regel 2148,
+   display:none tenzij .is-open) niet overschreven wordt door deze default. */
+@media (min-width: 769px) {
+  .topbar-search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    margin: 0 1.5rem;
+    min-width: 0;
+  }
 }
 .topbar-search {
   flex: 1;
