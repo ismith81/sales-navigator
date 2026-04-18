@@ -2111,22 +2111,28 @@ body::before {
 }
 
 @media (max-width: 640px) {
-  /* Compactere topbar: brand + view-toggle op 1 rij, search op 2e rij. */
+  /* Compactere topbar: expliciete grid zodat volgorde gegarandeerd is.
+     Rij 1: brand (links) + view-toggle (rechts).
+     Rij 2: chat-knop + zoekbalk (volle breedte). */
   .topbar {
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand   toggle"
+      "search  search";
     align-items: center;
-    gap: 0.5rem;
+    row-gap: 0.5rem;
+    column-gap: 0.5rem;
     padding: 0.55rem 1rem;
     margin: -1.25rem -1rem 1rem;
   }
-  .topbar-left { flex: 0 0 auto; }
+  .topbar-left { grid-area: brand; min-width: 0; }
   .topbar-brand { flex-direction: row; align-items: baseline; gap: 0.4rem; }
   .topbar-title { font-size: 1.05rem; white-space: nowrap; }
   .topbar-logo { display: none; } /* creates. weglaten op mobiel, winst in ruimte */
   .view-toggle {
+    grid-area: toggle;
     flex: 0 0 auto;
-    margin-left: auto;
     padding: 0.15rem;
   }
   .view-toggle-btn {
@@ -2135,9 +2141,9 @@ body::before {
     white-space: nowrap;
   }
   .topbar-search-row {
-    order: 3;
-    flex-basis: 100%;
+    grid-area: search;
     margin: 0;
+    width: 100%;
   }
   .topbar-search {
     flex: 1;
