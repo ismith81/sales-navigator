@@ -2930,11 +2930,12 @@ body::before {
   border-radius: 50%;
 }
 .hero-assistant-title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Nunito Sans', sans-serif;
   font-size: 1.35rem;
   line-height: 1.2;
   margin: 0 0 0.4rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 .hero-assistant-sub {
