@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 const STORAGE_KEY = 'sn.chatMessages';
 
@@ -175,7 +176,11 @@ export default function ChatPanel({ open, onClose, context = {} }) {
           {messages.map((m, i) => (
             <div key={i} className={`chat-msg chat-msg--${m.role}`}>
               <div className="chat-msg-bubble">
-                {m.content || (busy && i === messages.length - 1 ? <span className="chat-typing">●●●</span> : null)}
+                {m.content ? (
+                  m.role === 'assistant'
+                    ? <ReactMarkdown>{m.content}</ReactMarkdown>
+                    : m.content
+                ) : (busy && i === messages.length - 1 ? <span className="chat-typing">●●●</span> : null)}
               </div>
             </div>
           ))}

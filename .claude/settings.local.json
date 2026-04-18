@@ -48,7 +48,9 @@
       "Bash(python3)",
       "Bash(python3 'C:\\\\Users\\\\ian_s\\\\Downloads\\\\cases_output\\\\fill_tulp.py')",
       "Bash(curl -s 'https://sales-navigator-jade.vercel.app/assets/index-BW6-Jzdz.css')",
-      "Bash(grep -oE '\\(max-width:640px[^{]*\\\\{[^}]{0,500}')"
+      "Bash(grep -oE '\\(max-width:640px[^{]*\\\\{[^}]{0,500}')",
+      "Bash(ls api *)",
+      "Bash(cat vercel.json)"
     ]
   }
 }

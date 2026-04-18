@@ -2953,9 +2953,36 @@ body::before {
   border-radius: 14px;
   font-size: 0.9rem;
   line-height: 1.45;
-  white-space: pre-wrap;
   word-wrap: break-word;
 }
+.chat-msg--user .chat-msg-bubble { white-space: pre-wrap; }
+/* Markdown-output van de assistent netjes stylen binnen de bubble. */
+.chat-msg--assistant .chat-msg-bubble > *:first-child { margin-top: 0; }
+.chat-msg--assistant .chat-msg-bubble > *:last-child { margin-bottom: 0; }
+.chat-msg--assistant .chat-msg-bubble p { margin: 0 0 0.5em; }
+.chat-msg--assistant .chat-msg-bubble ul,
+.chat-msg--assistant .chat-msg-bubble ol { margin: 0 0 0.5em; padding-left: 1.25em; }
+.chat-msg--assistant .chat-msg-bubble li { margin-bottom: 0.15em; }
+.chat-msg--assistant .chat-msg-bubble li > p { margin: 0; }
+.chat-msg--assistant .chat-msg-bubble strong { font-weight: 700; }
+.chat-msg--assistant .chat-msg-bubble em { font-style: italic; }
+.chat-msg--assistant .chat-msg-bubble code {
+  background: rgba(49,183,185,0.10);
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+  font-size: 0.88em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.chat-msg--assistant .chat-msg-bubble h1,
+.chat-msg--assistant .chat-msg-bubble h2,
+.chat-msg--assistant .chat-msg-bubble h3,
+.chat-msg--assistant .chat-msg-bubble h4 {
+  margin: 0.4em 0 0.25em;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--navy);
+}
+.chat-msg--assistant .chat-msg-bubble a { color: var(--teal); text-decoration: underline; }
 .chat-msg--user .chat-msg-bubble {
   background: var(--teal);
   color: #fff;
