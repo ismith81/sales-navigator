@@ -166,6 +166,10 @@ body::before {
     flex-shrink: 0;
   }
   .hints-toggle-label { display: none; }
+  /* Icon-only tabs op mobiel — labels weg, knoppen compact. */
+  .nav-tab { padding: 0.5rem 0.75rem; min-width: 40px; justify-content: center; }
+  .nav-tab-label { display: none; }
+  .nav-tab { gap: 0; }
 }
 
 .nav-tab {
