@@ -146,22 +146,26 @@ body::before {
   border-color: rgba(49,183,185,0.35);
   background: rgba(49,183,185,0.06);
 }
-.hints-toggle-icon { font-size: 0.9rem; line-height: 1; }
+.hints-toggle-icon { display: inline-flex; align-items: center; line-height: 1; }
+.hints-toggle-icon svg { display: block; }
 /* Gedempte styling wanneer signalen verborgen zijn. */
 .hints-toggle.off {
   color: var(--muted);
   opacity: 0.75;
 }
 @media (max-width: 640px) {
-  /* Icon-only toggle op mobiel — scheelt breedte en blijft netjes naast de tabs. */
+  /* Icon-only toggle op mobiel — links uitgelijnd vóór de tabs. */
+  .nav-tabs-row { flex-wrap: nowrap; align-items: center; }
   .hints-toggle {
-    margin-left: auto;
+    order: -1;
+    margin-left: 0;
+    margin-right: 0.5rem;
     padding: 0.35rem 0.5rem;
     min-width: 32px;
     justify-content: center;
+    flex-shrink: 0;
   }
   .hints-toggle-label { display: none; }
-  .hints-toggle-icon { font-size: 0.95rem; }
 }
 
 .nav-tab {
