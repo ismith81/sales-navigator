@@ -104,7 +104,7 @@ Hybride RAG-achtig patroon:
 
 ## Stijl & design
 - Donker thema: navy (`--navy` #2C3C52) + teal accent (`--teal` #31B7B9)
-- Fonts: Nunito Sans (body) + Fraunces (headings) via Google Fonts
+- Font: Nunito Sans (body + headings, zwaardere weights voor titels) via Google Fonts
 - Professioneel maar niet saai — glassmorphism cards, subtle animaties
 - Tags kleur-gecodeerd: doelen=groen, behoeften=blauw, diensten=oranje
 - Topbar: 2 rijen op mobiel (brand+toggle bovenin; chat-knop + zoekbalk op rij 2)
