@@ -8,6 +8,9 @@ import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
+import HeroAssistant from './HeroAssistant';
+
+const HERO_DISMISSED_KEY = 'sn.heroDismissed';
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -34,6 +37,10 @@ export default function Navigator() {
   const [activeFilter, setActiveFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = useState(null);
+  const [heroDismissed, setHeroDismissed] = useState(() => {
+    try { return localStorage.getItem(HERO_DISMISSED_KEY) === 'true'; } catch { return false; }
+  });
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -48,10 +55,7 @@ export default function Navigator() {
         setTopics(data.topics);
         setFilters(data.filters);
         setPersonas(data.personas || {});
-        // Auto-selecteer eerste filter van de actieve tab, zodat Gersy meteen
-        // talking points ziet zonder eerst een kaartje te moeten aanklikken.
-        const firstFilter = data.filters?.doelen?.[0];
-        if (firstFilter) setActiveFilter(firstFilter);
+        // Géén default-filter: lege state toont de assistent-hero (primaire entry).
         setLoading(false);
         // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
         setTimeout(() => { hydrated.current = true; }, 0);
@@ -83,9 +87,23 @@ export default function Navigator() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    // Auto-selecteer eerste filter van nieuwe tab — scheelt Gersy een klik.
-    const firstFilter = filters?.[tab]?.[0];
-    setActiveFilter(firstFilter || null);
+    // Géén auto-selectie — laat Gersy bewust kiezen, of de assistent gebruiken.
+    setActiveFilter(null);
+  };
+
+  const dismissHero = () => {
+    setHeroDismissed(true);
+    try { localStorage.setItem(HERO_DISMISSED_KEY, 'true'); } catch {}
+  };
+
+  const openChat = (initialPrompt = null) => {
+    setChatInitialPrompt(initialPrompt);
+    setChatOpen(true);
+  };
+
+  const closeChat = () => {
+    setChatOpen(false);
+    setChatInitialPrompt(null);
   };
 
   const handleFilterChange = (filter) => {
@@ -299,7 +317,7 @@ export default function Navigator() {
             <button
               type="button"
               className="topbar-chat-btn"
-              onClick={() => setChatOpen(true)}
+              onClick={() => openChat()}
               title="Sales assistent openen"
               aria-label="Sales assistent openen"
             >
@@ -385,6 +403,14 @@ export default function Navigator() {
             </>
           ) : (
             <>
+              {!activeFilter && !heroDismissed && (
+                <HeroAssistant
+                  onAsk={() => openChat()}
+                  onQuickPrompt={(q) => openChat(q)}
+                  onDismiss={dismissHero}
+                />
+              )}
+
               {activeFilter && currentTopic && (
                 <TopicView
                   topicKey={activeFilter}
@@ -446,12 +472,14 @@ export default function Navigator() {
       {/* Sales-assistent — niet-destructief naast de bestaande zoekbalk. */}
       <ChatPanel
         open={chatOpen}
-        onClose={() => setChatOpen(false)}
+        onClose={closeChat}
         cases={cases}
+        initialPrompt={chatInitialPrompt}
+        onPromptConsumed={() => setChatInitialPrompt(null)}
         onNavigateToCase={(caseName) => {
           // Vanuit chat naar de case springen: sluit chat, switch naar navigator-view,
           // reset filter en zet zoekbalk op de exacte casenaam → CasesOverview filtert.
-          setChatOpen(false);
+          closeChat();
           setView('navigator');
           setActiveFilter(null);
           setSearchQuery(caseName);

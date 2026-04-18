@@ -18,7 +18,7 @@ const QUICK_PROMPTS = [
   'Wat zijn goede vervolgvragen bij realtime data?',
 ];
 
-export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase }) {
+export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed }) {
   // Namen van bestaande cases — gebruikt om in assistent-antwoorden klikbare links te maken.
   // Langste eerst zodat "AkzoNobel (Paint Company)" vóór "AkzoNobel" wordt gematcht.
   const caseNames = React.useMemo(
@@ -82,6 +82,28 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // Auto-verstuur een prompt wanneer het panel geopend wordt met een initialPrompt
+  // (vanuit de hero-quick-prompts). Pas na mount versturen — met een tick zodat de
+  // animatie/render af is.
+  const autoSentRef = useRef(null);
+  useEffect(() => {
+    if (!open || !initialPrompt || busy) return;
+    if (autoSentRef.current === initialPrompt) return; // al verstuurd in deze cyclus
+    autoSentRef.current = initialPrompt;
+    const handle = setTimeout(() => {
+      send(initialPrompt);
+      onPromptConsumed?.();
+    }, 80);
+    return () => clearTimeout(handle);
+    // Bewust geen send/busy in deps — willen alleen reageren op open/initialPrompt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialPrompt]);
+
+  // Reset auto-sent guard wanneer panel sluit, zodat volgende keer opnieuw mag.
+  useEffect(() => {
+    if (!open) autoSentRef.current = null;
+  }, [open]);
 
   const send = async (text) => {
     const clean = (text || '').trim();
