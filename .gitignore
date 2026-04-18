@@ -4,3 +4,4 @@ dist/
 *.local
 _potx_unpacked/
 supabase.txt
+tmp/
