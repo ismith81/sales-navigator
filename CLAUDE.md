@@ -3,10 +3,10 @@
 ## Wat is dit?
 Een interactief belscript-tool voor sales (gebruiker: Gersy).
 Gersy bereidt zich voor op een klantgesprek via één van twee routes:
-1. **Assistent-route** (primair): AI-chat die cases, talking points en persona-coaching ophaalt uit Supabase via Gemini function-calling.
-2. **Op-onderwerp-route** (guided): klikken door tabs (doelen/behoeften/diensten) → filter-knoppen → talking points + cases.
+1. **Assistent-route** (primair): AI-chat die cases, talking points en persona-coaching ophaalt uit Supabase via Gemini function-calling. Minimale klik-configuratie — gewoon vragen.
+2. **Gids-route** (guided): klikken door tabs (doelen/behoeften/diensten) → filter-knoppen → talking points + cases. Persona-context ("Met wie praat je?") hoort bij déze route en wordt alleen hier getoond.
 
-Beide routes worden verrijkt door de persona-laag ("Met wie praat je?") die als context bovenaan staat.
+De persona-laag is dus géén gedeelde context bovenaan — ze is onderdeel van de Gids-route. In de Assistent-route kan Gersy de rol gewoon in haar vraag verwerken ("Ik heb een CFO-gesprek over…").
 
 ## Structuur van het aanbod
 Twee strategische doelen (niet 1-op-1 gekoppeld aan behoeften/diensten):
@@ -126,13 +126,16 @@ Taal: Nederlands
 ## In overweging: "twee-routes" redesign
 Na eerste gebruik bleek dat de hero-CTA en de filter-knoppen visueel om dezelfde aandacht strijden. Nieuw UX-concept (nog niet gebouwd):
 
-- Expliciete **segmented route-toggle** direct onder de persona-context-strip: `[🤖 Assistent] | [📚 Op onderwerp]`. Default = Assistent.
-- **Route "Assistent":** chat wordt het primaire scherm (niet langer side-panel). Groot inputveld, quick-prompts eronder, kleine "Wat kan de assistent?" samenvatting.
-- **Route "Op onderwerp":** bestaande guided flow (tabs → filter-knoppen → talking points → cases).
+- Expliciete **segmented route-toggle** bovenaan het werkgebied: `[🤖 Assistent] | [🧭 Gids]`. Default = Assistent.
+- **Route "Assistent":** chat wordt het primaire scherm (niet langer side-panel). Groot inputveld, quick-prompts eronder, kleine "Wat kan de assistent?" samenvatting. Géén persona-strip — Gersy benoemt de rol gewoon in haar vraag.
+- **Route "Gids":** persona-context ("Met wie praat je?") bovenaan de route, daaronder de bestaande guided flow (tabs → filter-knoppen → talking points → cases). De persona hoort uitsluitend bij deze route.
 - Topbar-chat-knop kan dan weg (de chat ís nu het scherm wanneer Assistent-route actief).
-- Routekeuze onthouden in localStorage, zodat power-users die altijd op onderwerp werken niet elke sessie opnieuw hoeven te switchen.
+- **Mobiele topbar wordt één regel:** `[brand] … [🔍] [route-toggle]`. Zoekbalk collapse't tot icon (expand-on-tap, X om te sluiten). Rij 2 verdwijnt, CSS-grid named-areas voor mobiel is dan niet meer nodig. Desktop behoudt inline zoekbalk.
+- Routekeuze onthouden in localStorage, zodat power-users die altijd op Gids werken niet elke sessie opnieuw hoeven te switchen.
 
-Mockup: `Downloads/sales-navigator-mockup.html` (twee-staged: Assistent actief vs. Op onderwerp actief).
+Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natuurlijk met "Assistent" (rolnaam ↔ rolnaam), draagt de "guided"-betekenis expliciet, en is kort genoeg voor een segmented toggle.
+
+Mockup: `Downloads/sales-navigator-mockup.html` — moet nog geüpdatet worden: persona verhuist vanuit de gedeelde context-strip ín de Gids-route, en label "Op onderwerp" → "Gids".
 
 ## Bekende verbeterpunten / backlog
 - Talking points en follow-ups van geïmporteerde cases zijn auto-gegenereerd en kunnen beter
@@ -142,3 +145,5 @@ Mockup: `Downloads/sales-navigator-mockup.html` (twee-staged: Assistent actief v
 - Chat-geschiedenis is sessionStorage-only — geen cross-device geschiedenis
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
 - "Klantsignalen"-toggle staat rechtsboven in de context-strip maar hoort logisch bij de filter-knoppen; verhuizen bij twee-routes redesign
+- Mockup bijwerken: persona uit gedeelde strip → Gids-route; label "Op onderwerp" → "Gids"
+- Twee-routes redesign implementeren (segmented toggle Assistent/Gids, chat-as-main-screen voor Assistent, persona ín Gids-route, topbar-chat-knop verwijderen, localStorage route-memory)
