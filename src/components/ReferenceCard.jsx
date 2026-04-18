@@ -8,12 +8,17 @@ const DETAIL_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function ReferenceCard({ caseData, matchReason, defaultExpanded = false }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+export default function ReferenceCard({ caseData, matchReason, defaultExpanded = false, lockOpen = false }) {
+  const [expanded, setExpanded] = useState(defaultExpanded || lockOpen);
+  const isOpen = lockOpen || expanded;
 
   return (
     <div className="ref-card">
-      <div className="ref-header" onClick={() => setExpanded(prev => !prev)}>
+      <div
+        className="ref-header"
+        onClick={lockOpen ? undefined : () => setExpanded(prev => !prev)}
+        style={lockOpen ? { cursor: 'default' } : undefined}
+      >
         <div
           className="ref-logo"
           style={{ background: `linear-gradient(135deg, ${caseData.logoColor}, ${caseData.logoColor}cc)` }}
@@ -24,14 +29,14 @@ export default function ReferenceCard({ caseData, matchReason, defaultExpanded =
           <div className="ref-name">{caseData.name}</div>
           <div className="ref-subtitle">{caseData.subtitle}</div>
         </div>
-        <span className="ref-chevron">{expanded ? '▾' : '▸'}</span>
+        {!lockOpen && <span className="ref-chevron">{isOpen ? '▾' : '▸'}</span>}
       </div>
 
       {matchReason && (
         <div className="ref-match-reason">{matchReason}</div>
       )}
 
-      {expanded && (
+      {isOpen && (
         <div className="ref-details">
           {DETAIL_FIELDS.map(({ key, label }) =>
             caseData[key] ? (

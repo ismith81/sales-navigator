@@ -1,7 +1,7 @@
 import React from 'react';
 import { TAB_CONFIG } from '../data/filters';
 
-export default function FilterBar({ filters, painpoints = {}, activeTab, activeFilter, onTabChange, onFilterChange }) {
+export default function FilterBar({ filters, topics = {}, activeTab, activeFilter, onTabChange, onFilterChange }) {
   const tabs = Object.keys(TAB_CONFIG);
 
   return (
@@ -20,7 +20,7 @@ export default function FilterBar({ filters, painpoints = {}, activeTab, activeF
 
       <div className="button-grid">
         {(filters[activeTab] || []).map(filter => {
-          const hint = activeTab === 'behoeften' ? painpoints[filter] : null;
+          const hint = topics?.[activeTab]?.[filter]?.signals || '';
           return (
             <button
               key={filter}

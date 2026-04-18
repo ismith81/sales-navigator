@@ -23,7 +23,6 @@ export default function Navigator() {
   const [cases, setCases] = useState([]);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
-  const [painpoints, setPainpoints] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('navigator');
@@ -43,7 +42,6 @@ export default function Navigator() {
         setCases(data.cases);
         setTopics(data.topics);
         setFilters(data.filters);
-        setPainpoints(data.painpoints);
         setLoading(false);
         // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
         setTimeout(() => { hydrated.current = true; }, 0);
@@ -61,7 +59,6 @@ export default function Navigator() {
   useDebouncedSave(cases, hydrated, (v) => saveCases(v), 'cases');
   useDebouncedSave(topics, hydrated, (v) => saveConfig('topics', v), 'topics');
   useDebouncedSave(filters, hydrated, (v) => saveConfig('filters', v), 'filters');
-  useDebouncedSave(painpoints, hydrated, (v) => saveConfig('painpoints', v), 'painpoints');
 
   // Toast auto-hide
   useEffect(() => {
@@ -108,14 +105,24 @@ export default function Navigator() {
       ...prev,
       [category]: {
         ...prev[category],
-        [name]: { talkingPoints: [], followUps: [] },
+        [name]: { description: '', signals: '', talkingPoints: [], followUps: [] },
       },
     }));
     showToast(`"${name}" toegevoegd`);
   };
 
-  const handleUpdatePainpoint = (behoefte, html) => {
-    setPainpoints(prev => ({ ...prev, [behoefte]: html }));
+  // Update losse metadata (description / signals) per topic — zonder de rest te overschrijven.
+  const handleUpdateTopicMeta = (category, name, patch) => {
+    setTopics(prev => {
+      const current = prev[category]?.[name] || { description: '', signals: '', talkingPoints: [], followUps: [] };
+      return {
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [name]: { ...current, ...patch },
+        },
+      };
+    });
   };
 
   const handleRenameFilter = (category, oldName, newName) => {
@@ -146,14 +153,6 @@ export default function Navigator() {
         ),
       },
     })));
-    if (category === 'behoeften') {
-      setPainpoints(prev => {
-        if (!(oldName in prev)) return prev;
-        const next = { ...prev, [newName]: prev[oldName] };
-        delete next[oldName];
-        return next;
-      });
-    }
     if (activeFilter === oldName && activeTab === category) {
       setActiveFilter(newName);
     }
@@ -170,14 +169,6 @@ export default function Navigator() {
       delete catTopics[name];
       return { ...prev, [category]: catTopics };
     });
-    if (category === 'behoeften') {
-      setPainpoints(prev => {
-        if (!(name in prev)) return prev;
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
     if (activeFilter === name && activeTab === category) {
       setActiveFilter(null);
     }
@@ -186,7 +177,7 @@ export default function Navigator() {
 
   // Backup / Restore
   const handleBackup = () => {
-    const data = { cases, topics, filters, painpoints, exportedAt: new Date().toISOString() };
+    const data = { cases, topics, filters, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -207,7 +198,6 @@ export default function Navigator() {
         if (data.cases) setCases(data.cases);
         if (data.topics) setTopics(data.topics);
         if (data.filters) setFilters(data.filters);
-        if (data.painpoints) setPainpoints(data.painpoints);
         showToast('Backup hersteld');
       } catch {
         showToast('Ongeldig backup-bestand');
@@ -293,7 +283,7 @@ export default function Navigator() {
         <>
           <FilterBar
             filters={filters}
-            painpoints={painpoints}
+            topics={topics}
             activeTab={activeTab}
             activeFilter={activeFilter}
             onTabChange={handleTabChange}
@@ -365,14 +355,14 @@ export default function Navigator() {
         <CaseManager
           cases={cases}
           filters={filters}
-          painpoints={painpoints}
+          topics={topics}
           onUpdate={handleUpdateCase}
           onImport={handleImport}
           onRemove={handleRemove}
           onAddFilter={handleAddFilter}
           onRenameFilter={handleRenameFilter}
           onDeleteFilter={handleDeleteFilter}
-          onUpdatePainpoint={handleUpdatePainpoint}
+          onUpdateTopicMeta={handleUpdateTopicMeta}
           onBackup={handleBackup}
           onRestore={() => fileRef.current?.click()}
         />
