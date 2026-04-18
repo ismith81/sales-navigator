@@ -2689,10 +2689,20 @@ body::before {
 .kompas-helper-signals.rich-text li { margin-bottom: 2px; }
 
 @media (max-width: 720px) {
-  .kompas-grid { grid-template-columns: 1fr 1fr; }
-  .kompas-quad { padding: 6px 10px; min-height: 44px; }
+  .kompas-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .kompas-quad {
+    padding: 6px 8px;
+    min-height: 40px;
+    grid-template-columns: 18px 1fr;
+    column-gap: 6px;
+  }
+  .kompas-quad-icon { font-size: 14px; }
+  .kompas-quad-title { font-size: 11.5px; line-height: 1.15; }
   .kompas-quad-roles { display: none; }
-  .kompas-quad-title { font-size: 12px; }
+
+  /* Coaching-toggle onder de coach-tekst i.p.v. ernaast — meer leesruimte. */
+  .kompas-helper-main { flex-direction: column; align-items: stretch; gap: 8px; }
+  .kompas-signals-toggle { align-self: flex-start; }
 }
 
 /* ─── PERSONA MANAGER (Beheer) ──────────────────────────────── */
