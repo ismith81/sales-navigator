@@ -2123,13 +2123,20 @@ body::before {
       "expand expand  expand";
     align-items: center;
     row-gap: 0.5rem;
-    column-gap: 0.5rem;
-    padding: 0.55rem 1rem;
+    column-gap: 0.4rem;
+    padding: 0.55rem 0.75rem;
     margin: -1.25rem -1rem 1rem;
   }
-  .topbar-left { grid-area: brand; min-width: 0; }
-  .topbar-brand { flex-direction: row; align-items: baseline; gap: 0.4rem; }
-  .topbar-title { font-size: 1.05rem; white-space: nowrap; }
+  .topbar-left { grid-area: brand; min-width: 0; overflow: hidden; }
+  .topbar-brand { flex-direction: row; align-items: baseline; gap: 0.4rem; min-width: 0; }
+  /* Truncation als safety net zodat de title nooit over search-icon schuift. */
+  .topbar-title {
+    font-size: 1.02rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
   .topbar-logo { display: none; } /* creates. weglaten op mobiel, winst in ruimte */
   .view-toggle {
     grid-area: toggle;
@@ -2137,8 +2144,8 @@ body::before {
     padding: 0.15rem;
   }
   .view-toggle-btn {
-    font-size: 0.72rem;
-    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
     white-space: nowrap;
   }
   /* Search-icon: zichtbaar op mobiel, op rij 1 tussen brand en view-toggle. */
