@@ -3397,7 +3397,7 @@ body::before {
   position: static;
   transform: none !important;
   width: 100%;
-  max-width: 780px;
+  max-width: none;
   margin: 0 auto 1rem;
   height: auto;
   min-height: 420px;
