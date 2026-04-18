@@ -1,0 +1,50 @@
+{
+  "business-strategisch": {
+    "id": "business-strategisch",
+    "label": "Business · Strategisch",
+    "icon": "🧭",
+    "domain": "business",
+    "niveau": "strategisch",
+    "order": 1,
+    "description": "<p>Beslissers die de organisatie op koers houden. Ze denken in risico, rendement en marktpositie — niet in tools of pipelines.</p>",
+    "roles": "CFO, Algemeen Directeur, CCO, Finance Director",
+    "signals": "<ul><li>\"We willen data-gedreven worden, maar ik zie de ROI nog niet.\"</li><li>\"Wat kost het ons als we dit niet doen?\"</li><li>\"Hoe meten we succes over 12 maanden?\"</li></ul>",
+    "coaching": "Denk in ROI, risico's en marktpositie. Vermijd techjargon. Kortere zinnen, concrete bedragen. Praat over outcomes, niet over outputs."
+  },
+  "tech-strategisch": {
+    "id": "tech-strategisch",
+    "label": "Tech · Strategisch",
+    "icon": "🛠️",
+    "domain": "tech",
+    "niveau": "strategisch",
+    "order": 2,
+    "description": "<p>Architecten en tech-leiders die de roadmap bepalen. Kijken naar schaalbaarheid, vendor-strategie en hoe een oplossing past in het bredere landschap.</p>",
+    "roles": "CIO, CDO, Head of Data, IT-directeur, Enterprise Architect",
+    "signals": "<ul><li>\"We oriënteren op Fabric versus Databricks.\"</li><li>\"Past dit in onze cloud-strategie en bestaande stack?\"</li><li>\"Hoe voorkomen we vendor lock-in?\"</li></ul>",
+    "coaching": "Architectuur, vendor-strategie en roadmap. Wees specifiek over tools en patterns. Erken technische trade-offs en laat zien dat je hun landschap begrijpt."
+  },
+  "business-operationeel": {
+    "id": "business-operationeel",
+    "label": "Business · Operationeel",
+    "icon": "📊",
+    "domain": "business",
+    "niveau": "operationeel",
+    "order": 3,
+    "description": "<p>De dagelijkse gebruikers van data: rapporten maken, cijfers kloppend krijgen, afdelingsdoelen halen. Frustratie zit in tijd die verloren gaat aan handmatig werk.</p>",
+    "roles": "Controller, afdelingshoofd, Product Owner, marketing- of finance-lead",
+    "signals": "<ul><li>\"Mijn maandrapport kost me 3 dagen.\"</li><li>\"Ik besteed meer tijd aan cijfers corrigeren dan aan analyseren.\"</li><li>\"Waarom heeft iedere afdeling eigen cijfers?\"</li></ul>",
+    "coaching": "Dagelijkse frustraties en tijdwinst. Minder theorie, meer \"krijg jij dit voor elkaar?\". Concrete voorbeelden van wat ze op maandag anders doen."
+  },
+  "tech-operationeel": {
+    "id": "tech-operationeel",
+    "label": "Tech · Operationeel",
+    "icon": "⚙️",
+    "domain": "tech",
+    "niveau": "operationeel",
+    "order": 4,
+    "description": "<p>Mensen die hands-on aan het dataplatform werken: engineers, analisten, beheerders. Willen betere tools, minder ad-hoc werk en pipelines die niet onverwacht vallen.</p>",
+    "roles": "Data engineer, BI-analist, DBA, IT-beheerder, Platform engineer",
+    "signals": "<ul><li>\"We stikken in ad-hoc verzoeken.\"</li><li>\"Onze batch-jobs lopen uit hun tijdsvenster.\"</li><li>\"Schema-drift krijgen we pas door als de rapporten leeg zijn.\"</li></ul>",
+    "coaching": "Pragmatisch, tools-niveau. Erken de pijn van hands-on werk. Praat over productiviteit, minder debuggen en betere developer experience."
+  }
+}

@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import seedCases from '../data/cases.json';
 import seedTopics from '../data/topics.json';
+import seedPersonas from '../data/personas.json';
 import { DEFAULT_FILTERS, DEFAULT_PAINPOINTS } from '../data/filters';
 
 // Map tussen DB-kolommen (snake_case) en het JS-model (camelCase) dat de UI al kent.
@@ -56,20 +57,28 @@ async function fetchConfig(key, fallback) {
 }
 
 // Zorg dat elk topic dezelfde shape heeft: description + signals (rich HTML) naast talkingPoints/followUps.
-// Migreer oude painpoints[behoefte] → topics.behoeften[behoefte].signals wanneer nog niet gezet.
+// Val terug op seed-waardes uit topics.json (description/signals) zodat nieuwe velden die nog niet in
+// de DB staan automatisch zichtbaar worden bij bestaande installaties. Voor behoeften wordt ook nog
+// de legacy `painpoints` config gebruikt als signals-fallback.
 function normalizeTopics(topics, painpoints) {
   const next = {};
   for (const category of ['doelen', 'behoeften', 'diensten']) {
     const src = (topics && topics[category]) || {};
+    const seedSrc = (seedTopics && seedTopics[category]) || {};
     const out = {};
     for (const [name, raw] of Object.entries(src)) {
       const t = raw || {};
-      const fallbackSignal = category === 'behoeften' ? (painpoints && painpoints[name]) || '' : '';
+      const seed = seedSrc[name] || {};
+      const legacyPainpoint = category === 'behoeften' ? (painpoints && painpoints[name]) || '' : '';
+      const seedSignals = typeof seed.signals === 'string' ? seed.signals : '';
+      const seedDescription = typeof seed.description === 'string' ? seed.description : '';
+      const hasSignals = typeof t.signals === 'string' && t.signals.length > 0;
+      const hasDescription = typeof t.description === 'string' && t.description.length > 0;
       out[name] = {
-        description: typeof t.description === 'string' ? t.description : '',
-        signals: typeof t.signals === 'string' && t.signals.length > 0 ? t.signals : fallbackSignal,
-        talkingPoints: Array.isArray(t.talkingPoints) ? t.talkingPoints : [],
-        followUps: Array.isArray(t.followUps) ? t.followUps : [],
+        description: hasDescription ? t.description : seedDescription,
+        signals: hasSignals ? t.signals : (seedSignals || legacyPainpoint),
+        talkingPoints: Array.isArray(t.talkingPoints) ? t.talkingPoints : (seed.talkingPoints || []),
+        followUps: Array.isArray(t.followUps) ? t.followUps : (seed.followUps || []),
       };
     }
     next[category] = out;
@@ -77,12 +86,71 @@ function normalizeTopics(topics, painpoints) {
   return next;
 }
 
+// Zorg dat elke persona dezelfde shape heeft. Onbekende id's uit de DB blijven behouden,
+// seed-waardes vullen ontbrekende velden aan (zodat nieuwe velden niet breken bij upgrades).
+function normalizePersonas(personas) {
+  const src = personas && typeof personas === 'object' ? personas : seedPersonas;
+  const out = {};
+  for (const [id, raw] of Object.entries(src)) {
+    const seed = seedPersonas[id] || {};
+    const t = raw || {};
+    out[id] = {
+      id: typeof t.id === 'string' && t.id ? t.id : id,
+      label: typeof t.label === 'string' && t.label ? t.label : (seed.label || id),
+      icon: typeof t.icon === 'string' ? t.icon : (seed.icon || '👤'),
+      domain: t.domain === 'tech' ? 'tech' : (t.domain === 'business' ? 'business' : (seed.domain || 'business')),
+      niveau: t.niveau === 'operationeel' ? 'operationeel' : (t.niveau === 'strategisch' ? 'strategisch' : (seed.niveau || 'strategisch')),
+      order: Number.isFinite(t.order) ? t.order : (Number.isFinite(seed.order) ? seed.order : 99),
+      description: typeof t.description === 'string' ? t.description : (seed.description || ''),
+      roles: typeof t.roles === 'string' ? t.roles : (seed.roles || ''),
+      signals: typeof t.signals === 'string' ? t.signals : (seed.signals || ''),
+      coaching: typeof t.coaching === 'string' ? t.coaching : (seed.coaching || ''),
+    };
+  }
+  return out;
+}
+
+// One-shot migraties op de `topics` config. Elke migratie draait maximaal 1x per install:
+// we slaan het hoogst uitgevoerde versienummer op in app_config.topics_seed_version.
+// Binnen een migratie geven we per topic expliciet aan welke velden uit de seed geforceerd
+// overschreven moeten worden. User-edits op NIET-genoemde velden blijven altijd behouden.
+const TOPIC_SEED_VERSION = 1;
+const TOPIC_MIGRATIONS = {
+  // v1: eerste uitrol van description + signals. De test-content voor "Meer waarde halen uit data"
+  // wordt hiermee overschreven; overige topics krijgen de seed alleen als ze nog leeg zijn (dat
+  // regelt normalizeTopics al bij het lezen — hier forceren we het ook naar de DB).
+  1: [
+    { category: 'doelen', name: 'Meer waarde halen uit data', fields: ['description', 'signals'] },
+  ],
+};
+
+function applyTopicMigrations(topics, fromVersion) {
+  const next = JSON.parse(JSON.stringify(topics || {}));
+  for (let v = fromVersion + 1; v <= TOPIC_SEED_VERSION; v++) {
+    const steps = TOPIC_MIGRATIONS[v] || [];
+    for (const { category, name, fields } of steps) {
+      const seed = seedTopics?.[category]?.[name];
+      if (!seed) continue;
+      if (!next[category]) next[category] = {};
+      if (!next[category][name]) next[category][name] = {};
+      for (const f of fields) {
+        if (typeof seed[f] !== 'undefined') {
+          next[category][name][f] = seed[f];
+        }
+      }
+    }
+  }
+  return next;
+}
+
 export async function loadAll() {
-  const [{ data: caseRows, error: caseErr }, filters, painpoints, topics] = await Promise.all([
+  const [{ data: caseRows, error: caseErr }, filters, painpoints, topics, personas, seedVersion] = await Promise.all([
     supabase.from('cases').select('*').order('name'),
     fetchConfig('filters', null),
     fetchConfig('painpoints', null),
     fetchConfig('topics', null),
+    fetchConfig('personas', null),
+    fetchConfig('topics_seed_version', 0),
   ]);
   if (caseErr) throw caseErr;
 
@@ -93,13 +161,29 @@ export async function loadAll() {
       cases: seedCases,
       filters: DEFAULT_FILTERS,
       topics: normalizeTopics(seedTopics, DEFAULT_PAINPOINTS),
+      personas: normalizePersonas(seedPersonas),
     };
+  }
+
+  // Force-seed specifieke velden wanneer er een nieuwe TOPIC_SEED_VERSION is uitgerold.
+  let effectiveTopics = topics || seedTopics;
+  const currentVersion = Number(seedVersion) || 0;
+  if (currentVersion < TOPIC_SEED_VERSION) {
+    effectiveTopics = applyTopicMigrations(effectiveTopics, currentVersion);
+    try {
+      await saveConfig('topics', effectiveTopics);
+      await saveConfig('topics_seed_version', TOPIC_SEED_VERSION);
+    } catch (e) {
+      // Migratie mag de app niet stukmaken — log en ga door met wat we in memory hebben.
+      console.warn('Topic seed-migratie kon niet worden opgeslagen:', e);
+    }
   }
 
   return {
     cases: (caseRows || []).map(rowToCase),
     filters: filters || DEFAULT_FILTERS,
-    topics: normalizeTopics(topics || seedTopics, painpoints || DEFAULT_PAINPOINTS),
+    topics: normalizeTopics(effectiveTopics, painpoints || DEFAULT_PAINPOINTS),
+    personas: normalizePersonas(personas),
   };
 }
 
@@ -113,6 +197,8 @@ async function seedInitial() {
     { key: 'filters', value: DEFAULT_FILTERS },
     { key: 'painpoints', value: DEFAULT_PAINPOINTS },
     { key: 'topics', value: seedTopics },
+    { key: 'personas', value: seedPersonas },
+    { key: 'topics_seed_version', value: TOPIC_SEED_VERSION },
   ];
   const { error } = await supabase.from('app_config').upsert(configRows);
   if (error) throw error;

@@ -1,6 +1,8 @@
 {
   "doelen": {
     "Meer waarde halen uit data": {
+      "description": "<p>De klant wil bestaande data beter benutten: sneller rapporteren, betrouwbaarder sturen en feitelijke besluiten nemen in plaats van op onderbuik.</p>",
+      "signals": "<ul><li>\"We hebben veel data, maar rapportages komen te laat — we sturen op verouderde cijfers.\"</li><li>\"Iedere afdeling heeft eigen cijfers — we weten niet welke versie klopt.\"</li></ul>",
       "talkingPoints": [
         "Veel organisaties verzamelen enorm veel data, maar de vraag is: hoe vertaal je dat naar betere beslissingen en concrete resultaten?",
         "Wij helpen bedrijven om van ruwe data naar actionable insights te komen — sneller, betrouwbaarder en schaalbaar.",
@@ -14,6 +16,8 @@
       ]
     },
     "Data als business model": {
+      "description": "<p>De klant wil data niet alleen intern inzetten, maar ook extern waarde laten creëren — als product, dienst of onderdeel van de klantpropositie.</p>",
+      "signals": "<ul><li>\"We willen klanten of partners inzichten teruggeven via een portaal.\"</li><li>\"Kunnen we van onze data een product of dienst maken?\"</li></ul>",
       "talkingPoints": [
         "Steeds meer bedrijven ontdekken dat hun data niet alleen intern waardevol is, maar ook als product of dienst aan klanten of partners kan worden aangeboden.",
         "Data als business model betekent: je data inzetten om nieuwe omzetstromen te creëren of je bestaande propositie te versterken.",
@@ -29,6 +33,8 @@
   },
   "behoeften": {
     "Veilig en betrouwbaar": {
+      "description": "<p>De klant moet kunnen vertrouwen op de cijfers en aantoonbaar in control zijn — qua kwaliteit, toegang en compliance (AVG, DORA, audit).</p>",
+      "signals": "<ul><li>\"Ik vertrouw de cijfers niet.\"</li><li>\"We moeten aantoonbaar compliant zijn — AVG, DORA, audit.\"</li></ul>",
       "talkingPoints": [
         "Data-security en betrouwbaarheid zijn de basis — zonder vertrouwen in je data kun je er niet op sturen.",
         "Wij implementeren governance, RBAC, audit logging en encryption als standaard onderdeel van elk dataplatform.",
@@ -41,6 +47,8 @@
       ]
     },
     "Wendbaar": {
+      "description": "<p>De klant wil snel kunnen inspelen op nieuwe vragen, bronnen of use cases — zonder telkens afhankelijk te zijn van lange IT-trajecten.</p>",
+      "signals": "<ul><li>\"Elke nieuwe rapportage of wijziging duurt weken.\"</li><li>\"Business is voor elk rapport afhankelijk van IT.\"</li></ul>",
       "talkingPoints": [
         "Een wendbaar dataplatform betekent dat je snel kunt inspelen op nieuwe vragen, bronnen of use cases.",
         "Wij bouwen met modulaire architecturen — zodat je niet elke keer het wiel opnieuw hoeft uit te vinden.",
@@ -53,6 +61,8 @@
       ]
     },
     "AI ready": {
+      "description": "<p>De klant wil AI/ML kunnen inzetten, maar heeft daarvoor een fundament nodig: schone data, juiste structuur en schaalbare omgeving.</p>",
+      "signals": "<ul><li>\"Onze AI-pilots stranden op datakwaliteit — onze data is niet goed genoeg voor AI.\"</li><li>\"Hoe zorgen we dat onze data bruikbaar is voor AI-agents?\"</li></ul>",
       "talkingPoints": [
         "AI en machine learning zijn pas waardevol als je datafundament op orde is — schone data, de juiste structuur, en een schaalbare omgeving.",
         "Wij maken organisaties AI-ready door hun dataplatform in te richten met ML-workloads in gedachten.",
@@ -65,6 +75,8 @@
       ]
     },
     "Realtime data": {
+      "description": "<p>De klant wil kunnen sturen op wat er nú gebeurt — niet op data van gisteren. Denk aan live dashboards, alerting en operationele beslissingen.</p>",
+      "signals": "<ul><li>\"Stuurinformatie loopt achter — we nemen besluiten op verouderde data.\"</li><li>\"We willen direct reageren, niet morgen pas zien wat gisteren gebeurde.\"</li></ul>",
       "talkingPoints": [
         "Real-time data stelt je in staat om direct te reageren op wat er nu gebeurt — in plaats van te kijken naar wat gisteren was.",
         "Van event-driven architecturen tot streaming pipelines: wij bouwen real-time verwerking die schaalbaar en betrouwbaar is.",
@@ -79,6 +91,8 @@
   },
   "diensten": {
     "Data modernisatie": {
+      "description": "<p>Migratie van verouderde dataplatformen naar een moderne, schaalbare cloudoplossing — zonder dataverlies of onnodige downtime.</p>",
+      "signals": "<ul><li>\"Ons huidige platform schaalt niet mee met de groei.\"</li><li>\"We zijn klaar voor een modern cloudplatform, maar weten niet waar te beginnen.\"</li></ul>",
       "talkingPoints": [
         "Veel organisaties zitten vast aan verouderde dataplatformen die niet meer meekomen met de groeiende informatiebehoefte.",
         "Data modernisatie betekent: migreren naar een modern, schaalbaar cloudplatform zonder dataverlies of downtime.",
@@ -91,6 +105,8 @@
       ]
     },
     "Governance": {
+      "description": "<p>Weten wat je data is, waar het staat, wie erbij kan en of je het mag gebruiken. Fundament voor compliance én verantwoord AI-gebruik.</p>",
+      "signals": "<ul><li>\"Iedereen heeft gelijk — en niemand echt.\"</li><li>\"We hebben geen zicht op wie welke data mag zien of wijzigen.\"</li></ul>",
       "talkingPoints": [
         "Goede data governance zorgt dat je weet wat je data is, waar het staat, wie erbij kan, en of je het mag gebruiken.",
         "Wij implementeren governance-frameworks met tools als Unity Catalog, Purview en custom metadata-oplossingen.",
@@ -103,6 +119,8 @@
       ]
     },
     "Data kwaliteit": {
+      "description": "<p>Structureel borgen dat data klopt: geautomatiseerde checks, alerting bij afwijkingen en schema-validatie in pipelines — continu, niet eenmalig.</p>",
+      "signals": "<ul><li>\"We besteden meer tijd aan cijfers corrigeren dan aan analyseren.\"</li><li>\"Niemand vertrouwt de rapporten.\"</li></ul>",
       "talkingPoints": [
         "Slechte datakwaliteit kost organisaties gemiddeld 15-25% van hun omzet — door foute beslissingen, handmatig herstelwerk en gemist vertrouwen.",
         "Wij helpen met geautomatiseerde kwaliteitschecks, alerting bij afwijkingen, en schema-validatie in je pipelines.",
@@ -115,6 +133,8 @@
       ]
     },
     "Training": {
+      "description": "<p>Hands-on enablement van het team: van data engineering met Databricks/Fabric tot governance best practices — op eigen data en use cases.</p>",
+      "signals": "<ul><li>\"We hebben het platform, maar de organisatie werkt er niet mee.\"</li><li>\"Ons team moet meer zelfstandig met data kunnen werken.\"</li></ul>",
       "talkingPoints": [
         "Technologie is maar de helft — je mensen moeten ermee kunnen werken. Wij bieden hands-on trainingen op maat.",
         "Van data engineering met Databricks en Fabric tot data governance best practices — op elk niveau.",
