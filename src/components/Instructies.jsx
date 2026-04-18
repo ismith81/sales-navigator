@@ -9,119 +9,157 @@ export default function Instructies() {
       </div>
 
       <section className="ins-section">
-        <h3>1. De Navigator gebruiken</h3>
+        <h3>1. Twee routes: Gids en Assistent</h3>
         <p>
-          De Navigator is bedoeld om tijdens een salesgesprek snel de juiste talking points
-          en vervolgvragen bij de hand te hebben. Zodra je de pagina opent zie je meteen
-          de talking points van het eerste onderwerp — geen extra klikken nodig om te starten.
+          Bovenaan de pagina staat een segmented toggle met twee routes. Kies wat bij jouw
+          voorbereiding past — de keuze wordt onthouden voor de volgende keer.
         </p>
         <ul>
           <li>
-            <strong>Kies een tab</strong> — <em>Doelen</em>, <em>Behoeften</em> of <em>Diensten</em> — afhankelijk van
-            het gespreksonderwerp. Binnen een tab wordt altijd automatisch het eerste onderwerp geopend.
+            <strong>Gids</strong> — klikken door tabs (<em>Doelen</em>, <em>Behoeften</em>, <em>Diensten</em>)
+            en filter-knoppen om talking points en relevante cases te zien. Inclusief persona-coach
+            "Met wie praat je?". Handig als je gericht een onderwerp of doelgroep wilt verkennen.
           </li>
           <li>
-            <strong>Klik op een ander onderwerp</strong> (bv. "AI ready" of "Data modernisatie") om de
-            bijbehorende talking points, vervolgvragen en relevante klantcases te zien.
+            <strong>Assistent</strong> — een AI-chat die automatisch door alle cases, talking points en
+            persona-coaching heen zoekt. Stel gewoon een vraag in natuurlijke taal
+            ("Welke cases passen bij AI ready?", "Bereid CFO-gesprek voor over dataplatform-migratie")
+            en de assistent zoekt zelf de feiten erbij.
+          </li>
+        </ul>
+        <p>
+          Nieuwe gebruikers starten standaard in de Gids-route. De toggle staat altijd boven aan
+          de pagina, dus één klik wisselen kan altijd.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>2. Assistent-route — chat met Gersy's AI-collega</h3>
+        <p>
+          De assistent is geen algemene chatbot: hij praat alleen over de cases, talking points en
+          persona-coaching die in deze app staan. Feiten (bedrijfsnamen, cijfers, tags) komen uit de
+          database — de assistent verzint die niet.
+        </p>
+        <ul>
+          <li>
+            <strong>Quick-prompts</strong> — onder het welkomstbericht staan drie voorgestelde vragen
+            om direct te starten. Klik of typ je eigen vraag.
           </li>
           <li>
-            <strong>Klap een case open</strong> om details te lezen: situatie, doel, oplossing, resultaat
-            en match redenen.
+            <strong>Klikbare bedrijfsnamen</strong> — als de assistent <em>AkzoNobel</em>, <em>CITO</em>,
+            <em>Tulp Group</em> of andere case-namen noemt, kun je daarop klikken om direct naar de
+            volledige case te springen (de app switcht dan naar de Gids-route met die case geopend).
           </li>
           <li>
-            <strong>Zoekbalk bovenin</strong> — typ een klantnaam, trefwoord of technologie om direct
-            relevante cases te vinden, dwars door alle categorieën heen.
+            <strong>Persona in je vraag</strong> — in deze route is er geen aparte persona-selector.
+            Vermeld de rol gewoon in je vraag ("Ik heb zo een gesprek met een CFO…") en de assistent
+            stemt het advies daarop af.
+          </li>
+          <li>
+            <strong>Feedback</strong> — bij elk antwoord staan 👍/👎-knoppen. Feedback helpt om de
+            systeemprompt en content achter de schermen scherp te stellen.
+          </li>
+          <li>
+            <strong>Geschiedenis</strong> — de chat blijft bewaard binnen deze browser-sessie. Na een
+            tab-refresh is 'ie leeg. Er is (nog) geen cross-device geschiedenis.
           </li>
         </ul>
       </section>
 
       <section className="ins-section">
-        <h3>2. Met wie praat je? — de persona-coach</h3>
+        <h3>3. Gids-route — guided belscript</h3>
         <p>
-          Links bovenin staat het kompas "Met wie praat je?". Dit is een <strong>optionele
-          coach-laag</strong>: hij bepaalt niet wélke content je ziet, maar wel hóe je 'm brengt.
-          Standaard ingeklapt — open als je weet wie je aan de lijn hebt.
+          De Gids-route is de klikbare belscript-flow. Alles op één pagina, in één kaartje: persona,
+          tabs en filter-knoppen.
         </p>
         <ul>
           <li>
-            <strong>2×2-kompas</strong> — persona's zijn verdeeld over domein (Business / Tech)
-            en niveau (Strategisch / Operationeel). Voorbeeldrollen (CFO, Data engineer, ...) staan
-            als geheugensteun onder elke persona.
+            <strong>Met wie praat je?</strong> — linksboven in de kaart zit het persona-kompas
+            (Business/Tech × Strategisch/Operationeel). Optioneel — vul alleen in als je weet wie je
+            aan de lijn hebt. Levert een coach-tekst ("denk in ROI, vermijd techjargon…") plus
+            klantsignalen ("zinnen die typisch bij deze persona horen").
           </li>
           <li>
-            <strong>Coaching-tip</strong> — kies een persona en er verschijnt een stijl-instructie
-            ("Denk in ROI, vermijd techjargon, …"). Gebruik dit om je eigen taal af te stemmen.
+            <strong>Tabs kiezen</strong> — <em>Doelen</em>, <em>Behoeften</em> of <em>Diensten</em>,
+            afhankelijk van waar het gesprek over gaat.
           </li>
           <li>
-            <strong>Herkenningspunten</strong> — onder de coaching kun je klantsignalen tonen:
-            citaten die typisch bij deze persona horen. Handig bij koud bellen om snel te plaatsen
-            met wie je praat.
+            <strong>Filter-knop</strong> — klik een onderwerp (bv. "AI ready", "Data modernisatie")
+            om talking points, vervolgvragen en relevante cases te zien.
           </li>
           <li>
-            <strong>Wissen</strong> — persona blijft alleen actief tijdens deze sessie, refresh of
-            "Wissen" zet 'm uit.
+            <strong>Klantsignalen-toggle</strong> — rechts in de filter-kaart. Laat onder elke
+            filter-knop zien welke klantsignalen (zinnen uit het veld) bij dat onderwerp horen.
+            Handig bij koud bellen.
+          </li>
+          <li>
+            <strong>Case openen</strong> — onder de filters verschijnt een case-overzicht. Klik op
+            een case voor situatie, doel, oplossing, resultaat, keywords en match-redenen per tag.
+          </li>
+          <li>
+            <strong>Zoeken</strong> — de zoekbalk in de topbar (desktop: altijd zichtbaar; mobiel:
+            verstopt achter een 🔍-icoon) werkt dwars door alle cases op naam, trefwoord of technologie.
           </li>
         </ul>
       </section>
 
       <section className="ins-section">
-        <h3>3. Beheer — cases, categorieën en persona's</h3>
+        <h3>4. Beheer — cases, categorieën en persona's</h3>
         <p>
-          In <strong>Beheer</strong> richt je alle content in die in de Navigator verschijnt.
+          In <strong>Beheer</strong> (rechtsboven in de topbar) beheer je alle content die in beide
+          routes verschijnt.
         </p>
         <ul>
           <li>
-            <strong>Nieuwe case</strong> — klik op "+ Nieuwe case" voor een lege case
-            die je direct in de editor invult.
+            <strong>Nieuwe case</strong> — klik op "+ Nieuwe case" voor een lege case die je direct
+            in de editor invult.
           </li>
           <li>
             <strong>Case importeren</strong> — upload een ingevulde Word-template
-            (<code>case-template.docx</code>). De app leest automatisch alle velden uit,
-            inclusief opmaak (vet, cursief, bullet-lijsten).
+            (<code>case-template.docx</code>, downloadbaar vanuit Beheer). De app leest automatisch
+            alle velden uit, inclusief opmaak (vet, cursief, bullet-lijsten) en aangevinkte mapping.
           </li>
           <li>
-            <strong>Case bewerken</strong> — klik op een case in de lijst om alle velden
-            aan te passen. Alle lange-tekstvelden ondersteunen rich text.
+            <strong>Case bewerken</strong> — klik op een case in de lijst. Alle lange-tekstvelden
+            ondersteunen rich text.
           </li>
           <li>
-            <strong>Match redenen</strong> — per gemapte tag kun je in de editor een korte
-            uitleg geven waarom de case daarbij past. Die verschijnt in de Navigator onder
-            de case-titel.
+            <strong>Match redenen</strong> — per gemapte tag kun je een korte uitleg geven waarom
+            de case daarbij past. Die verschijnt onder de case-titel én de assistent gebruikt 'm
+            in antwoorden.
           </li>
           <li>
             <strong>Exporteren</strong> — per case kun je een <em>.docx</em> of <em>.pptx</em>
-            downloaden in Creates-huisstijl, handig om te delen met collega's of klanten.
+            downloaden in Creates-huisstijl.
           </li>
           <li>
-            <strong>Doelen / Behoeften / Diensten</strong> — voeg items toe, hernoem ze of
-            verwijder ze. Per item kun je talking points, vervolgvragen, een omschrijving en
-            klantsignalen vastleggen. Verwijderen kan alleen als geen enkele case ernaar verwijst.
+            <strong>Doelen / Behoeften / Diensten</strong> — voeg items toe, hernoem of verwijder ze.
+            Per item leg je talking points, vervolgvragen, een omschrijving en klantsignalen vast.
+            Verwijderen kan alleen als geen enkele case ernaar verwijst.
           </li>
           <li>
-            <strong>Persona's</strong> — beheer de 4 standaard-kwadranten (Business/Tech ×
-            Strategisch/Operationeel) en voeg eventueel extra persona's toe (verschijnen als
-            "Overige"-chips onder het kompas). Per persona leg je icoon, voorbeeldrollen,
-            omschrijving, klantsignalen en coaching-tekst vast.
+            <strong>Persona's</strong> — beheer de 4 standaard-kwadranten en voeg eventueel extra
+            persona's toe. Per persona leg je icoon, voorbeeldrollen, omschrijving, klantsignalen
+            en coaching-tekst vast.
           </li>
         </ul>
       </section>
 
       <section className="ins-section">
-        <h3>4. Opslag &amp; synchronisatie</h3>
+        <h3>5. Opslag &amp; synchronisatie</h3>
         <p>
-          De app werkt met een <strong>centrale database</strong> (Supabase). Alle cases,
-          categorieën, talking points en persona's worden automatisch opgeslagen en zijn
-          direct zichtbaar voor iedereen die de app opent — op elk apparaat, zonder import
-          of export.
+          De app werkt met een <strong>centrale database</strong> (Supabase). Alle cases, categorieën,
+          talking points, persona's en feedback worden automatisch opgeslagen en zijn direct zichtbaar
+          voor iedereen die de app opent — op elk apparaat, zonder import of export.
         </p>
         <p>
-          Wijzigingen verschijnen vrijwel direct (binnen een seconde) in de database.
-          Er is geen handmatige synchronisatie nodig.
+          Wijzigingen verschijnen vrijwel direct (binnen een seconde). Er is geen handmatige
+          synchronisatie nodig.
         </p>
       </section>
 
       <section className="ins-section">
-        <h3>5. Lokale snapshot (optioneel)</h3>
+        <h3>6. Lokale snapshot (optioneel)</h3>
         <p>
           Onderaan in <em>Beheer</em> staan twee knoppen:
           <strong> Backup downloaden</strong> en <strong>Backup herstellen</strong>.
@@ -142,13 +180,36 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>6. Tips</h3>
+        <h3>7. Tips</h3>
         <ul>
-          <li>Gebruik korte, herkenbare namen voor Doelen/Behoeften/Diensten — die verschijnen als knoppen tijdens het gesprek.</li>
-          <li>Vul match redenen zoveel mogelijk in: die maken direct duidelijk waarom een case relevant is bij een specifieke tag.</li>
-          <li>Persona-coaching werkt alleen goed als je 'm ook echt invult — laat 'm anders leeg, dan verschijnt er geen helper.</li>
-          <li>De PowerPoint-export is geschikt als inspiratie-slide; pas altijd zelf aan voor het specifieke gesprek.</li>
-          <li>Maak voor grote wijzigingen eerst een lokale snapshot (zie punt 5), zodat je kunt terugrollen.</li>
+          <li>
+            <strong>Niet zeker waar te beginnen?</strong> Begin in de Assistent-route met een open
+            vraag — die leidt je vanzelf naar de juiste cases en onderwerpen.
+          </li>
+          <li>
+            <strong>Bekend onderwerp?</strong> Gids-route is sneller: 2–3 klikken en je hebt
+            talking points + cases op het scherm.
+          </li>
+          <li>
+            Gebruik korte, herkenbare namen voor Doelen/Behoeften/Diensten — die verschijnen als
+            knoppen tijdens het gesprek.
+          </li>
+          <li>
+            Vul match redenen zoveel mogelijk in: die maken direct duidelijk waarom een case
+            relevant is, en de assistent haalt er z'n onderbouwing uit.
+          </li>
+          <li>
+            Persona-coaching werkt alleen goed als je 'm ook echt invult — laat 'm anders leeg,
+            dan verschijnt er geen helper.
+          </li>
+          <li>
+            Geef 👍/👎 op assistent-antwoorden — dat is de snelste manier om content-gaten
+            (ontbrekende cases, zwakke talking points) op te sporen.
+          </li>
+          <li>
+            Maak voor grote wijzigingen eerst een lokale snapshot (zie punt 6), zodat je kunt
+            terugrollen.
+          </li>
         </ul>
       </section>
     </div>

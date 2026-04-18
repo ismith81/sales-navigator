@@ -640,6 +640,13 @@ body::before {
   margin-bottom: 1rem;
   opacity: 0.5;
 }
+.empty-state .icon-large.loading-spinner {
+  opacity: 0.65;
+  color: var(--teal);
+  display: inline-flex;
+  animation: sn-spin 0.9s linear infinite;
+}
+@keyframes sn-spin { to { transform: rotate(360deg); } }
 .empty-state p { font-size: 0.95rem; }
 
 /* ---- Import Panel ---- */

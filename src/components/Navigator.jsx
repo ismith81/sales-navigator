@@ -287,7 +287,11 @@ export default function Navigator() {
     return (
       <div className="app">
         <div className="empty-state">
-          <div className="icon-large">⏳</div>
+          <div className="icon-large loading-spinner" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          </div>
           <p>Data laden...</p>
         </div>
       </div>
