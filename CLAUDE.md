@@ -81,6 +81,9 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - **Server-gate:** alle serverless endpoints valideren de JWT via `requireUser()`.
 - **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan en policies voor `authenticated` role. SQL-script staat in `supabase/auth-rls.sql`. Anon key mag client-side blijven; RLS doet het werk.
 - **Uitlogknop:** rechtsboven in de topbar (logout-icon), toont e-mail in tooltip.
+- **Supabase Auth-config (live):** `Allow new users to sign up` = OFF (invite-only), `Confirm email` = ON, Email provider enabled. Magic Link werkt automatisch via `signInWithOtp` zodra Email provider aan staat — er is géén aparte toggle meer in recente Supabase-versies.
+- **Site URL / Redirect URLs:** staat op de productie Vercel-URL. Voor lokale dev moet `http://localhost:5173/**` in de Redirect URL-lijst; anders falen magic-links en resets stil.
+- **SMTP rate limit (open issue):** Supabase's ingebouwde mailer op free tier doet ~3-4 mails/uur. Volstaat voor eenmalige invites, maar kan bij piekgebruik knellen. Besloten om voorlopig op built-in mailer te blijven; als het storend wordt: custom SMTP via Resend (3k/maand gratis) of M365 aansluiten via Authentication → Emails → SMTP Settings. Niet urgent.
 
 ## Case JSON-formaat (Supabase `cases` tabel, snake_case)
 ```json
@@ -162,3 +165,9 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
 - Optioneel: route-toggle sticky maken (blijft zichtbaar bij scrollen). Vereist zorgvuldige top-offset tegen de sticky topbar — niet urgent.
 - `HeroAssistant.jsx` niet meer gebruikt — kan verwijderd worden, of laten staan als reserve/reference. Mockup in `Downloads/sales-navigator-mockup.html` is nog de oude versie en kan weg (of bijgewerkt worden naar de geïmplementeerde versie als referentie).
+- Custom SMTP (Resend of M365) inregelen wanneer de built-in mailer te krap wordt — zie Auth & security.
+
+## Status (laatste sessie)
+- **Auth is live op productie** (`main` → Vercel). Supabase Auth + RLS actief, invite-only, magic-link werkt bevestigd.
+- **Users:** Ian is ingelogd (magic-link). Collega-uitnodiging voor `g.lommen@creates.nl` stuitte op rate limit — moet later opnieuw verstuurd worden zodra het uurtje voorbij is.
+- **Open:** tweede user toevoegen (retry invite), en evt. Ian zelf een wachtwoord laten zetten via password-recovery mail zodat magic-link niet elke keer nodig is.
