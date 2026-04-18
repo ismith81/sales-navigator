@@ -3431,9 +3431,10 @@ body::before {
 
 /* ═══ TOPBAR SEARCH-COLLAPSE (mobile: icon → expand) ══════════════════════
    Desktop: rij blijft zoals het was, icon is verborgen (de balk staat altijd open).
-   Mobiel: icon-only knop op rij 1; expanded rij 2 (search-veld) alleen als is-open. */
+   Mobiel: icon-only knop op rij 1; expanded rij 2 (search-veld) alleen als is-open.
+   Visuele styling hier; display is gescoped in de mobile / desktop media queries
+   om source-order conflicts te voorkomen. */
 .topbar-search-icon {
-  display: none; /* alleen zichtbaar op mobiel */
   width: 36px;
   height: 36px;
   align-items: center;
@@ -3445,6 +3446,9 @@ body::before {
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s ease, border-color 0.15s ease;
+}
+@media (min-width: 769px) {
+  .topbar-search-icon { display: none; } /* desktop: balk staat open, icon niet nodig */
 }
 .topbar-search-icon:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.22); }
 .topbar-search-icon svg { display: block; }
