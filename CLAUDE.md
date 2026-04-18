@@ -43,7 +43,7 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 
 ## Belangrijke bestanden
 ### Frontend
-- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies) én route-router (gids/assistent) binnen de navigator-view. Route onthouden in localStorage (`sn.route`), default `assistent`. Rendert de segmented route-toggle (gecentreerd boven de content), de Gids-flow in een gecentreerde `.gids-route` wrapper, of het ChatPanel in `variant="inline"` als hoofdscherm.
+- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies) én route-router (gids/assistent) binnen de navigator-view. Route onthouden in localStorage (`sn.route`), default `gids`. Rendert de segmented route-toggle (gecentreerd boven de content), de Gids-flow in een gecentreerde `.gids-route` wrapper, of het ChatPanel in `variant="inline"` als hoofdscherm.
 - `src/components/HeroAssistant.jsx` — **niet meer in gebruik** sinds de twee-routes redesign. Blijft op schijf als reserve/referentie; niet meer geïmporteerd in Navigator. Dezelfde quick-prompts zitten nu in de chat-welcome.
 - `src/components/CasesOverview.jsx` — zoekbare case-overzichtspagina
 - `src/components/CaseCard.jsx` — case weergave met talking points + vervolgvragen
@@ -119,7 +119,7 @@ Hybride RAG-achtig patroon:
 - **Route-toggle** (`.route-toggle`): gecentreerde segmented pill boven de content, compact geformatteerd (font 0.82rem, kleine padding). Actieve knop krijgt witte bg + subtiele shadow; eerste knop (Gids) actief in teal, laatste (Assistent) in accent-rood.
 - **Gids-route** (`.gids-route`): max-width 900px, gecentreerd. `.context-strip--card` wrapt persona + filters in een witte card met border en zachte shadow — persona + tabs/filters + klantsignalen-toggle leven als één blok.
 - **Assistent-route:** ChatPanel inline-variant (`.chat-panel--inline`) met witte header i.p.v. navy, zachte border, max-width 780px, gecentreerd.
-- **Topbar** mobiel (≤640px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop behoudt inline zoekbalk. De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
+- **Topbar** mobiel/tablet (≤768px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop (>768px) behoudt inline zoekbalk. Breakpoint bewust op 768px zodat iPad-portrait en phones-in-landscape ook collapsed starten — de balk voelde daar "erg aanwezig". De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
 
 ## Doelgroep
 Primaire gebruiker: Gersy (sales)
@@ -129,7 +129,7 @@ Taal: Nederlands
 ## Twee-routes architectuur (geïmplementeerd)
 De twee-routes redesign is live. Kern:
 
-- **Segmented route-toggle** `[🧭 Gids] | [🤖 Assistent]` gecentreerd boven de content, compact geformatteerd. Keuze onthouden in localStorage (`sn.route`), default `assistent`. Volgorde bewust: Gids eerst (links = meest voor-de-hand liggend startpunt), Assistent rechts.
+- **Segmented route-toggle** `[🧭 Gids] | [🤖 Assistent]` gecentreerd boven de content, compact geformatteerd. Keuze onthouden in localStorage (`sn.route`), default `gids` — nieuwe gebruikers starten in de guided flow; de assistent is één klik weg. Volgorde bewust: Gids eerst (links = meest voor-de-hand liggend startpunt), Assistent rechts.
 - **Assistent-route:** ChatPanel als hoofdscherm via `variant="inline"` (open staat altijd op `true`). Geen persona-strip — Gersy benoemt de rol gewoon in haar vraag. Chat-naar-case vanaf hier switcht naar Gids-route + zet de zoekopdracht.
 - **Gids-route:** persona + guided flow (tabs → filter-knoppen → talking points → cases) in een gecentreerde wrapper. Persona hoort uitsluitend bij deze route. Klantsignalen-toggle leeft nu binnen de `.context-strip--card` naast de tabs (logisch op hun plek).
 - **Geen topbar-chat-knop meer:** de chat ís het scherm wanneer Assistent-route actief.

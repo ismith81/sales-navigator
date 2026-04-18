@@ -39,8 +39,8 @@ export default function Navigator() {
   const [route, setRoute] = useState(() => {
     try {
       const stored = localStorage.getItem(ROUTE_KEY);
-      return stored === 'gids' || stored === 'assistent' ? stored : 'assistent';
-    } catch { return 'assistent'; }
+      return stored === 'gids' || stored === 'assistent' ? stored : 'gids';
+    } catch { return 'gids'; }
   });
   const [searchOpen, setSearchOpen] = useState(false); // mobile: collapsed search toggle
   const [toast, setToast] = useState(null);

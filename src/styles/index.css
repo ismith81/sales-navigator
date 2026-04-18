@@ -2110,9 +2110,11 @@ body::before {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   /* Eén rij topbar: brand | search-icon | view-toggle.
-     Zoekbalk collapse't tot icon; tik → balk expandt naar rij 2. */
+     Zoekbalk collapse't tot icon; tik → balk expandt naar rij 2.
+     Breakpoint op 768px zodat ook iPad-portrait en phones-in-landscape
+     de collapsed-state krijgen — search-balk voelde daar te aanwezig. */
   .topbar {
     display: grid;
     grid-template-columns: 1fr auto auto;
