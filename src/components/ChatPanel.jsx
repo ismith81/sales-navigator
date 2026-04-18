@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { authedFetch } from '../lib/auth';
 
 const STORAGE_KEY = 'sn.chatMessages';
 
@@ -123,7 +124,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     abortRef.current = controller;
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: nextMessages, context }),
@@ -221,7 +222,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     }
 
     try {
-      await fetch('/api/chat-feedback', {
+      await authedFetch('/api/chat-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

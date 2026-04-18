@@ -4,12 +4,16 @@
 // Env vars: SUPABASE_URL, SUPABASE_ANON_KEY (RLS policy staat insert open).
 
 import { createClient } from '@supabase/supabase-js';
+import { requireUser } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
@@ -29,7 +33,7 @@ export default async function handler(req, res) {
     rating,
     user_message: (userMessage || '').slice(0, 4000),
     assistant_message: (assistantMessage || '').slice(0, 8000),
-    context: context || {},
+    context: { ...(context || {}), user_email: user.email },
     tool_calls: Array.isArray(toolCalls) ? toolCalls : [],
   });
 
