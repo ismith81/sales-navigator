@@ -50,7 +50,10 @@
       "Bash(curl -s 'https://sales-navigator-jade.vercel.app/assets/index-BW6-Jzdz.css')",
       "Bash(grep -oE '\\(max-width:640px[^{]*\\\\{[^}]{0,500}')",
       "Bash(ls api *)",
-      "Bash(cat vercel.json)"
+      "Bash(cat vercel.json)",
+      "Bash(python -c \"from docx import Document; d=Document\\(r'C:\\\\Users\\\\ian_s\\\\OneDrive - Caesar Experts B.V\\\\Klanten\\\\Tulp Group\\\\Contracten\\\\Voorstellen\\\\Offerte Realisatie Dataplatform_versie 1.0.docx'\\); [print\\(p.text\\) for p in d.paragraphs if p.text.strip\\(\\)]\")",
+      "Read(//c/Users/ian_s/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/**)",
+      "Bash(start \"\" \"C:\\\\Users\\\\ian_s\\\\Downloads\\\\sales-navigator-mockup.html\")"
     ]
   }
 }
