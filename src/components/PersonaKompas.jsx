@@ -123,7 +123,6 @@ export default function PersonaKompas({ personas = {}, activePersona, onSelect }
           {active && (
             <div className="kompas-helper">
               <div className="kompas-helper-main">
-                <span className="kompas-helper-icon" aria-hidden="true">{active.icon}</span>
                 {active.coaching ? (
                   <span className="kompas-helper-coach">{active.coaching}</span>
                 ) : (
