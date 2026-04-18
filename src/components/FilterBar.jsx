@@ -45,10 +45,11 @@ export default function FilterBar({ filters, topics = {}, activeTab, activeFilte
             type="button"
             className={`hints-toggle ${showHints ? 'on' : 'off'}`}
             onClick={() => setShowHints(v => !v)}
-            title={showHints ? 'Verberg pijnpunten onder de topics' : 'Toon pijnpunten onder de topics'}
+            aria-pressed={showHints}
+            title={showHints ? 'Verberg klantsignalen' : 'Toon klantsignalen'}
           >
-            <span className="hints-toggle-icon" aria-hidden="true">{showHints ? '👁' : '👁‍🗨'}</span>
-            <span className="hints-toggle-label">Pijnpunten {showHints ? 'aan' : 'uit'}</span>
+            <span className="hints-toggle-icon" aria-hidden="true">{showHints ? '👁' : '🚫'}</span>
+            <span className="hints-toggle-label">Klantsignalen</span>
           </button>
         )}
       </div>
