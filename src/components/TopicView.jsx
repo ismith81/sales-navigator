@@ -7,10 +7,8 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
   const [addingTP, setAddingTP] = useState(false);
   const [addingFU, setAddingFU] = useState(false);
   const [newValue, setNewValue] = useState('');
-  const [showDescription, setShowDescription] = useState(false);
 
-  const { talkingPoints, followUps, description } = topicData;
-  const hasDescription = description && description.replace(/<[^>]+>/g, '').trim();
+  const { talkingPoints, followUps } = topicData;
 
   const matchedCases = cases.filter(c => c.mapping[tab]?.includes(topicKey));
 
@@ -66,29 +64,6 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
   return (
     <div className="topic-view" key={topicKey}>
       {!hideTitle && <h2 className="topic-title">{topicKey}</h2>}
-
-      {hasDescription && (
-        <div className={`topic-description-collapsible ${showDescription ? 'open' : ''}`}>
-          <button
-            type="button"
-            className="topic-description-toggle"
-            onClick={() => setShowDescription(prev => !prev)}
-          >
-            <svg className="tdc-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" />
-              <circle cx="8" cy="4.5" r="0.9" fill="currentColor" />
-              <path d="M8 7v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            <span className="tdc-label">Wat is dit?</span>
-          </button>
-          {showDescription && (
-            <div
-              className="topic-description rich-text"
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
-          )}
-        </div>
-      )}
 
       <div className="topic-columns">
         {/* Left column: Talking Points — "Wat zeg je?" */}
