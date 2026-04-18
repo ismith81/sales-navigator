@@ -331,19 +331,21 @@ export default function Navigator() {
         <Instructies />
       ) : view === 'navigator' ? (
         <>
-          <PersonaKompas
-            personas={personas}
-            activePersona={activePersona}
-            onSelect={setActivePersona}
-          />
-          <FilterBar
-            filters={filters}
-            topics={topics}
-            activeTab={activeTab}
-            activeFilter={activeFilter}
-            onTabChange={handleTabChange}
-            onFilterChange={handleFilterChange}
-          />
+          <div className="context-strip">
+            <PersonaKompas
+              personas={personas}
+              activePersona={activePersona}
+              onSelect={setActivePersona}
+            />
+            <FilterBar
+              filters={filters}
+              topics={topics}
+              activeTab={activeTab}
+              activeFilter={activeFilter}
+              onTabChange={handleTabChange}
+              onFilterChange={handleFilterChange}
+            />
+          </div>
 
           {searchQuery.trim() ? (
             <>

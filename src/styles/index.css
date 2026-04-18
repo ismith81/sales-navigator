@@ -65,8 +65,11 @@ body::before {
   padding: 0.6rem 1.5rem;
   background: var(--navy, #2C3C52);
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
   margin: -2rem -1.5rem 1.5rem;
+  /* Laat de navy achtergrond doorlopen tot de viewport-randen,
+     terwijl content binnen de max-width van .app blijft. */
+  box-shadow: 0 0 0 100vmax var(--navy, #2C3C52), 0 1px 0 rgba(0,0,0,0.08);
+  clip-path: inset(0 -100vmax);
 }
 
 .topbar-left {
@@ -2343,6 +2346,36 @@ body::before {
 .tps-label { font-weight: 700; color: var(--teal); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
 .tps-sep { color: var(--muted); }
 .tps-coach { font-style: italic; color: var(--text); flex: 1; min-width: 0; }
+
+/* ─── CONTEXT-STRIP: persona + filters op één rij ──────────── */
+.context-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+/* Kompas pakt alleen zijn natuurlijke breedte wanneer ingeklapt. */
+.context-strip .kompas { margin-bottom: 0; width: auto; }
+/* Wanneer uitgeklapt pakt het kompas de volle breedte zodat het
+   2x2-grid eronder hangt en de tabs op de volgende rij wrappen. */
+.context-strip .kompas:not(.kompas--collapsed) { flex-basis: 100%; width: 100%; }
+/* Verticale scheider tussen persona en tabs (alleen als ingeklapt). */
+.context-strip .kompas--collapsed {
+  position: relative;
+  padding-right: 1.25rem;
+}
+.context-strip .kompas--collapsed::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 22px;
+  width: 1px;
+  background: var(--border);
+}
+.context-strip .nav-tabs { margin-bottom: 0; }
 
 /* ─── PERSONA KOMPAS ────────────────────────────────────────── */
 .kompas {
