@@ -2086,8 +2086,9 @@ body::before {
   .context-strip .kompas--collapsed { padding-right: 0; }
   .context-strip .kompas--collapsed::after { display: none; }
 
-  /* 'Terug naar totaal overzicht' redundant op mobiel — topic-chips staan erboven. */
-  .active-filter-bar--compact { display: none; }
+  /* 'Terug naar totaal overzicht' redundant op mobiel — topic-chips staan erboven.
+     Dubbele klasse voor hogere specificity dan .active-filter-bar base-regel. */
+  .active-filter-bar.active-filter-bar--compact { display: none; }
 
   .case-card { padding: 1.25rem; }
   .app { padding: 1.25rem 1rem 3rem; }
