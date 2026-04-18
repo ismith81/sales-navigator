@@ -26,12 +26,24 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     [cases]
   );
 
+  // Fuzzy helper: strip spaties, punctuatie, diacritics en lowercase.
+  // "Tulp Group", "tulpgroep", "Tulp-Group" matchen dan allemaal.
+  const normalize = (s) => (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+
   // Markdown-component override: vervangt <strong> inhoud door een klikbare link
-  // als de tekst exact overeenkomt met een case-naam. Niet-case-bold blijft gewoon bold.
+  // als de tekst (fuzzy) overeenkomt met een case-naam. Niet-case-bold blijft gewoon bold.
   const markdownComponents = React.useMemo(() => ({
     strong: ({ children }) => {
       const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
-      const matched = caseNames.find(n => n === text || text.startsWith(n));
+      const textNorm = normalize(text);
+      const matched = textNorm && caseNames.find(n => {
+        const nNorm = normalize(n);
+        if (!nNorm) return false;
+        return nNorm === textNorm || textNorm.startsWith(nNorm) || nNorm.startsWith(textNorm) || nNorm.includes(textNorm) || textNorm.includes(nNorm);
+      });
       if (matched && onNavigateToCase) {
         return (
           <button

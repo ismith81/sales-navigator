@@ -295,31 +295,31 @@ export default function Navigator() {
           </div>
         </div>
         {view === 'navigator' && (
-          <div className="topbar-search">
-            <input
-              type="text"
-              placeholder="Zoek een case, klant of trefwoord..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
-            )}
+          <div className="topbar-search-row">
+            <button
+              type="button"
+              className="topbar-chat-btn"
+              onClick={() => setChatOpen(true)}
+              title="Sales assistent openen"
+              aria-label="Sales assistent openen"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="topbar-chat-label">Assistent</span>
+            </button>
+            <div className="topbar-search">
+              <input
+                type="text"
+                placeholder="Zoek een case, klant of trefwoord..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
+              )}
+            </div>
           </div>
-        )}
-        {view === 'navigator' && (
-          <button
-            type="button"
-            className="topbar-chat-btn"
-            onClick={() => setChatOpen(true)}
-            title="Sales assistent openen"
-            aria-label="Sales assistent openen"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span className="topbar-chat-label">Assistent</span>
-          </button>
         )}
         <div className="view-toggle">
           <button
