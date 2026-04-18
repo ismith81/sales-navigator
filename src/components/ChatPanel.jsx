@@ -18,7 +18,8 @@ const QUICK_PROMPTS = [
   'Wat zijn goede vervolgvragen bij realtime data?',
 ];
 
-export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed }) {
+export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
+  const inline = variant === 'inline';
   // Namen van bestaande cases — gebruikt om in assistent-antwoorden klikbare links te maken.
   // Langste eerst zodat "AkzoNobel (Paint Company)" vóór "AkzoNobel" wordt gematcht.
   const caseNames = React.useMemo(
@@ -76,12 +77,12 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   }, [messages, busy]);
 
   useEffect(() => {
-    // Close on ESC
-    if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    // Close on ESC — niet relevant voor inline-modus (geen sluit-actie).
+    if (!open || inline) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open, onClose, inline]);
 
   // Auto-verstuur een prompt wanneer het panel geopend wordt met een initialPrompt
   // (vanuit de hero-quick-prompts). Pas na mount versturen — met een tick zodat de
@@ -250,8 +251,15 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
 
   return (
     <>
-      <div className={`chat-overlay ${open ? 'open' : ''}`} onClick={onClose} aria-hidden={!open} />
-      <aside className={`chat-panel ${open ? 'open' : ''}`} aria-hidden={!open} role="dialog" aria-label="Sales assistent">
+      {!inline && (
+        <div className={`chat-overlay ${open ? 'open' : ''}`} onClick={onClose} aria-hidden={!open} />
+      )}
+      <aside
+        className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${open ? 'open' : ''}`}
+        aria-hidden={!open}
+        role={inline ? 'region' : 'dialog'}
+        aria-label="Sales assistent"
+      >
         <header className="chat-header">
           <div className="chat-header-title">
             <span className="chat-header-dot" aria-hidden="true" />
@@ -263,7 +271,9 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                 Wissen
               </button>
             )}
-            <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
+            {!inline && (
+              <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
+            )}
           </div>
         </header>
 

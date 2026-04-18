@@ -2,7 +2,11 @@
 
 ## Wat is dit?
 Een interactief belscript-tool voor sales (gebruiker: Gersy).
-Salesmedewerkers klikken op doelen, behoeften of diensten en zien direct relevante klantcases, talking points en vervolgvragen. Daarnaast is er een AI-chatassistent die Gersy helpt met gespreksvoorbereiding.
+Gersy bereidt zich voor op een klantgesprek via één van twee routes:
+1. **Assistent-route** (primair): AI-chat die cases, talking points en persona-coaching ophaalt uit Supabase via Gemini function-calling. Minimale klik-configuratie — gewoon vragen.
+2. **Gids-route** (guided): klikken door tabs (doelen/behoeften/diensten) → filter-knoppen → talking points + cases. Persona-context ("Met wie praat je?") hoort bij déze route en wordt alleen hier getoond.
+
+De persona-laag is dus géén gedeelde context bovenaan — ze is onderdeel van de Gids-route. In de Assistent-route kan Gersy de rol gewoon in haar vraag verwerken ("Ik heb een CFO-gesprek over…").
 
 ## Structuur van het aanbod
 Twee strategische doelen (niet 1-op-1 gekoppeld aan behoeften/diensten):
@@ -39,7 +43,8 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 
 ## Belangrijke bestanden
 ### Frontend
-- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/cases/personas/manage/instructies)
+- `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies). Auto-selectie van eerste doel is uitgezet — lege state toont de hero om de assistent te promoten.
+- `src/components/HeroAssistant.jsx` — empty-state CTA-kaart met "Stel een vraag" + drie quick-prompts. Dismissible (localStorage `sn.heroDismissed`). Toont alleen als geen filter en geen zoekopdracht actief zijn.
 - `src/components/CasesOverview.jsx` — zoekbare case-overzichtspagina
 - `src/components/CaseCard.jsx` — case weergave met talking points + vervolgvragen
 - `src/components/CaseEditor.jsx` / `CaseManager.jsx` — case CRUD-UI tegen Supabase
@@ -47,7 +52,7 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - `src/components/FilterBar.jsx` — tabs (doelen/behoeften/diensten) + filter knoppen
 - `src/components/PersonaKompas.jsx` / `PersonaManager.jsx` — persona-laag
 - `src/components/FilterManager.jsx` — beheer van topics/filters in `app_config`
-- `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback)
+- `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback). Accepteert `initialPrompt` zodat quick-prompts uit de hero direct verstuurd worden bij openen.
 - `src/components/TopicView.jsx` — topic-detail (description/signals/talking points/follow-ups)
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
 - `src/components/Instructies.jsx` — handleiding-pagina
@@ -103,16 +108,34 @@ Hybride RAG-achtig patroon:
 - ChatPanel matcht `**bedrijfsnaam**` in markdown fuzzy (lowercase, strip diacritics/leestekens) tegen bestaande case-namen → klik navigeert naar de case.
 
 ## Stijl & design
-- Donker thema: navy (`--navy` #2C3C52) + teal accent (`--teal` #31B7B9)
+- Kleurenpalet:
+  - Navy: `--navy` (#2C3C52) — topbar + donkere achtergrond
+  - Teal: `--teal` (#31B7B9) — secundair accent, actieve filters, hints
+  - Rood/accent: `--accent` (#ED174B) — brand accent ("Navigator" in titel), primaire CTA-kleur voor de assistent (chat-knop, hero-CTA)
 - Font: Nunito Sans (body + headings, zwaardere weights voor titels) via Google Fonts
 - Professioneel maar niet saai — glassmorphism cards, subtle animaties
-- Tags kleur-gecodeerd: doelen=groen, behoeften=blauw, diensten=oranje
-- Topbar: 2 rijen op mobiel (brand+toggle bovenin; chat-knop + zoekbalk op rij 2)
+- Tags kleur-gecodeerd: doelen=teal, behoeften=blauw, diensten=oranje
+- Topbar: CSS grid met named areas (`"brand toggle" / "search search"`) op mobiel (≤640px) — rij 1 = brand + view-toggle, rij 2 = chat-knop + zoekbalk
+- Chat-knop in topbar: gevuld rood met subtiele pulse-ring animatie die aandacht trekt zonder opdringerig te zijn; stopt op hover/focus
 
 ## Doelgroep
 Primaire gebruiker: Gersy (sales)
 Publiek van de sales calls: mix van technische en business stakeholders
 Taal: Nederlands
+
+## In overweging: "twee-routes" redesign
+Na eerste gebruik bleek dat de hero-CTA en de filter-knoppen visueel om dezelfde aandacht strijden. Nieuw UX-concept (nog niet gebouwd):
+
+- Expliciete **segmented route-toggle** bovenaan het werkgebied: `[🤖 Assistent] | [🧭 Gids]`. Default = Assistent.
+- **Route "Assistent":** chat wordt het primaire scherm (niet langer side-panel). Groot inputveld, quick-prompts eronder, kleine "Wat kan de assistent?" samenvatting. Géén persona-strip — Gersy benoemt de rol gewoon in haar vraag.
+- **Route "Gids":** persona-context ("Met wie praat je?") bovenaan de route, daaronder de bestaande guided flow (tabs → filter-knoppen → talking points → cases). De persona hoort uitsluitend bij deze route.
+- Topbar-chat-knop kan dan weg (de chat ís nu het scherm wanneer Assistent-route actief).
+- **Mobiele topbar wordt één regel:** `[brand] … [🔍] [route-toggle]`. Zoekbalk collapse't tot icon (expand-on-tap, X om te sluiten). Rij 2 verdwijnt, CSS-grid named-areas voor mobiel is dan niet meer nodig. Desktop behoudt inline zoekbalk.
+- Routekeuze onthouden in localStorage, zodat power-users die altijd op Gids werken niet elke sessie opnieuw hoeven te switchen.
+
+Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natuurlijk met "Assistent" (rolnaam ↔ rolnaam), draagt de "guided"-betekenis expliciet, en is kort genoeg voor een segmented toggle.
+
+Mockup: `Downloads/sales-navigator-mockup.html` — moet nog geüpdatet worden: persona verhuist vanuit de gedeelde context-strip ín de Gids-route, en label "Op onderwerp" → "Gids".
 
 ## Bekende verbeterpunten / backlog
 - Talking points en follow-ups van geïmporteerde cases zijn auto-gegenereerd en kunnen beter
@@ -121,3 +144,6 @@ Taal: Nederlands
 - Training-dienst heeft nog geen referentie-case
 - Chat-geschiedenis is sessionStorage-only — geen cross-device geschiedenis
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
+- "Klantsignalen"-toggle staat rechtsboven in de context-strip maar hoort logisch bij de filter-knoppen; verhuizen bij twee-routes redesign
+- Mockup bijwerken: persona uit gedeelde strip → Gids-route; label "Op onderwerp" → "Gids"
+- Twee-routes redesign implementeren (segmented toggle Assistent/Gids, chat-as-main-screen voor Assistent, persona ín Gids-route, topbar-chat-knop verwijderen, localStorage route-memory)

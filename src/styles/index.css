@@ -2111,15 +2111,14 @@ body::before {
 }
 
 @media (max-width: 640px) {
-  /* Compactere topbar: expliciete grid zodat volgorde gegarandeerd is.
-     Rij 1: brand (links) + view-toggle (rechts).
-     Rij 2: chat-knop + zoekbalk (volle breedte). */
+  /* Eén rij topbar: brand | search-icon | view-toggle.
+     Zoekbalk collapse't tot icon; tik → balk expandt naar rij 2. */
   .topbar {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto auto;
     grid-template-areas:
-      "brand   toggle"
-      "search  search";
+      "brand  search  toggle"
+      "expand expand  expand";
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem;
@@ -2140,19 +2139,30 @@ body::before {
     padding: 0.35rem 0.6rem;
     white-space: nowrap;
   }
+  /* Default (collapsed): icon op rij 1, input onzichtbaar. */
   .topbar-search-row {
-    grid-area: search;
+    display: contents; /* laat kinderen direct in de grid vallen */
     margin: 0;
-    width: 100%;
+  }
+  .topbar-search-icon {
+    display: inline-flex;
+    grid-area: search;
   }
   .topbar-search {
+    grid-area: expand;
+    display: none;
     flex: 1;
     max-width: none;
     margin: 0;
+    width: 100%;
+  }
+  .topbar-search-row.is-open .topbar-search {
+    display: block;
   }
   .topbar-search input {
     padding: 0.45rem 2rem 0.45rem 0.75rem;
     font-size: 0.85rem;
+    width: 100%;
   }
 
   /* Context-strip: scheider weg en tabs full-width wanneer gewrapped. */
@@ -3266,7 +3276,7 @@ body::before {
     justify-content: center;
   }
 
-  .chat-panel {
+  .chat-panel:not(.chat-panel--inline) {
     top: 0;
     bottom: 0;
     right: 0;
@@ -3277,6 +3287,156 @@ body::before {
     transform: translateY(100%);
     box-shadow: none;
   }
-  .chat-panel.open { transform: translateY(0); }
+  .chat-panel:not(.chat-panel--inline).open { transform: translateY(0); }
   .chat-header { border-radius: 0; }
 }
+
+/* ═══ ROUTE-TOGGLE (Assistent ↔ Gids) ═════════════════════════════════════
+   Gecentreerd boven de content zodat het visueel uitlijnt met de chat-card
+   (die ook gecentreerd is). Op de Gids-route vult de content de volle breedte,
+   maar de toggle blijft gecentreerd — duidelijk "kies je route"-moment. */
+.route-toggle {
+  display: inline-flex;
+  gap: 0.1rem;
+  background: #eef2f5;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.18rem;
+  margin: 0 auto 1rem;
+}
+/* Wrap: centreert de toggle onafhankelijk van de route-content eronder. */
+.route-toggle-wrap {
+  display: flex;
+  justify-content: center;
+}
+.route-toggle-wrap .route-toggle { margin: 0 0 1rem; }
+
+/* ═══ GIDS-ROUTE WRAPPER ══════════════════════════════════════════════════
+   Content gecentreerd + begrensd, matched de chat-card uit de Assistent-
+   route zodat beide routes op dezelfde compositorische baan staan. */
+.gids-route {
+  max-width: 900px;
+  margin: 0 auto;
+}
+@media (max-width: 960px) {
+  .gids-route { max-width: none; }
+}
+
+/* Card-variant van de context-strip: persona + filters als één blok,
+   met bg, border en padding. */
+.context-strip--card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(44,60,82,0.04);
+  margin-bottom: 1.2rem;
+}
+/* Binnen de card pakt de persona-kompas zijn natuurlijke ruimte;
+   de tabs-rij vult de rest. Geen extra marges tussen kind-elementen. */
+.context-strip--card > * { margin-bottom: 0; }
+.context-strip--card .nav-tabs-row { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .context-strip--card { padding: 0.75rem 0.85rem; border-radius: 12px; }
+}
+.route-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  padding: 0.38rem 0.9rem;
+  border-radius: 7px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.route-toggle-btn:hover:not(.active) {
+  color: var(--navy);
+  background: rgba(255,255,255,0.65);
+}
+.route-toggle-btn.active {
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 1px 3px rgba(44,60,82,0.08), 0 0 0 1px rgba(44,60,82,0.06);
+}
+.route-toggle-btn:first-child.active { color: var(--teal); }
+.route-toggle-btn:last-child.active { color: var(--accent); }
+.route-toggle-icon { display: block; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .route-toggle { width: 100%; display: flex; }
+  .route-toggle-btn { flex: 1; justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.5rem; }
+}
+
+/* ═══ CHAT-PANEL INLINE-VARIANT (Assistent-route = hoofdscherm) ════════════
+   Rendert als gewone pagina-content, geen drawer-gedrag.
+   Lichte huisstijl-look: witte header, zachte border, geen donker navy-vlak. */
+.chat-panel--inline {
+  position: static;
+  transform: none !important;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto 1rem;
+  height: auto;
+  min-height: 420px;
+  max-height: calc(100vh - 220px);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(44,60,82,0.06);
+  overflow: hidden;
+}
+/* Header: wit, navy-tekst, subtiele onderscheiding in plaats van donkere bar. */
+.chat-panel--inline .chat-header {
+  background: #fff;
+  color: var(--navy);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: 0;
+}
+.chat-panel--inline .chat-header-title { color: var(--navy); font-size: 0.9rem; }
+.chat-panel--inline .chat-header-btn {
+  border-color: var(--border);
+  color: var(--text-light);
+}
+.chat-panel--inline .chat-header-btn:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+/* Messages-vlak iets lichter om minder zwaar te voelen. */
+.chat-panel--inline .chat-messages { background: #fafbfc; }
+/* Welkom-card mag wat meer ademruimte. */
+.chat-panel--inline .chat-welcome { padding: 1.1rem 1.15rem; }
+/* Sluitknop verbergen in inline-modus — route-toggle is de exit. */
+.chat-panel--inline .chat-close { display: none; }
+@media (max-width: 640px) {
+  .chat-panel--inline {
+    max-width: none;
+    min-height: 380px;
+    max-height: calc(100dvh - 240px);
+    border-radius: 12px;
+  }
+}
+
+/* ═══ TOPBAR SEARCH-COLLAPSE (mobile: icon → expand) ══════════════════════
+   Desktop: rij blijft zoals het was, icon is verborgen (de balk staat altijd open).
+   Mobiel: icon-only knop op rij 1; expanded rij 2 (search-veld) alleen als is-open. */
+.topbar-search-icon {
+  display: none; /* alleen zichtbaar op mobiel */
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.topbar-search-icon:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.22); }
+.topbar-search-icon svg { display: block; }

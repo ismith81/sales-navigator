@@ -8,9 +8,8 @@ import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
-import HeroAssistant from './HeroAssistant';
 
-const HERO_DISMISSED_KEY = 'sn.heroDismissed';
+const ROUTE_KEY = 'sn.route'; // 'assistent' | 'gids'
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -36,11 +35,14 @@ export default function Navigator() {
   const [activeTab, setActiveTab] = useState('doelen');
   const [activeFilter, setActiveFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [chatOpen, setChatOpen] = useState(false);
   const [chatInitialPrompt, setChatInitialPrompt] = useState(null);
-  const [heroDismissed, setHeroDismissed] = useState(() => {
-    try { return localStorage.getItem(HERO_DISMISSED_KEY) === 'true'; } catch { return false; }
+  const [route, setRoute] = useState(() => {
+    try {
+      const stored = localStorage.getItem(ROUTE_KEY);
+      return stored === 'gids' || stored === 'assistent' ? stored : 'assistent';
+    } catch { return 'assistent'; }
   });
+  const [searchOpen, setSearchOpen] = useState(false); // mobile: collapsed search toggle
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -91,19 +93,9 @@ export default function Navigator() {
     setActiveFilter(null);
   };
 
-  const dismissHero = () => {
-    setHeroDismissed(true);
-    try { localStorage.setItem(HERO_DISMISSED_KEY, 'true'); } catch {}
-  };
-
-  const openChat = (initialPrompt = null) => {
-    setChatInitialPrompt(initialPrompt);
-    setChatOpen(true);
-  };
-
-  const closeChat = () => {
-    setChatOpen(false);
-    setChatInitialPrompt(null);
+  const changeRoute = (next) => {
+    setRoute(next);
+    try { localStorage.setItem(ROUTE_KEY, next); } catch {}
   };
 
   const handleFilterChange = (filter) => {
@@ -313,18 +305,23 @@ export default function Navigator() {
           </div>
         </div>
         {view === 'navigator' && (
-          <div className="topbar-search-row">
+          <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
             <button
               type="button"
-              className="topbar-chat-btn"
-              onClick={() => openChat()}
-              title="Sales assistent openen"
-              aria-label="Sales assistent openen"
+              className="topbar-search-icon"
+              onClick={() => setSearchOpen(o => !o)}
+              title={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+              aria-label={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+              aria-expanded={searchOpen}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <span className="topbar-chat-label">Assistent</span>
+              {searchOpen ? (
+                <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>✕</span>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.5" y2="16.5" />
+                </svg>
+              )}
             </button>
             <div className="topbar-search">
               <input
@@ -332,6 +329,7 @@ export default function Navigator() {
                 placeholder="Zoek een case, klant of trefwoord..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus={searchOpen || undefined}
               />
               {searchQuery && (
                 <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
@@ -365,20 +363,36 @@ export default function Navigator() {
         <Instructies />
       ) : view === 'navigator' ? (
         <>
-          <div className="context-strip">
-            <PersonaKompas
-              personas={personas}
-              activePersona={activePersona}
-              onSelect={setActivePersona}
-            />
-            <FilterBar
-              filters={filters}
-              topics={topics}
-              activeTab={activeTab}
-              activeFilter={activeFilter}
-              onTabChange={handleTabChange}
-              onFilterChange={handleFilterChange}
-            />
+          {/* Route-toggle: Assistent (AI-chat) vs. Gids (guided flow) */}
+          <div className="route-toggle-wrap">
+          <div className="route-toggle" role="tablist" aria-label="Kies je werkwijze">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={route === 'gids'}
+              className={`route-toggle-btn ${route === 'gids' ? 'active' : ''}`}
+              onClick={() => changeRoute('gids')}
+            >
+              <svg className="route-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <polygon points="15.5 8.5 12.5 13.5 8.5 15.5 11.5 10.5" />
+              </svg>
+              <span>Gids</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={route === 'assistent'}
+              className={`route-toggle-btn ${route === 'assistent' ? 'active' : ''}`}
+              onClick={() => changeRoute('assistent')}
+            >
+              <svg className="route-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5L12 3z" />
+                <path d="M18 14l.8 1.7L20.5 16.5l-1.7.8L18 19l-.8-1.7L15.5 16.5l1.7-.8L18 14z" />
+              </svg>
+              <span>Assistent</span>
+            </button>
+          </div>
           </div>
 
           {searchQuery.trim() ? (
@@ -401,15 +415,43 @@ export default function Navigator() {
                 heading={`Zoekresultaten voor "${searchQuery}"`}
               />
             </>
+          ) : route === 'assistent' ? (
+            /* Assistent-route: chat is het hoofdscherm, géén persona-strip. */
+            <ChatPanel
+              variant="inline"
+              open
+              cases={cases}
+              initialPrompt={chatInitialPrompt}
+              onPromptConsumed={() => setChatInitialPrompt(null)}
+              onNavigateToCase={(caseName) => {
+                changeRoute('gids');
+                setActiveFilter(null);
+                setSearchQuery(caseName);
+              }}
+              context={{
+                activeTab: null,
+                activeFilter: null,
+                activePersonaLabel: null,
+              }}
+            />
           ) : (
-            <>
-              {!activeFilter && !heroDismissed && (
-                <HeroAssistant
-                  onAsk={() => openChat()}
-                  onQuickPrompt={(q) => openChat(q)}
-                  onDismiss={dismissHero}
+            /* Gids-route: persona + guided flow (tabs → filters → topic/cases) */
+            <div className="gids-route">
+              <div className="context-strip context-strip--card">
+                <PersonaKompas
+                  personas={personas}
+                  activePersona={activePersona}
+                  onSelect={setActivePersona}
                 />
-              )}
+                <FilterBar
+                  filters={filters}
+                  topics={topics}
+                  activeTab={activeTab}
+                  activeFilter={activeFilter}
+                  onTabChange={handleTabChange}
+                  onFilterChange={handleFilterChange}
+                />
+              </div>
 
               {activeFilter && currentTopic && (
                 <TopicView
@@ -433,7 +475,7 @@ export default function Navigator() {
                   ? null
                   : 'Klik op een case voor de details, of kies een filter hierboven om talking points te zien.'}
               />
-            </>
+            </div>
           )}
         </>
       ) : (
@@ -468,28 +510,6 @@ export default function Navigator() {
 
       {/* Toast notification */}
       {toast && <div className="toast">{toast}</div>}
-
-      {/* Sales-assistent — niet-destructief naast de bestaande zoekbalk. */}
-      <ChatPanel
-        open={chatOpen}
-        onClose={closeChat}
-        cases={cases}
-        initialPrompt={chatInitialPrompt}
-        onPromptConsumed={() => setChatInitialPrompt(null)}
-        onNavigateToCase={(caseName) => {
-          // Vanuit chat naar de case springen: sluit chat, switch naar navigator-view,
-          // reset filter en zet zoekbalk op de exacte casenaam → CasesOverview filtert.
-          closeChat();
-          setView('navigator');
-          setActiveFilter(null);
-          setSearchQuery(caseName);
-        }}
-        context={{
-          activeTab,
-          activeFilter,
-          activePersonaLabel: activePersona ? personas[activePersona]?.label : null,
-        }}
-      />
     </div>
   );
 }
