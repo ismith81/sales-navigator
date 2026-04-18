@@ -2139,25 +2139,24 @@ body::before {
     padding: 0.35rem 0.6rem;
     white-space: nowrap;
   }
-  /* Default (collapsed): icon op rij 1, input onzichtbaar. */
-  .topbar-search-row {
-    display: contents; /* laat kinderen direct in de grid vallen */
-    margin: 0;
-  }
+  /* Search-icon: zichtbaar op mobiel, op rij 1 tussen brand en view-toggle. */
   .topbar-search-icon {
     display: inline-flex;
     grid-area: search;
   }
-  .topbar-search {
+  /* Expanded zoekveld: rij 2, full-width, standaard verborgen. */
+  .topbar-search-row {
     grid-area: expand;
     display: none;
+    margin: 0;
+    width: 100%;
+  }
+  .topbar-search-row.is-open { display: block; }
+  .topbar-search {
     flex: 1;
     max-width: none;
     margin: 0;
     width: 100%;
-  }
-  .topbar-search-row.is-open .topbar-search {
-    display: block;
   }
   .topbar-search input {
     padding: 0.45rem 2rem 0.45rem 0.75rem;
@@ -3415,9 +3414,12 @@ body::before {
 @media (max-width: 640px) {
   .chat-panel--inline {
     max-width: none;
-    min-height: 380px;
-    max-height: calc(100dvh - 240px);
+    /* Vul de viewport: trek topbar (~52px) + toggle+marges (~60px) + app padding (~48px) af. */
+    height: calc(100dvh - 160px);
+    min-height: 420px;
+    max-height: none;
     border-radius: 12px;
+    margin-bottom: 0.5rem;
   }
 }
 
