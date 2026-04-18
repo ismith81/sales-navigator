@@ -12,7 +12,9 @@ function bucketOf(p) {
 }
 
 export default function PersonaKompas({ personas = {}, activePersona, onSelect }) {
-  const [collapsed, setCollapsed] = useState(false);
+  // Start ingeklapt: persona is een optionele coach-laag, niet stap 1 in de flow.
+  // Gersy opent het alleen als ze weet wie ze spreekt.
+  const [collapsed, setCollapsed] = useState(true);
   const [showSignals, setShowSignals] = useState(false);
 
   const list = Object.values(personas).sort((a, b) => (a.order || 99) - (b.order || 99));

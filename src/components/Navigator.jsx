@@ -46,6 +46,10 @@ export default function Navigator() {
         setTopics(data.topics);
         setFilters(data.filters);
         setPersonas(data.personas || {});
+        // Auto-selecteer eerste filter van de actieve tab, zodat Gersy meteen
+        // talking points ziet zonder eerst een kaartje te moeten aanklikken.
+        const firstFilter = data.filters?.doelen?.[0];
+        if (firstFilter) setActiveFilter(firstFilter);
         setLoading(false);
         // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
         setTimeout(() => { hydrated.current = true; }, 0);
@@ -77,7 +81,9 @@ export default function Navigator() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setActiveFilter(null);
+    // Auto-selecteer eerste filter van nieuwe tab — scheelt Gersy een klik.
+    const firstFilter = filters?.[tab]?.[0];
+    setActiveFilter(firstFilter || null);
   };
 
   const handleFilterChange = (filter) => {
