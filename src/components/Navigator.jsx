@@ -305,7 +305,7 @@ export default function Navigator() {
           </div>
         </div>
         {view === 'navigator' && (
-          <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
+          <>
             <button
               type="button"
               className="topbar-search-icon"
@@ -323,19 +323,21 @@ export default function Navigator() {
                 </svg>
               )}
             </button>
-            <div className="topbar-search">
-              <input
-                type="text"
-                placeholder="Zoek een case, klant of trefwoord..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus={searchOpen || undefined}
-              />
-              {searchQuery && (
-                <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
-              )}
+            <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
+              <div className="topbar-search">
+                <input
+                  type="text"
+                  placeholder="Zoek een case, klant of trefwoord..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus={searchOpen || undefined}
+                />
+                {searchQuery && (
+                  <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
         <div className="view-toggle">
           <button
