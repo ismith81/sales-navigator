@@ -7,6 +7,7 @@ import CaseManager from './CaseManager';
 import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
 import PersonaKompas from './PersonaKompas';
+import ChatPanel from './ChatPanel';
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function Navigator() {
   const [activeTab, setActiveTab] = useState('doelen');
   const [activeFilter, setActiveFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -305,6 +307,20 @@ export default function Navigator() {
             )}
           </div>
         )}
+        {view === 'navigator' && (
+          <button
+            type="button"
+            className="topbar-chat-btn"
+            onClick={() => setChatOpen(true)}
+            title="Sales assistent openen"
+            aria-label="Sales assistent openen"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="topbar-chat-label">Assistent</span>
+          </button>
+        )}
         <div className="view-toggle">
           <button
             className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
@@ -426,6 +442,17 @@ export default function Navigator() {
 
       {/* Toast notification */}
       {toast && <div className="toast">{toast}</div>}
+
+      {/* Sales-assistent — niet-destructief naast de bestaande zoekbalk. */}
+      <ChatPanel
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        context={{
+          activeTab,
+          activeFilter,
+          activePersonaLabel: activePersona ? personas[activePersona]?.label : null,
+        }}
+      />
     </div>
   );
 }
