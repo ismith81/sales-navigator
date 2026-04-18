@@ -369,17 +369,6 @@ export default function Navigator() {
             </>
           ) : (
             <>
-              {activeFilter && (
-                <div className="active-filter-bar active-filter-bar--compact">
-                  <button
-                    className="btn-clear-filter"
-                    onClick={() => setActiveFilter(null)}
-                  >
-                    ← Terug naar totaal overzicht
-                  </button>
-                </div>
-              )}
-
               {activeFilter && currentTopic && (
                 <TopicView
                   topicKey={activeFilter}
