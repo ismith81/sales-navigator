@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Mockup — Persona Kompas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #2C3C52;
+    --navy-light: #3a4e68;
+    --teal: #31B7B9;
+    --accent: #ED174B;
+    --orange: #ED8936;
+    --bg: #F4F6F9;
+    --white: #ffffff;
+    --border: #E2E7EE;
+    --text: #2C3C52;
+    --muted: #6B7A8F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Nunito Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 24px 80px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  h1.title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  h2.sub {
+    font-size: 26px;
+    margin: 0 0 24px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+
+  /* ─── MOCKUP FRAME ───────────────────────────────── */
+  .app {
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(44,60,82,0.08);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .app-head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--navy);
+    color: var(--white);
+  }
+  .brand { font-weight: 800; letter-spacing: 0.02em; font-size: 15px; }
+  .brand span { color: var(--teal); }
+  .app-head .u { font-size: 12px; opacity: 0.7; }
+
+  .content { padding: 24px; }
+
+  /* ─── KOMPAS WIDGET ──────────────────────────────── */
+  .kompas {
+    background: linear-gradient(180deg, #fafbfd, #fff);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+  }
+  .kompas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .kompas-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--navy);
+  }
+  .kompas-title svg { color: var(--teal); }
+  .kompas-clear {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .kompas-clear:hover { background: var(--border); color: var(--navy); }
+
+  .kompas-grid {
+    display: grid;
+    grid-template-columns: 28px 1fr 1fr;
+    grid-template-rows: 22px 1fr 1fr 22px;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .axis-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .axis-label.vert {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .tl { grid-column: 2; grid-row: 1; justify-content: flex-start; padding-left: 12px; }
+  .tr { grid-column: 3; grid-row: 1; justify-content: flex-end; padding-right: 12px; }
+  .bl { grid-column: 2; grid-row: 4; justify-content: flex-start; padding-left: 12px; }
+  .br { grid-column: 3; grid-row: 4; justify-content: flex-end; padding-right: 12px; }
+  .lt { grid-column: 1; grid-row: 2; }
+  .lb { grid-column: 1; grid-row: 3; }
+
+  .quad {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    text-align: left;
+    font-family: inherit;
+  }
+  .quad:hover {
+    border-color: var(--teal);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(49,183,185,0.12);
+  }
+  .quad.active {
+    border-color: var(--teal);
+    background: linear-gradient(180deg, rgba(49,183,185,0.08), rgba(49,183,185,0.02));
+    box-shadow: 0 6px 20px rgba(49,183,185,0.18);
+  }
+  .quad .icon { font-size: 20px; }
+  .quad .qtitle { font-weight: 700; font-size: 14px; color: var(--navy); }
+  .quad .roles { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  .q1 { grid-column: 2; grid-row: 2; }
+  .q2 { grid-column: 3; grid-row: 2; }
+  .q3 { grid-column: 2; grid-row: 3; }
+  .q4 { grid-column: 3; grid-row: 3; }
+
+  .kompas-helper {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(49,183,185,0.08);
+    border-left: 3px solid var(--teal);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+  .kompas-helper.neutral {
+    background: #f4f6f9;
+    border-left-color: var(--border);
+    color: var(--muted);
+  }
+
+  /* ─── BELOW THE KOMPAS ───────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .tab {
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    font-family: inherit;
+  }
+  .tab.active { color: var(--navy); border-bottom-color: var(--accent); }
+
+  .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+  .fb {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-width: 200px;
+    max-width: 260px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+  }
+  .fb.active { border-color: var(--accent); background: rgba(237,23,75,0.04); }
+  .fb-label { font-weight: 700; font-size: 13px; color: var(--navy); display: block; margin-bottom: 4px; }
+  .fb-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  .topic-panel {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .topic-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 0 0 16px;
+  }
+  .persona-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: rgba(49,183,185,0.15);
+    color: var(--teal);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 10px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .topic-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .col-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .col-title.talk { color: var(--accent); }
+  .col-title.ask { color: var(--teal); }
+  ul.items { margin: 0; padding: 0; list-style: none; }
+  ul.items li {
+    padding: 8px 0 8px 16px;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+    line-height: 1.5;
+    position: relative;
+    transition: background 0.2s ease;
+  }
+  ul.items li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  ul.items.ask li:before { color: var(--teal); }
+  ul.items li:last-child { border-bottom: none; }
+  ul.items li.highlight {
+    background: rgba(49,183,185,0.06);
+    padding-left: 20px;
+    margin: 4px -4px;
+    border-radius: 6px;
+    border: 1px solid rgba(49,183,185,0.25);
+    border-bottom-style: solid;
+  }
+  ul.items li.highlight:before { left: 6px; }
+
+  .notes {
+    margin-top: 32px;
+    padding: 20px 24px;
+    background: #fffbe6;
+    border: 1px solid #f5e1a6;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .notes h3 { margin: 0 0 8px; font-size: 14px; color: var(--navy); }
+  .notes ul { margin: 0; padding-left: 20px; }
+
+  @media (max-width: 720px) {
+    .topic-cols { grid-template-columns: 1fr; }
+    .kompas-grid { grid-template-columns: 22px 1fr 1fr; }
+    .quad { padding: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title">Mockup · Sales Navigator</h1>
+  <h2 class="sub">Persona Kompas — eerste schets</h2>
+
+  <div class="app">
+    <div class="app-head">
+      <div class="brand">Sales<span>Navigator</span></div>
+      <div class="u">Gersy · Creates</div>
+    </div>
+
+    <div class="content">
+
+      <!-- KOMPAS -->
+      <div class="kompas">
+        <div class="kompas-header">
+          <div class="kompas-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            Met wie praat je?
+          </div>
+          <button class="kompas-clear" id="clearBtn" onclick="selectQuad(null)">Wissen</button>
+        </div>
+
+        <div class="kompas-grid">
+          <div class="axis-label tl">◀ Business</div>
+          <div class="axis-label tr">Tech ▶</div>
+          <div class="axis-label vert lt">▲ Strategisch</div>
+
+          <button class="quad q1" data-q="business-strategisch" onclick="selectQuad('business-strategisch')">
+            <div class="icon">🧭</div>
+            <div class="qtitle">Business · Strategisch</div>
+            <div class="roles">CFO · Alg. Directeur · CCO</div>
+          </button>
+
+          <button class="quad q2" data-q="tech-strategisch" onclick="selectQuad('tech-strategisch')">
+            <div class="icon">🛠️</div>
+            <div class="qtitle">Tech · Strategisch</div>
+            <div class="roles">CIO · CDO · Head of Data</div>
+          </button>
+
+          <div class="axis-label vert lb">Operationeel ▼</div>
+
+          <button class="quad q3" data-q="business-operationeel" onclick="selectQuad('business-operationeel')">
+            <div class="icon">📊</div>
+            <div class="qtitle">Business · Operationeel</div>
+            <div class="roles">Controller · Afd. hoofd · PO</div>
+          </button>
+
+          <button class="quad q4" data-q="tech-operationeel" onclick="selectQuad('tech-operationeel')">
+            <div class="icon">⚙️</div>
+            <div class="qtitle">Tech · Operationeel</div>
+            <div class="roles">Data engineer · BI-analist · DBA</div>
+          </button>
+
+          <div class="axis-label bl">Business</div>
+          <div class="axis-label br">Tech</div>
+        </div>
+
+        <div class="kompas-helper neutral" id="helper">
+          Kies een kwadrant om signalen, talking points en vervolgvragen af te stemmen op de persoon aan de telefoon. Laat leeg voor de neutrale weergave.
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab">🎯 Doelen</button>
+        <button class="tab active">💡 Behoeften</button>
+        <button class="tab">🔧 Diensten</button>
+      </div>
+
+      <!-- FILTER BUTTONS — signalen passen zich aan per kwadrant -->
+      <div class="filter-row" id="filterRow">
+        <button class="fb active">
+          <span class="fb-label">Veilig en betrouwbaar</span>
+          <span class="fb-hint" id="hint-veilig">"Ik vertrouw de cijfers niet"</span>
+        </button>
+        <button class="fb">
+          <span class="fb-label">Wendbaar</span>
+          <span class="fb-hint" id="hint-wendbaar">"Elke wijziging duurt weken"</span>
+        </button>
+        <button class="fb">
+          <span class="fb-label">AI ready</span>
+          <span class="fb-hint" id="hint-ai">"AI-pilots stranden op datakwaliteit"</span>
+        </button>
+        <button class="fb">
+          <span class="fb-label">Realtime data</span>
+          <span class="fb-hint" id="hint-rt">"Stuurinformatie loopt achter"</span>
+        </button>
+      </div>
+
+      <!-- TOPIC PANEL — de talking points en vragen kantelen mee -->
+      <div class="topic-panel">
+        <h3 class="topic-title">
+          Veilig en betrouwbaar
+          <span class="persona-badge" id="badge" style="display:none;">📌 <span id="badgeLabel">Business · Strategisch</span></span>
+        </h3>
+
+        <div class="topic-cols">
+          <div>
+            <div class="col-title talk">Wat zeg je?</div>
+            <ul class="items" id="talkList">
+              <li>Data-security en betrouwbaarheid zijn de basis — zonder vertrouwen in je data kun je er niet op sturen.</li>
+              <li>Wij implementeren governance, RBAC, audit logging en encryption als standaard onderdeel van elk dataplatform.</li>
+              <li>Compliance-eisen zoals AVG/GDPR worden meegenomen vanaf dag één, niet als afterthought.</li>
+            </ul>
+          </div>
+          <div>
+            <div class="col-title ask">Wat vraag je?</div>
+            <ul class="items ask" id="askList">
+              <li>Hoe is de governance rondom jullie data nu geregeld?</li>
+              <li>Hebben jullie te maken met compliance-eisen die impact hebben op hoe jullie data opslaan en verwerken?</li>
+              <li>Is er zicht op wie toegang heeft tot welke data binnen jullie organisatie?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Wat zie je hier?</h3>
+    <ul>
+      <li><b>Kompas bovenin</b> — klik een kwadrant; zie onder live veranderen.</li>
+      <li><b>Signalen op filterknoppen</b> worden herschreven naar het taalgebruik van dat kwadrant.</li>
+      <li><b>Talking points + vervolgvragen</b> krijgen een gemarkeerde variant die specifiek bij dat kwadrant past (groene rand) — de rest blijft zichtbaar.</li>
+      <li><b>Geen kwadrant gekozen</b> = neutraal, precies wat Gersy nu ook ziet. Zo breek je de bestaande flow niet.</li>
+      <li>De <b>rolnamen onder elk kwadrant</b> dienen als geheugensteun — Gersy hoeft ze niet te onthouden.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // Per kwadrant: hints op filterknoppen + highlight-variant van talking point & vraag
+  const DATA = {
+    'business-strategisch': {
+      label: 'Business · Strategisch',
+      hints: {
+        veilig: '"Een datalek kost ons reputatie én klanten"',
+        wendbaar: '"We reageren te traag op marktverandering"',
+        ai: '"Concurrent doet het met AI — wij niet"',
+        rt: '"Beslissingen nemen op oude cijfers kost omzet"'
+      },
+      talk: 'Een incident in datakwaliteit of security raakt direct jullie reputatie en omzet — niet alleen IT. Wij maken die risico\'s expliciet en beheersbaar.',
+      ask: 'Welk bedrag staat er voor jullie op het spel bij een datakwaliteit- of compliance-incident?'
+    },
+    'tech-strategisch': {
+      label: 'Tech · Strategisch',
+      hints: {
+        veilig: '"We moeten aantoonbaar compliant zijn — AVG, DORA, audit"',
+        wendbaar: '"Onze architectuur remt de roadmap"',
+        ai: '"Ons dataplatform is niet klaar voor AI-workloads"',
+        rt: '"We hebben event-driven capaciteit nodig"'
+      },
+      talk: 'Governance bouwen we in de architectuur in: Unity Catalog / Purview, RBAC op laag-niveau, audit-trail per query. Past in je bestaande Azure- of Databricks-landschap.',
+      ask: 'Welk governance-framework (Unity Catalog, Purview, custom) past bij jullie platform-keuze op termijn?'
+    },
+    'business-operationeel': {
+      label: 'Business · Operationeel',
+      hints: {
+        veilig: '"Mijn rapport klopt niet — weer"',
+        wendbaar: '"Elke kleine wijziging kost me weken"',
+        ai: '"Ik kan niets met die AI-tool — mijn data is rommel"',
+        rt: '"Ik krijg de cijfers altijd te laat"'
+      },
+      talk: 'Je krijgt dagelijks cijfers waar je op kunt bouwen — geen twijfel, geen handmatig nachecken. Minder Excel, meer analyseren.',
+      ask: 'Hoeveel tijd per week ben je bezig met cijfers corrigeren in plaats van interpreteren?'
+    },
+    'tech-operationeel': {
+      label: 'Tech · Operationeel',
+      hints: {
+        veilig: '"We hebben geen zicht op wie welke data raakt"',
+        wendbaar: '"We stikken in ad-hoc verzoeken"',
+        ai: '"Onze data-pipelines zijn niet ML-ready"',
+        rt: '"Onze batch-jobs lopen uit hun tijdsvenster"'
+      },
+      talk: 'Automatische kwaliteitschecks, schema-validatie in pipelines, alerting op afwijkingen — jij hoeft niet meer handmatig te debuggen wat kapot is gegaan.',
+      ask: 'Hoe detecteren jullie nu schema-drift of een gevallen pipeline — krijgen jullie een alert of belt iemand?'
+    }
+  };
+
+  const helperText = {
+    'business-strategisch': 'Denk in ROI, risico\'s en marktpositie. Vermijd techjargon. Kortere zinnen, concrete bedragen.',
+    'tech-strategisch': 'Architectuur, vendor-strategie en roadmap. Wees specifiek over tools en patterns.',
+    'business-operationeel': 'Dagelijkse frustraties en tijdwinst. Minder theorie, meer "krijg jij dit voor elkaar?".',
+    'tech-operationeel': 'Pragmatisch, tools-niveau. Erken de pijn van hands-on werk.'
+  };
+
+  let current = null;
+
+  function selectQuad(q) {
+    current = q;
+    document.querySelectorAll('.quad').forEach(el => {
+      el.classList.toggle('active', el.dataset.q === q);
+    });
+
+    const hints = {
+      veilig: '"Ik vertrouw de cijfers niet"',
+      wendbaar: '"Elke wijziging duurt weken"',
+      ai: '"AI-pilots stranden op datakwaliteit"',
+      rt: '"Stuurinformatie loopt achter"'
+    };
+    const data = q ? DATA[q] : null;
+    const active = data ? data.hints : hints;
+
+    document.getElementById('hint-veilig').textContent = active.veilig;
+    document.getElementById('hint-wendbaar').textContent = active.wendbaar;
+    document.getElementById('hint-ai').textContent = active.ai;
+    document.getElementById('hint-rt').textContent = active.rt;
+
+    // helper
+    const helper = document.getElementById('helper');
+    if (q) {
+      helper.className = 'kompas-helper';
+      helper.textContent = helperText[q];
+    } else {
+      helper.className = 'kompas-helper neutral';
+      helper.textContent = 'Kies een kwadrant om signalen, talking points en vervolgvragen af te stemmen op de persoon aan de telefoon. Laat leeg voor de neutrale weergave.';
+    }
+
+    // badge
+    const badge = document.getElementById('badge');
+    if (q) {
+      badge.style.display = 'inline-flex';
+      document.getElementById('badgeLabel').textContent = data.label;
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // highlight-variants
+    const talkList = document.getElementById('talkList');
+    const askList = document.getElementById('askList');
+    talkList.querySelectorAll('li.highlight').forEach(n => n.remove());
+    askList.querySelectorAll('li.highlight').forEach(n => n.remove());
+    if (q) {
+      const t = document.createElement('li');
+      t.className = 'highlight';
+      t.textContent = data.talk;
+      talkList.prepend(t);
+      const a = document.createElement('li');
+      a.className = 'highlight';
+      a.textContent = data.ask;
+      askList.prepend(a);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Mockup — Persona Beheer</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #2C3C52;
+    --navy-light: #3a4e68;
+    --teal: #31B7B9;
+    --accent: #ED174B;
+    --orange: #ED8936;
+    --bg: #F4F6F9;
+    --white: #ffffff;
+    --border: #E2E7EE;
+    --text: #2C3C52;
+    --muted: #6B7A8F;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Nunito Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 32px 24px 80px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1.title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; }
+  h2.sub { font-size: 26px; margin: 0 0 24px; font-weight: 800; color: var(--navy); }
+
+  .app { background: var(--white); border-radius: 14px; box-shadow: 0 12px 40px rgba(44,60,82,0.08); overflow: hidden; border: 1px solid var(--border); }
+  .app-head { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--navy); color: var(--white); }
+  .brand { font-weight: 800; letter-spacing: 0.02em; font-size: 15px; }
+  .brand span { color: var(--teal); }
+  .u { font-size: 12px; opacity: 0.7; }
+
+  .beheer-tabs { display: flex; gap: 4px; padding: 12px 24px 0; border-bottom: 1px solid var(--border); background: #fafbfd; }
+  .bh-tab { padding: 10px 16px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; font-family: inherit; position: relative; }
+  .bh-tab.active { color: var(--navy); border-bottom-color: var(--accent); }
+  .bh-tab .new { font-size: 9px; background: var(--teal); color: var(--white); padding: 2px 6px; border-radius: 10px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; vertical-align: middle; }
+
+  .content { padding: 24px; }
+
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 20px; }
+  .page-title { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0 0 6px; }
+  .page-sub { font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 620px; }
+  .btn-add-persona { background: var(--teal); color: var(--white); border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn-add-persona:hover { background: #28a1a3; }
+
+  /* Row-with-expand, zoals FilterManager */
+  .fm-row-wrap { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: var(--white); overflow: hidden; transition: box-shadow 0.15s ease; }
+  .fm-row-wrap:hover { box-shadow: 0 2px 8px rgba(44,60,82,0.06); }
+  .fm-row-wrap.open { box-shadow: 0 6px 24px rgba(44,60,82,0.10); }
+  .fm-row { padding: 14px 18px; display: grid; grid-template-columns: 36px 220px 1fr auto 24px; gap: 14px; align-items: center; cursor: pointer; }
+  .fm-icon { font-size: 22px; width: 36px; text-align: center; }
+  .fm-row-main { display: flex; flex-direction: column; gap: 2px; }
+  .fm-row-title { font-weight: 700; font-size: 14px; color: var(--navy); }
+  .fm-row-axes { font-size: 11px; color: var(--muted); }
+  .fm-row-preview { font-size: 12px; color: var(--muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .fm-row-meta { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge.complete { background: rgba(49,183,185,0.15); color: var(--teal); }
+  .badge.incomplete { background: #fef4e6; color: var(--orange); }
+  .badge.refs { background: #f4f6f9; color: var(--muted); }
+  .fm-chevron { color: var(--muted); font-size: 14px; transition: transform 0.2s ease; }
+  .fm-row-wrap.open .fm-chevron { transform: rotate(90deg); color: var(--teal); }
+
+  .fm-expand-panel { border-top: 1px solid var(--border); padding: 20px 22px 22px; background: linear-gradient(180deg, #fafbfd, #fff); display: none; }
+  .fm-row-wrap.open .fm-expand-panel { display: block; }
+
+  .panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; }
+  .tag-large { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--navy); }
+  .tag-large .quad-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal); }
+  .inline-rename { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--navy); cursor: pointer; font-family: inherit; font-weight: 600; }
+  .inline-rename:hover { background: var(--white); border-color: var(--teal); color: var(--teal); }
+
+  .fm-field { margin-bottom: 18px; }
+  .fm-field-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .fm-field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--navy); }
+  .fm-field-hint { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .fm-input, .fm-textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--navy);
+    background: var(--white);
+    line-height: 1.5;
+  }
+  .fm-textarea { min-height: 90px; resize: vertical; }
+  .fm-input:focus, .fm-textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(49,183,185,0.15); }
+
+  .axes-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .axes-group { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--white); }
+  .axes-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .axes-choices { display: flex; gap: 6px; }
+  .axis-chip { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; background: var(--white); text-align: center; font-family: inherit; }
+  .axis-chip.active { border-color: var(--teal); background: rgba(49,183,185,0.08); color: var(--teal); }
+
+  .panel-footer { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  .delete-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 7px; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600; }
+  .delete-btn:hover { background: #fdf2f4; border-color: var(--accent); color: var(--accent); }
+
+  /* Topic-cross-reference callout */
+  .crossref {
+    margin-top: 28px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    background: #fafbfd;
+  }
+  .crossref h4 { margin: 0 0 8px; font-size: 13px; color: var(--navy); font-weight: 800; }
+  .crossref p { margin: 0 0 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .crossref-preview {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .crossref-preview .cp-head { font-weight: 700; color: var(--navy); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+  .crossref-preview .cp-head .count { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cp-row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--border); font-size: 12px; }
+  .cp-row:last-child { border-bottom: none; }
+  .cp-row .cp-label { color: var(--muted); font-weight: 600; font-size: 11px; }
+  .cp-row .cp-text { color: var(--navy); }
+  .cp-row.empty .cp-text { color: var(--muted); font-style: italic; }
+
+  .notes { margin-top: 32px; padding: 20px 24px; background: #fffbe6; border: 1px solid #f5e1a6; border-radius: 10px; font-size: 13px; line-height: 1.6; }
+  .notes h3 { margin: 0 0 8px; font-size: 14px; color: var(--navy); }
+  .notes ul { margin: 0; padding-left: 20px; }
+  .notes ul li { margin-bottom: 4px; }
+
+  @media (max-width: 720px) {
+    .fm-row { grid-template-columns: 32px 1fr auto; }
+    .fm-row-preview { display: none; }
+    .axes-pick { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title">Mockup · Sales Navigator — Beheer</h1>
+  <h2 class="sub">Persona's beheren</h2>
+
+  <div class="app">
+    <div class="app-head">
+      <div class="brand">Sales<span>Navigator</span> · Beheer</div>
+      <div class="u">Gersy · Creates</div>
+    </div>
+
+    <div class="beheer-tabs">
+      <button class="bh-tab">Cases</button>
+      <button class="bh-tab">Doelen</button>
+      <button class="bh-tab">Behoeften</button>
+      <button class="bh-tab">Diensten</button>
+      <button class="bh-tab active">Persona's <span class="new">Nieuw</span></button>
+      <button class="bh-tab">Backup</button>
+    </div>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h3 class="page-title">Persona's</h3>
+          <p class="page-sub">Elke persona bepaalt hoe signalen, talking points en vervolgvragen worden ingekleurd als je 'm tijdens een gesprek aanklikt. De 4 standaard-kwadranten staan hieronder — je kunt ze aanpassen, verwijderen of een eigen persona toevoegen.</p>
+        </div>
+        <button class="btn-add-persona">+ Persona toevoegen</button>
+      </div>
+
+      <!-- Persona 1: OPEN -->
+      <div class="fm-row-wrap open">
+        <div class="fm-row" onclick="this.parentElement.classList.toggle('open')">
+          <div class="fm-icon">🧭</div>
+          <div class="fm-row-main">
+            <div class="fm-row-title">Business · Strategisch</div>
+            <div class="fm-row-axes">Business × Strategisch</div>
+          </div>
+          <div class="fm-row-preview">"We willen data-gedreven worden, maar ik zie de ROI nog niet." — CFO, Algemeen Directeur, CCO</div>
+          <div class="fm-row-meta">
+            <span class="badge complete">Compleet</span>
+            <span class="badge refs">6 varianten</span>
+          </div>
+          <div class="fm-chevron">▸</div>
+        </div>
+
+        <div class="fm-expand-panel">
+
+          <div class="panel-title-row">
+            <div class="tag-large"><span class="quad-dot"></span> Business · Strategisch</div>
+            <button class="inline-rename">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Hernoemen
+            </button>
+          </div>
+
+          <div class="fm-field">
+            <div class="fm-field-header">
+              <span class="fm-field-label">Assen</span>
+              <span class="fm-field-hint">Bepaalt waar de persona in het kompas verschijnt</span>
+            </div>
+            <div class="axes-pick">
+              <div class="axes-group">
+                <div class="axes-group-label">As 1: Domein</div>
+                <div class="axes-choices">
+                  <button class="axis-chip active">Business</button>
+                  <button class="axis-chip">Tech</button>
+                </div>
+              </div>
+              <div class="axes-group">
+                <div class="axes-group-label">As 2: Niveau</div>
+                <div class="axes-choices">
+                  <button class="axis-chip active">Strategisch</button>
+                  <button class="axis-chip">Operationeel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fm-field">
+            <div class="fm-field-header">
+              <span class="fm-field-label">Omschrijving</span>
+              <span class="fm-field-hint">Korte duiding voor Gersy — wanneer herken je dit type?</span>
+            </div>
+            <textarea class="fm-textarea">Beslissers die de organisatie op koers houden: CFO, directie, commerciële leiding. Ze denken in risico, rendement en marktpositie. Niet in tools of pipelines.</textarea>
+          </div>
+
+          <div class="fm-field">
+            <div class="fm-field-header">
+              <span class="fm-field-label">Voorbeeld-rollen</span>
+              <span class="fm-field-hint">Komma-gescheiden. Verschijnt als geheugensteun onder het kwadrant.</span>
+            </div>
+            <input class="fm-input" value="CFO, Algemeen Directeur, CCO, Finance Director">
+          </div>
+
+          <div class="fm-field">
+            <div class="fm-field-header">
+              <span class="fm-field-label">Klantsignalen (herkenningspunten)</span>
+              <span class="fm-field-hint">Citaten die je typisch hoort — helpt Gersy dit kwadrant te herkennen tijdens koud bellen</span>
+            </div>
+            <textarea class="fm-textarea">• "We willen data-gedreven worden, maar ik zie de ROI nog niet."
+• "Wat kost het ons als we dit niet doen?"
+• "Hoe meten we succes over 12 maanden?"</textarea>
+          </div>
+
+          <div class="fm-field">
+            <div class="fm-field-header">
+              <span class="fm-field-label">Coaching (helper-balk)</span>
+              <span class="fm-field-hint">Tekst die Gersy ziet zodra ze dit kwadrant kiest — stijlinstructie voor het gesprek</span>
+            </div>
+            <textarea class="fm-textarea">Denk in ROI, risico's en marktpositie. Vermijd techjargon. Kortere zinnen, concrete bedragen. Praat over outcomes, niet over outputs.</textarea>
+          </div>
+
+          <!-- Cross-reference naar topic-varianten -->
+          <div class="crossref">
+            <h4>Varianten per topic (6 / 10 ingevuld)</h4>
+            <p>Per Doel, Behoefte of Dienst kun je optioneel een persona-specifiek talking-point en vervolgvraag toevoegen. Deze verschijnen tijdens een gesprek met een ✨ als "Business · Strategisch" is geselecteerd. Niet ingevuld = Gersy ziet alleen de neutrale content.</p>
+
+            <div class="crossref-preview">
+              <div class="cp-head">
+                <span>💡 Veilig en betrouwbaar</span>
+                <span class="count">2 velden ✓</span>
+              </div>
+              <div class="cp-row">
+                <div class="cp-label">Wat zeg je?</div>
+                <div class="cp-text">Een incident in datakwaliteit of security raakt direct jullie reputatie en omzet — niet alleen IT.</div>
+              </div>
+              <div class="cp-row">
+                <div class="cp-label">Wat vraag je?</div>
+                <div class="cp-text">Welk bedrag staat er voor jullie op het spel bij een compliance-incident?</div>
+              </div>
+            </div>
+
+            <div class="crossref-preview" style="margin-top: 10px;">
+              <div class="cp-head">
+                <span>🎯 Data als business model</span>
+                <span class="count">0 velden · leeg</span>
+              </div>
+              <div class="cp-row empty">
+                <div class="cp-label">Wat zeg je?</div>
+                <div class="cp-text">— nog niet ingevuld — klik om toe te voegen</div>
+              </div>
+              <div class="cp-row empty">
+                <div class="cp-label">Wat vraag je?</div>
+                <div class="cp-text">— nog niet ingevuld —</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px; color: var(--muted); text-align: right;">
+              + 8 andere topics · <a href="#" style="color: var(--teal); text-decoration: none; font-weight: 600;">Bekijk alle 10 →</a>
+            </div>
+          </div>
+
+          <div class="panel-footer">
+            <button class="delete-btn">Verwijderen</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Persona 2: CLOSED -->
+      <div class="fm-row-wrap">
+        <div class="fm-row" onclick="this.parentElement.classList.toggle('open')">
+          <div class="fm-icon">🛠️</div>
+          <div class="fm-row-main">
+            <div class="fm-row-title">Tech · Strategisch</div>
+            <div class="fm-row-axes">Tech × Strategisch</div>
+          </div>
+          <div class="fm-row-preview">"We oriënteren op Fabric vs Databricks." — CIO, CDO, Head of Data, IT-directeur</div>
+          <div class="fm-row-meta">
+            <span class="badge complete">Compleet</span>
+            <span class="badge refs">8 varianten</span>
+          </div>
+          <div class="fm-chevron">▸</div>
+        </div>
+      </div>
+
+      <!-- Persona 3: CLOSED -->
+      <div class="fm-row-wrap">
+        <div class="fm-row" onclick="this.parentElement.classList.toggle('open')">
+          <div class="fm-icon">📊</div>
+          <div class="fm-row-main">
+            <div class="fm-row-title">Business · Operationeel</div>
+            <div class="fm-row-axes">Business × Operationeel</div>
+          </div>
+          <div class="fm-row-preview">"Mijn maandrapport kost me 3 dagen." — Controller, afdelingshoofd, PO</div>
+          <div class="fm-row-meta">
+            <span class="badge incomplete">Coaching ontbreekt</span>
+            <span class="badge refs">3 varianten</span>
+          </div>
+          <div class="fm-chevron">▸</div>
+        </div>
+      </div>
+
+      <!-- Persona 4: CLOSED -->
+      <div class="fm-row-wrap">
+        <div class="fm-row" onclick="this.parentElement.classList.toggle('open')">
+          <div class="fm-icon">⚙️</div>
+          <div class="fm-row-main">
+            <div class="fm-row-title">Tech · Operationeel</div>
+            <div class="fm-row-axes">Tech × Operationeel</div>
+          </div>
+          <div class="fm-row-preview">"We stikken in ad-hoc verzoeken." — Data engineer, BI-analist, DBA</div>
+          <div class="fm-row-meta">
+            <span class="badge complete">Compleet</span>
+            <span class="badge refs">5 varianten</span>
+          </div>
+          <div class="fm-chevron">▸</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="notes">
+    <h3>Wat zie je hier?</h3>
+    <ul>
+      <li><b>Nieuwe tab "Persona's"</b> naast de bestaande tabs in Beheer — zelfde row-with-expand patroon als Doelen/Behoeften/Diensten.</li>
+      <li><b>Per persona beheer je:</b> assen (2 × 2 radio), omschrijving, voorbeeld-rollen, klantsignalen, coaching-tekst.</li>
+      <li><b>"Varianten per topic"</b> onder in elke persona: per Doel/Behoefte/Dienst kun je een persona-specifieke talking point + vervolgvraag invullen. Leeg = Gersy ziet de neutrale content tijdens het bellen.</li>
+      <li><b>Badge "6 varianten"</b> op de rij toont in één oogopslag hoe compleet een persona is uitgewerkt.</li>
+      <li><b>Volgorde opslaan</b>: dit gebeurt zoals nu via de bestaande debounced-save naar Supabase — identiek aan Doelen/Behoeften/Diensten.</li>
+    </ul>
+    <h3 style="margin-top: 16px;">Waar zit de complexiteit?</h3>
+    <ul>
+      <li><b>4 persona's × 10 topics = 40 velden-paren</b> om in te vullen als je alles dekt. Daarom: varianten zijn <em>optioneel</em>. Begin met de meest impactvolle combinaties. De tool valt bij ontbrekende varianten terug op de neutrale content.</li>
+      <li><b>Alternatief</b>: variant-beheer óók aanbieden vanuit het <em>topic</em> (dus in Behoeften → "Veilig en betrouwbaar" ook een sectie met 4 persona-varianten). Dan kun je óf per-topic óf per-persona werken — wat jou uitkomt.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
