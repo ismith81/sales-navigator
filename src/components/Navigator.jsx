@@ -10,6 +10,8 @@ import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
 
 const ROUTE_KEY = 'sn.route'; // 'assistent' | 'gids'
+const ROUTE_MIGRATION_KEY = 'sn.route.migration'; // één-malig migreren naar nieuwe default
+const ROUTE_MIGRATION_VERSION = '2'; // bump → resets oude 'assistent' default eenmalig naar 'gids'
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -38,6 +40,16 @@ export default function Navigator() {
   const [chatInitialPrompt, setChatInitialPrompt] = useState(null);
   const [route, setRoute] = useState(() => {
     try {
+      // One-time migratie: de default was eerder 'assistent'; nu 'gids'.
+      // Gebruikers die nooit bewust op Assistent hebben gekozen willen we
+      // eenmalig resetten. We kunnen niet zien of ze écht hebben gekozen,
+      // dus we accepteren dat bewuste Assistent-keuzes ook worden overschreven
+      // (kleine gebruikersgroep — bewuste trade-off).
+      const migratedVersion = localStorage.getItem(ROUTE_MIGRATION_KEY);
+      if (migratedVersion !== ROUTE_MIGRATION_VERSION) {
+        localStorage.removeItem(ROUTE_KEY);
+        localStorage.setItem(ROUTE_MIGRATION_KEY, ROUTE_MIGRATION_VERSION);
+      }
       const stored = localStorage.getItem(ROUTE_KEY);
       return stored === 'gids' || stored === 'assistent' ? stored : 'gids';
     } catch { return 'gids'; }
