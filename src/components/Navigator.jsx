@@ -447,6 +447,15 @@ export default function Navigator() {
       <ChatPanel
         open={chatOpen}
         onClose={() => setChatOpen(false)}
+        cases={cases}
+        onNavigateToCase={(caseName) => {
+          // Vanuit chat naar de case springen: sluit chat, switch naar navigator-view,
+          // reset filter en zet zoekbalk op de exacte casenaam → CasesOverview filtert.
+          setChatOpen(false);
+          setView('navigator');
+          setActiveFilter(null);
+          setSearchQuery(caseName);
+        }}
         context={{
           activeTab,
           activeFilter,
