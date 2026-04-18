@@ -49,7 +49,7 @@ body::before {
 }
 
 .app {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
@@ -3326,12 +3326,11 @@ body::before {
 /* ═══ GIDS-ROUTE WRAPPER ══════════════════════════════════════════════════
    Content gecentreerd + begrensd, matched de chat-card uit de Assistent-
    route zodat beide routes op dezelfde compositorische baan staan. */
+/* Gids-route gebruikt dezelfde max-width als .app (topbar) zodat brand,
+   filter-card en cases allemaal op dezelfde linker- en rechter-gutter
+   uitlijnen. Geen eigen breedte meer nodig. */
 .gids-route {
-  max-width: 900px;
-  margin: 0 auto;
-}
-@media (max-width: 960px) {
-  .gids-route { max-width: none; }
+  width: 100%;
 }
 
 /* Card-variant van de context-strip: persona + filters als één blok,
