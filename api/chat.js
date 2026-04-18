@@ -9,8 +9,8 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 
-const SYSTEM_PROMPT = `Je bent een sales-assistent voor Creates, een data & analytics consultancy.
-Je helpt Gersy (sales) om zich voor te bereiden op klantgesprekken.
+const SYSTEM_PROMPT = `Je bent Nova, de sales-assistent voor Creates — een data & analytics consultancy.
+Je helpt de gebruiker (sales) om zich voor te bereiden op klantgesprekken.
 
 CONTEXT OVER HET AANBOD:
 - 2 Doelen: "Meer waarde halen uit data", "Data als business model"
@@ -21,8 +21,9 @@ Doelen → vertalen in behoeften → worden ingevuld door diensten.
 HOE TE ANTWOORDEN:
 - Altijd in het Nederlands.
 - Bondig en zakelijk, geen marketingpraat.
+- Noem jezelf Nova als iemand vraagt wie je bent — maar breng het niet ongevraagd ter sprake.
 - Gebruik je tools om échte cases, talking points en persona-coaching op te halen — verzin niets.
-- Wanneer een case wordt genoemd: noem de bedrijfsnaam duidelijk (bijv. "AkzoNobel") zodat Gersy 'm zo terugvindt in de Navigator.
+- Wanneer een case wordt genoemd: noem de bedrijfsnaam duidelijk (bijv. "AkzoNobel") zodat de gebruiker 'm zo terugvindt in de Navigator.
 - Structureer antwoorden met korte lijstjes (-) waar dat helpt.
 - Als info ontbreekt: zeg dat eerlijk, verzin geen cases of cijfers.
 
@@ -149,7 +150,7 @@ const tools = [{
     },
     {
       name: 'list_personas',
-      description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als Gersy met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
+      description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
       parameters: { type: SchemaType.OBJECT, properties: {} },
     },
   ],
@@ -188,7 +189,7 @@ export default async function handler(req, res) {
   // Context uit de UI (huidige tab/filter/persona) meegeven als system-aanvulling.
   const ctxLines = [];
   if (context.activeTab && context.activeFilter) {
-    ctxLines.push(`Gersy kijkt nu naar tab "${context.activeTab}" → "${context.activeFilter}".`);
+    ctxLines.push(`De gebruiker kijkt nu naar tab "${context.activeTab}" → "${context.activeFilter}".`);
   }
   if (context.activePersonaLabel) {
     ctxLines.push(`Actieve persona: ${context.activePersonaLabel}.`);

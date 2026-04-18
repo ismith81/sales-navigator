@@ -53,7 +53,8 @@
       "Bash(cat vercel.json)",
       "Bash(python -c \"from docx import Document; d=Document\\(r'C:\\\\Users\\\\ian_s\\\\OneDrive - Caesar Experts B.V\\\\Klanten\\\\Tulp Group\\\\Contracten\\\\Voorstellen\\\\Offerte Realisatie Dataplatform_versie 1.0.docx'\\); [print\\(p.text\\) for p in d.paragraphs if p.text.strip\\(\\)]\")",
       "Read(//c/Users/ian_s/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/**)",
-      "Bash(start \"\" \"C:\\\\Users\\\\ian_s\\\\Downloads\\\\sales-navigator-mockup.html\")"
+      "Bash(start \"\" \"C:\\\\Users\\\\ian_s\\\\Downloads\\\\sales-navigator-mockup.html\")",
+      "Bash(PYTHONIOENCODING=utf-8 python \"C:\\\\Users\\\\ian_s\\\\repos\\\\creates\\\\Sales Navigator\\\\tmp\\\\fill_template.py\")"
     ]
   }
 }

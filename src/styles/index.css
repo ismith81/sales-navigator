@@ -3077,7 +3077,8 @@ body::before {
   color: #fff;
   flex-shrink: 0;
 }
-.chat-header-title { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
+.chat-header-title { display: inline-flex; align-items: baseline; gap: 0.5rem; font-size: 0.95rem; }
+.chat-header-subtitle { font-size: 0.75rem; font-weight: 400; opacity: 0.65; }
 .chat-header-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--teal);

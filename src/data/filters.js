@@ -14,7 +14,7 @@ export const TAB_CONFIG = {
 };
 
 // Voorbeeld-pijnpunten per behoefte (klanttaal tegenover de abstracte behoefte).
-// Gebruikt als eerste vulling zodat Gersy gelijk iets ziet — kan via Beheer aangepast worden.
+// Gebruikt als eerste vulling zodat de gebruiker gelijk iets ziet — kan via Beheer aangepast worden.
 export const DEFAULT_PAINPOINTS = {
   'Veilig en betrouwbaar': '<ul><li>"Data klopt niet"</li><li>"Niemand vertrouwt de cijfers"</li></ul>',
   'Wendbaar': '<ul><li>"Excel is onhoudbaar"</li><li>"Elke wijziging kost weken"</li></ul>',
