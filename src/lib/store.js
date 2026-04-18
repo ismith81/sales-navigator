@@ -55,6 +55,28 @@ async function fetchConfig(key, fallback) {
   return data ? data.value : fallback;
 }
 
+// Zorg dat elk topic dezelfde shape heeft: description + signals (rich HTML) naast talkingPoints/followUps.
+// Migreer oude painpoints[behoefte] → topics.behoeften[behoefte].signals wanneer nog niet gezet.
+function normalizeTopics(topics, painpoints) {
+  const next = {};
+  for (const category of ['doelen', 'behoeften', 'diensten']) {
+    const src = (topics && topics[category]) || {};
+    const out = {};
+    for (const [name, raw] of Object.entries(src)) {
+      const t = raw || {};
+      const fallbackSignal = category === 'behoeften' ? (painpoints && painpoints[name]) || '' : '';
+      out[name] = {
+        description: typeof t.description === 'string' ? t.description : '',
+        signals: typeof t.signals === 'string' && t.signals.length > 0 ? t.signals : fallbackSignal,
+        talkingPoints: Array.isArray(t.talkingPoints) ? t.talkingPoints : [],
+        followUps: Array.isArray(t.followUps) ? t.followUps : [],
+      };
+    }
+    next[category] = out;
+  }
+  return next;
+}
+
 export async function loadAll() {
   const [{ data: caseRows, error: caseErr }, filters, painpoints, topics] = await Promise.all([
     supabase.from('cases').select('*').order('name'),
@@ -70,16 +92,14 @@ export async function loadAll() {
     return {
       cases: seedCases,
       filters: DEFAULT_FILTERS,
-      painpoints: DEFAULT_PAINPOINTS,
-      topics: seedTopics,
+      topics: normalizeTopics(seedTopics, DEFAULT_PAINPOINTS),
     };
   }
 
   return {
     cases: (caseRows || []).map(rowToCase),
     filters: filters || DEFAULT_FILTERS,
-    painpoints: painpoints || DEFAULT_PAINPOINTS,
-    topics: topics || seedTopics,
+    topics: normalizeTopics(topics || seedTopics, painpoints || DEFAULT_PAINPOINTS),
   };
 }
 

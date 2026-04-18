@@ -4,48 +4,57 @@ import RichTextEditor from './RichTextEditor';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function FilterManager({ filters, cases, painpoints = {}, onAdd, onRename, onDelete, onUpdatePainpoint }) {
-  const [editingItem, setEditingItem] = useState(null); // { category, name }
-  const [editValue, setEditValue] = useState('');
-  const [addingTo, setAddingTo] = useState(null); // category key
+function stripHtml(html) {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || '').trim();
+}
+
+export default function FilterManager({ filters, cases, topics = {}, onAdd, onRename, onDelete, onUpdateTopicMeta }) {
+  const [expandedItem, setExpandedItem] = useState(null); // { category, name }
+  const [renaming, setRenaming] = useState(null); // { category, name }
+  const [renameValue, setRenameValue] = useState('');
+  const [addingTo, setAddingTo] = useState(null);
   const [addValue, setAddValue] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(null); // { category, name }
-  const [expandedPain, setExpandedPain] = useState(null); // behoefte name
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Check if a filter item is referenced by any case
-  const getReferencingCases = (category, name) => {
-    return cases.filter(c => c.mapping[category]?.includes(name));
-  };
+  const getReferencingCases = (category, name) =>
+    cases.filter(c => c.mapping[category]?.includes(name));
 
-  const handleStartEdit = (category, name) => {
-    setEditingItem({ category, name });
-    setEditValue(name);
-    setAddingTo(null);
-  };
+  const isExpanded = (category, name) =>
+    expandedItem?.category === category && expandedItem?.name === name;
 
-  const handleSaveEdit = () => {
-    if (!editingItem || !editValue.trim()) return;
-    const newName = editValue.trim();
-    if (newName !== editingItem.name) {
-      // Check for duplicates
-      if (filters[editingItem.category].includes(newName)) {
-        alert(`"${newName}" bestaat al in deze categorie.`);
-        return;
-      }
-      onRename(editingItem.category, editingItem.name, newName);
+  const toggleExpand = (category, name) => {
+    if (isExpanded(category, name)) {
+      setExpandedItem(null);
+      setRenaming(null);
+    } else {
+      setExpandedItem({ category, name });
+      setRenaming(null);
     }
-    setEditingItem(null);
-    setEditValue('');
   };
 
-  const handleCancelEdit = () => {
-    setEditingItem(null);
-    setEditValue('');
+  const startRename = (category, name) => {
+    setRenaming({ category, name });
+    setRenameValue(name);
+  };
+  const saveRename = () => {
+    if (!renaming) return;
+    const newName = renameValue.trim();
+    if (!newName || newName === renaming.name) { setRenaming(null); return; }
+    if (filters[renaming.category].includes(newName)) {
+      alert(`"${newName}" bestaat al in deze categorie.`);
+      return;
+    }
+    onRename(renaming.category, renaming.name, newName);
+    setExpandedItem({ category: renaming.category, name: newName });
+    setRenaming(null);
   };
 
   const handleAdd = (category) => {
-    if (!addValue.trim()) return;
     const name = addValue.trim();
+    if (!name) return;
     if (filters[category].includes(name)) {
       alert(`"${name}" bestaat al in deze categorie.`);
       return;
@@ -58,16 +67,17 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
   const handleDeleteClick = (category, name) => {
     const refs = getReferencingCases(category, name);
     if (refs.length > 0) {
-      // Can't delete — show message
       setConfirmDelete({ category, name, blocked: true, refs });
     } else {
       setConfirmDelete({ category, name, blocked: false });
     }
   };
-
   const handleConfirmDelete = () => {
     if (confirmDelete && !confirmDelete.blocked) {
       onDelete(confirmDelete.category, confirmDelete.name);
+      if (expandedItem?.category === confirmDelete.category && expandedItem?.name === confirmDelete.name) {
+        setExpandedItem(null);
+      }
     }
     setConfirmDelete(null);
   };
@@ -76,7 +86,7 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
     <div className="fm-container">
       <div className="fm-header">
         <h2>Doelen, Behoeften & Diensten</h2>
-        <p>Beheer de categorieën die beschikbaar zijn in de Navigator.</p>
+        <p>Beheer de categorieën die beschikbaar zijn in de Navigator. Klik een item open om de omschrijving en klantsignalen te bewerken.</p>
       </div>
 
       {Object.entries(TAB_CONFIG).map(([category, config]) => (
@@ -85,85 +95,127 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
             <h3>{config.label}</h3>
             <button
               className="btn-add-small"
-              onClick={() => { setAddingTo(addingTo === category ? null : category); setAddValue(''); setEditingItem(null); }}
+              onClick={() => { setAddingTo(addingTo === category ? null : category); setAddValue(''); }}
             >
               {addingTo === category ? '✕' : '+ Toevoegen'}
             </button>
           </div>
 
-          <div className="fm-list">
+          <div className="fm-table">
             {(filters[category] || []).map(name => {
-              const isEditing = editingItem?.category === category && editingItem?.name === name;
-              const refCount = getReferencingCases(category, name).length;
+              const refs = getReferencingCases(category, name);
+              const topic = topics?.[category]?.[name] || {};
+              const descText = stripHtml(topic.description);
+              const signalsText = stripHtml(topic.signals);
+              const hasDesc = !!descText;
+              const hasSignals = !!signalsText;
+              const isComplete = hasDesc && hasSignals;
+              const expanded = isExpanded(category, name);
+              const isRenaming = renaming?.category === category && renaming?.name === name;
 
               return (
-                <div key={name} className="fm-item">
-                  {isEditing ? (
-                    <div className="fm-edit-row">
-                      <input
-                        className="fm-input"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit();
-                          if (e.key === 'Escape') handleCancelEdit();
-                        }}
-                        autoFocus
-                      />
-                      <button className="fm-btn save" onClick={handleSaveEdit} title="Opslaan">✓</button>
-                      <button className="fm-btn cancel" onClick={handleCancelEdit} title="Annuleren">✕</button>
+                <div key={name} className={`fm-row-wrap ${expanded ? 'expanded' : ''}`}>
+                  <div
+                    className="fm-row"
+                    onClick={() => toggleExpand(category, name)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(category, name); } }}
+                  >
+                    <div className="fm-row-main">
+                      <span className={`tag ${TAG_CLASS[category]}`}>{name}</span>
+                      {descText && <span className="fm-row-preview">{descText.length > 90 ? descText.slice(0, 90) + '…' : descText}</span>}
                     </div>
-                  ) : (
-                    <>
-                      <div className="fm-display-row">
-                        <span className={`tag ${TAG_CLASS[category]}`}>{name}</span>
-                        {refCount > 0 && (
-                          <span className="fm-ref-count" title={`Gebruikt door ${refCount} case(s)`}>
-                            {refCount} case{refCount !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                        {category === 'behoeften' && painpoints[name] && (
-                          <span className="fm-pain-indicator" title="Heeft pijnpunten">💬</span>
-                        )}
-                        <div className="fm-item-actions">
-                          {category === 'behoeften' && (
+                    <div className="fm-row-meta">
+                      <span className="fm-row-refs" title={`Gebruikt door ${refs.length} case(s)`}>
+                        {refs.length} case{refs.length === 1 ? '' : 's'}
+                      </span>
+                      <span className={`cm-badge ${isComplete ? 'complete' : 'incomplete'}`}>
+                        {isComplete ? 'Compleet' : 'Incompleet'}
+                      </span>
+                      <span className="fm-chevron">{expanded ? '▾' : '▸'}</span>
+                    </div>
+                  </div>
+
+                  {expanded && (
+                    <div className="fm-expand-panel" onClick={(e) => e.stopPropagation()}>
+                      {/* Inline rename: big tag + pencil button */}
+                      <div className="fm-panel-title-row">
+                        {isRenaming ? (
+                          <div className="fm-rename-row">
+                            <input
+                              className="fm-input"
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveRename();
+                                if (e.key === 'Escape') setRenaming(null);
+                              }}
+                              autoFocus
+                            />
+                            <button className="btn btn-teal" onClick={saveRename}>Opslaan</button>
+                            <button className="btn btn-secondary" onClick={() => setRenaming(null)}>Annuleren</button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`tag ${TAG_CLASS[category]} tag-large`}>{name}</span>
                             <button
-                              className={`fm-btn pain ${expandedPain === name ? 'active' : ''}`}
-                              onClick={() => setExpandedPain(expandedPain === name ? null : name)}
-                              title="Pijnpunten bewerken"
+                              className="fm-inline-rename"
+                              onClick={() => startRename(category, name)}
+                              title="Hernoemen"
                             >
-                              💬
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                                <path d="M10 4l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                              </svg>
+                              <span>Hernoemen</span>
                             </button>
-                          )}
-                          <button
-                            className="fm-btn edit"
-                            onClick={() => handleStartEdit(category, name)}
-                            title="Hernoemen"
-                          >
-                            ✎
-                          </button>
-                          <button
-                            className={`fm-btn delete ${refCount > 0 ? 'disabled' : ''}`}
-                            onClick={() => handleDeleteClick(category, name)}
-                            title={refCount > 0 ? `Kan niet verwijderen: ${refCount} case(s) verwijzen hiernaar` : 'Verwijderen'}
-                          >
-                            🗑
-                          </button>
-                        </div>
+                          </>
+                        )}
                       </div>
-                      {category === 'behoeften' && expandedPain === name && (
-                        <div className="fm-pain-editor">
-                          <label className="fm-pain-label">
-                            Pijnpunten <span className="fm-pain-hint">— hoe een klant dit kan verwoorden (bv. "Excel is onhoudbaar")</span>
-                          </label>
+
+                      {/* Description field */}
+                      <div className="fm-field">
+                        <div className="fm-field-header">
+                          <span className="fm-field-label">Omschrijving</span>
+                          <span className="fm-field-hint">— korte uitleg (1-2 zinnen) die je kunt gebruiken om dit concept toe te lichten</span>
+                        </div>
+                        <div className="fm-field-body">
                           <RichTextEditor
-                            value={painpoints[name] || ''}
-                            onChange={(html) => onUpdatePainpoint(name, html)}
-                            placeholder={`Pijnpunten bij "${name}"...`}
+                            value={topic.description || ''}
+                            onChange={(html) => onUpdateTopicMeta(category, name, { description: html })}
+                            placeholder={`Omschrijving van "${name}"...`}
                           />
                         </div>
-                      )}
-                    </>
+                      </div>
+
+                      {/* Signals field */}
+                      <div className="fm-field">
+                        <div className="fm-field-header">
+                          <span className="fm-field-label">Klantsignalen</span>
+                          <span className="fm-field-hint">— waaraan herken je dat dit speelt? (bv. "Excel is onhoudbaar", "we willen data-gedreven werken")</span>
+                        </div>
+                        <div className="fm-field-body">
+                          <RichTextEditor
+                            value={topic.signals || ''}
+                            onChange={(html) => onUpdateTopicMeta(category, name, { signals: html })}
+                            placeholder={`Klantsignalen bij "${name}"...`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Footer: destructive action */}
+                      <div className="fm-panel-footer">
+                        <button
+                          className={`fm-delete-btn ${refs.length > 0 ? 'disabled' : ''}`}
+                          onClick={() => handleDeleteClick(category, name)}
+                          disabled={refs.length > 0}
+                          title={refs.length > 0 ? `Kan niet verwijderen: ${refs.length} case(s) verwijzen hiernaar` : 'Dit item verwijderen'}
+                        >
+                          Verwijderen
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -187,13 +239,12 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
                 }}
                 autoFocus
               />
-              <button className="fm-btn save" onClick={() => handleAdd(category)}>✓ Toevoegen</button>
+              <button className="btn btn-teal" onClick={() => handleAdd(category)}>Toevoegen</button>
             </div>
           )}
         </div>
       ))}
 
-      {/* Delete confirmation / blocked modal */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
@@ -226,7 +277,7 @@ export default function FilterManager({ filters, cases, painpoints = {}, onAdd, 
                 </p>
                 <div className="modal-actions">
                   <button className="btn btn-danger" onClick={handleConfirmDelete}>
-                    🗑 Verwijderen
+                    Verwijderen
                   </button>
                   <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>
                     Annuleren

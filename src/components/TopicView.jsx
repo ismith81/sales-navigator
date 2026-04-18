@@ -7,13 +7,13 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
   const [addingTP, setAddingTP] = useState(false);
   const [addingFU, setAddingFU] = useState(false);
   const [newValue, setNewValue] = useState('');
+  const [showDescription, setShowDescription] = useState(false);
 
-  const { talkingPoints, followUps } = topicData;
+  const { talkingPoints, followUps, description } = topicData;
+  const hasDescription = description && description.replace(/<[^>]+>/g, '').trim();
 
-  // Filter cases that match this topic
   const matchedCases = cases.filter(c => c.mapping[tab]?.includes(topicKey));
 
-  // --- Inline edit helpers ---
   const saveTP = (i, value) => {
     const updated = [...talkingPoints];
     updated[i] = value;
@@ -67,99 +67,128 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
     <div className="topic-view" key={topicKey}>
       {!hideTitle && <h2 className="topic-title">{topicKey}</h2>}
 
-      {/* Talking Points */}
-      <div className="section-title section-title--talking">Talking Points</div>
-      {talkingPoints.map((tp, i) => (
-        <div key={i} className="topic-item">
-          {editingTP === i ? (
-            <div className="topic-inline-edit">
-              <textarea
-                defaultValue={tp}
-                autoFocus
-                rows={2}
-                onKeyDown={(e) => handleKeyDown(e, (v) => saveTP(i, v))}
-                onBlur={(e) => saveTP(i, e.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="talking-point">
-              <span className="bullet">•</span>
-              <span
-                className="topic-text clickable"
-                onClick={() => setEditingTP(i)}
-                title="Klik om te bewerken"
-              >
-                {tp}
-              </span>
-              <button className="btn-inline-remove" onClick={() => removeTP(i)} title="Verwijder">✕</button>
-            </div>
+      {hasDescription && (
+        <div className={`topic-description-collapsible ${showDescription ? 'open' : ''}`}>
+          <button
+            type="button"
+            className="topic-description-toggle"
+            onClick={() => setShowDescription(prev => !prev)}
+          >
+            <svg className="tdc-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" />
+              <circle cx="8" cy="4.5" r="0.9" fill="currentColor" />
+              <path d="M8 7v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <span className="tdc-label">Wat is dit?</span>
+          </button>
+          {showDescription && (
+            <div
+              className="topic-description rich-text"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
           )}
         </div>
-      ))}
-      {addingTP ? (
-        <div className="topic-inline-edit">
-          <textarea
-            autoFocus
-            rows={2}
-            placeholder="Nieuw talking point..."
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, addTP)}
-            onBlur={() => { addTP(newValue); }}
-          />
-        </div>
-      ) : (
-        <button className="btn-add" onClick={() => { setAddingTP(true); setNewValue(''); }}>
-          + Talking point toevoegen
-        </button>
       )}
 
-      {/* Follow-ups */}
-      <div className="section-title section-title--followup">Vervolgvragen</div>
-      {followUps.map((q, i) => (
-        <div key={i} className="topic-item">
-          {editingFU === i ? (
+      <div className="topic-columns">
+        {/* Left column: Talking Points — "Wat zeg je?" */}
+        <div className="topic-col">
+          <div className="section-title section-title--talking">Wat zeg je?</div>
+          {talkingPoints.map((tp, i) => (
+            <div key={i} className="topic-item">
+              {editingTP === i ? (
+                <div className="topic-inline-edit">
+                  <textarea
+                    defaultValue={tp}
+                    autoFocus
+                    rows={2}
+                    onKeyDown={(e) => handleKeyDown(e, (v) => saveTP(i, v))}
+                    onBlur={(e) => saveTP(i, e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="talking-point">
+                  <span className="bullet">•</span>
+                  <span
+                    className="topic-text clickable"
+                    onClick={() => setEditingTP(i)}
+                    title="Klik om te bewerken"
+                  >
+                    {tp}
+                  </span>
+                  <button className="btn-inline-remove" onClick={() => removeTP(i)} title="Verwijder">✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+          {addingTP ? (
             <div className="topic-inline-edit">
               <textarea
-                defaultValue={q}
                 autoFocus
                 rows={2}
-                onKeyDown={(e) => handleKeyDown(e, (v) => saveFU(i, v))}
-                onBlur={(e) => saveFU(i, e.target.value)}
+                placeholder="Nieuw talking point..."
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, addTP)}
+                onBlur={() => { addTP(newValue); }}
               />
             </div>
           ) : (
-            <div className="followup-question">
-              <span className="bullet">•</span>
-              <span
-                className="topic-text clickable"
-                onClick={() => setEditingFU(i)}
-                title="Klik om te bewerken"
-              >
-                {q}
-              </span>
-              <button className="btn-inline-remove" onClick={() => removeFU(i)} title="Verwijder">✕</button>
-            </div>
+            <button className="btn-add" onClick={() => { setAddingTP(true); setNewValue(''); }}>
+              + Talking point toevoegen
+            </button>
           )}
         </div>
-      ))}
-      {addingFU ? (
-        <div className="topic-inline-edit">
-          <textarea
-            autoFocus
-            rows={2}
-            placeholder="Nieuwe vervolgvraag..."
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, addFU)}
-            onBlur={() => { addFU(newValue); }}
-          />
+
+        {/* Right column: Follow-ups — "Wat vraag je?" */}
+        <div className="topic-col">
+          <div className="section-title section-title--followup">Wat vraag je?</div>
+          {followUps.map((q, i) => (
+            <div key={i} className="topic-item">
+              {editingFU === i ? (
+                <div className="topic-inline-edit">
+                  <textarea
+                    defaultValue={q}
+                    autoFocus
+                    rows={2}
+                    onKeyDown={(e) => handleKeyDown(e, (v) => saveFU(i, v))}
+                    onBlur={(e) => saveFU(i, e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="followup-question">
+                  <span className="bullet">•</span>
+                  <span
+                    className="topic-text clickable"
+                    onClick={() => setEditingFU(i)}
+                    title="Klik om te bewerken"
+                  >
+                    {q}
+                  </span>
+                  <button className="btn-inline-remove" onClick={() => removeFU(i)} title="Verwijder">✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+          {addingFU ? (
+            <div className="topic-inline-edit">
+              <textarea
+                autoFocus
+                rows={2}
+                placeholder="Nieuwe vervolgvraag..."
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, addFU)}
+                onBlur={() => { addFU(newValue); }}
+              />
+            </div>
+          ) : (
+            <button className="btn-add" onClick={() => { setAddingFU(true); setNewValue(''); }}>
+              + Vervolgvraag toevoegen
+            </button>
+          )}
         </div>
-      ) : (
-        <button className="btn-add" onClick={() => { setAddingFU(true); setNewValue(''); }}>
-          + Vervolgvraag toevoegen
-        </button>
-      )}
+      </div>
 
       {/* Reference cases */}
       {!hideReferences && matchedCases.length > 0 && (

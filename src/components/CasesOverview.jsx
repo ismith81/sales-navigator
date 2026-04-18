@@ -70,7 +70,7 @@ function CasePreviewCard({ caseData }) {
     return (
       <div className="co-card co-card--expanded">
         <button className="co-collapse" onClick={() => setExpanded(false)} title="Inklappen">✕</button>
-        <ReferenceCard caseData={caseData} defaultExpanded />
+        <ReferenceCard caseData={caseData} lockOpen />
       </div>
     );
   }
