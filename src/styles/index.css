@@ -2134,9 +2134,13 @@ body::before {
     padding: 0.35rem 0.6rem;
     white-space: nowrap;
   }
-  .topbar-search {
+  .topbar-search-row {
     order: 3;
     flex-basis: 100%;
+    margin: 0;
+  }
+  .topbar-search {
+    flex: 1;
     max-width: none;
     margin: 0;
   }
@@ -2203,11 +2207,19 @@ body::before {
 }
 
 /* ---- Topbar search ---- */
+.topbar-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  margin: 0 1.5rem;
+  min-width: 0;
+}
 .topbar-search {
   flex: 1;
   max-width: 360px;
-  margin: 0 1.5rem;
   position: relative;
+  min-width: 0;
 }
 .topbar-search input {
   width: 100%;
@@ -2243,7 +2255,8 @@ body::before {
 .topbar-search-clear:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 @media (max-width: 768px) {
-  .topbar-search { margin: 0.5rem 0; max-width: none; }
+  .topbar-search-row { margin: 0.5rem 0; }
+  .topbar-search { max-width: none; }
 }
 
 /* ---- Active filter bar ---- */
