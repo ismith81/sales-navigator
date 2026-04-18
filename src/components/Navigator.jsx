@@ -6,6 +6,7 @@ import TopicView from './TopicView';
 import CaseManager from './CaseManager';
 import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
+import PersonaKompas from './PersonaKompas';
 
 function useDebouncedSave(value, hydratedRef, saver, label) {
   useEffect(() => {
@@ -23,6 +24,8 @@ export default function Navigator() {
   const [cases, setCases] = useState([]);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
+  const [personas, setPersonas] = useState({});
+  const [activePersona, setActivePersona] = useState(null); // session-only, niet persistent
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [view, setView] = useState('navigator');
@@ -42,6 +45,7 @@ export default function Navigator() {
         setCases(data.cases);
         setTopics(data.topics);
         setFilters(data.filters);
+        setPersonas(data.personas || {});
         setLoading(false);
         // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
         setTimeout(() => { hydrated.current = true; }, 0);
@@ -59,6 +63,7 @@ export default function Navigator() {
   useDebouncedSave(cases, hydrated, (v) => saveCases(v), 'cases');
   useDebouncedSave(topics, hydrated, (v) => saveConfig('topics', v), 'topics');
   useDebouncedSave(filters, hydrated, (v) => saveConfig('filters', v), 'filters');
+  useDebouncedSave(personas, hydrated, (v) => saveConfig('personas', v), 'personas');
 
   // Toast auto-hide
   useEffect(() => {
@@ -175,9 +180,47 @@ export default function Navigator() {
     showToast(`"${name}" verwijderd`);
   };
 
+  // Persona CRUD
+  const handleUpdatePersona = (id, patch) => {
+    setPersonas(prev => {
+      const current = prev[id];
+      if (!current) return prev;
+      return { ...prev, [id]: { ...current, ...patch } };
+    });
+  };
+  const handleAddPersona = () => {
+    const id = `persona-${Date.now()}`;
+    const nextOrder = Object.values(personas).reduce((m, p) => Math.max(m, p.order || 0), 0) + 1;
+    setPersonas(prev => ({
+      ...prev,
+      [id]: {
+        id,
+        label: 'Nieuwe persona',
+        icon: '👤',
+        domain: 'business',
+        niveau: 'strategisch',
+        order: nextOrder,
+        description: '',
+        roles: '',
+        signals: '',
+        coaching: '',
+      },
+    }));
+    showToast('Persona toegevoegd');
+  };
+  const handleDeletePersona = (id) => {
+    setPersonas(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    if (activePersona === id) setActivePersona(null);
+    showToast('Persona verwijderd');
+  };
+
   // Backup / Restore
   const handleBackup = () => {
-    const data = { cases, topics, filters, exportedAt: new Date().toISOString() };
+    const data = { cases, topics, filters, personas, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -198,6 +241,7 @@ export default function Navigator() {
         if (data.cases) setCases(data.cases);
         if (data.topics) setTopics(data.topics);
         if (data.filters) setFilters(data.filters);
+        if (data.personas) setPersonas(data.personas);
         showToast('Backup hersteld');
       } catch {
         showToast('Ongeldig backup-bestand');
@@ -281,6 +325,11 @@ export default function Navigator() {
         <Instructies />
       ) : view === 'navigator' ? (
         <>
+          <PersonaKompas
+            personas={personas}
+            activePersona={activePersona}
+            onSelect={setActivePersona}
+          />
           <FilterBar
             filters={filters}
             topics={topics}
@@ -313,11 +362,7 @@ export default function Navigator() {
           ) : (
             <>
               {activeFilter && (
-                <div className="active-filter-bar">
-                  <span className="active-filter-chip">
-                    <span className="afc-label">{TAB_CONFIG[activeTab].singular}:</span>
-                    <strong>{activeFilter}</strong>
-                  </span>
+                <div className="active-filter-bar active-filter-bar--compact">
                   <button
                     className="btn-clear-filter"
                     onClick={() => setActiveFilter(null)}
@@ -336,6 +381,7 @@ export default function Navigator() {
                   onUpdateTopic={handleUpdateTopic}
                   hideReferences
                   hideTitle
+                  activePersona={activePersona ? personas[activePersona] : null}
                 />
               )}
 
@@ -356,6 +402,7 @@ export default function Navigator() {
           cases={cases}
           filters={filters}
           topics={topics}
+          personas={personas}
           onUpdate={handleUpdateCase}
           onImport={handleImport}
           onRemove={handleRemove}
@@ -363,6 +410,9 @@ export default function Navigator() {
           onRenameFilter={handleRenameFilter}
           onDeleteFilter={handleDeleteFilter}
           onUpdateTopicMeta={handleUpdateTopicMeta}
+          onUpdatePersona={handleUpdatePersona}
+          onAddPersona={handleAddPersona}
+          onDeletePersona={handleDeletePersona}
           onBackup={handleBackup}
           onRestore={() => fileRef.current?.click()}
         />

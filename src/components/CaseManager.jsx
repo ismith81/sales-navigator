@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import CaseEditor from './CaseEditor';
 import ImportCase from './ImportCase';
 import FilterManager from './FilterManager';
+import PersonaManager from './PersonaManager';
 import { exportCaseToDocx } from '../utils/exportCase';
 import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function CaseManager({ cases, filters, topics, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onBackup, onRestore }) {
+export default function CaseManager({ cases, filters, topics, personas, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onUpdatePersona, onAddPersona, onDeletePersona, onBackup, onRestore }) {
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -181,6 +182,14 @@ export default function CaseManager({ cases, filters, topics, onUpdate, onImport
         onRename={onRenameFilter}
         onDelete={onDeleteFilter}
         onUpdateTopicMeta={onUpdateTopicMeta}
+      />
+
+      {/* Persona Manager */}
+      <PersonaManager
+        personas={personas}
+        onUpdate={onUpdatePersona}
+        onAdd={onAddPersona}
+        onDelete={onDeletePersona}
       />
 
       {/* Backup / Restore */}
