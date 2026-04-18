@@ -1,12 +1,13 @@
 # Sales Navigator — Project Context
 
 ## Wat is dit?
-Een interactief belscript-tool voor sales (gebruiker: Gersy).
-Gersy bereidt zich voor op een klantgesprek via één van twee routes:
-1. **Assistent-route** (primair): AI-chat die cases, talking points en persona-coaching ophaalt uit Supabase via Gemini function-calling. Minimale klik-configuratie — gewoon vragen.
-2. **Gids-route** (guided): klikken door tabs (doelen/behoeften/diensten) → filter-knoppen → talking points + cases. Persona-context ("Met wie praat je?") hoort bij déze route en wordt alleen hier getoond.
+Een interactief belscript-tool voor sales. De sales-gebruiker bereidt zich voor op een klantgesprek via één van twee routes:
+1. **Assistent-route**: AI-chat met **Nova** (de sales-assistent) die cases, talking points en persona-coaching ophaalt uit Supabase via Gemini function-calling. Minimale klik-configuratie — gewoon vragen.
+2. **Gids-route** (guided, default): klikken door tabs (doelen/behoeften/diensten) → filter-knoppen → talking points + cases. Persona-context ("Met wie praat je?") hoort bij déze route en wordt alleen hier getoond.
 
-De persona-laag is dus géén gedeelde context bovenaan — ze is onderdeel van de Gids-route. In de Assistent-route kan Gersy de rol gewoon in haar vraag verwerken ("Ik heb een CFO-gesprek over…").
+De persona-laag is dus géén gedeelde context bovenaan — ze is onderdeel van de Gids-route. In de Assistent-route kan de gebruiker de rol gewoon in de vraag verwerken ("Ik heb een CFO-gesprek over…") en Nova stemt het advies daarop af.
+
+**Naming:** de assistent heet **Nova** (sales-assistent) — verschijnt in de chat-header en welkomsttekst. Eigen namen van eindgebruikers komen niet in de code of interface voor; altijd "de gebruiker" of "sales" gebruiken.
 
 ## Structuur van het aanbod
 Twee strategische doelen (niet 1-op-1 gekoppeld aan behoeften/diensten):
@@ -122,7 +123,7 @@ Hybride RAG-achtig patroon:
 - **Topbar** mobiel/tablet (≤768px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop (>768px) behoudt inline zoekbalk. Breakpoint bewust op 768px zodat iPad-portrait en phones-in-landscape ook collapsed starten — de balk voelde daar "erg aanwezig". De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
 
 ## Doelgroep
-Primaire gebruiker: Gersy (sales)
+Primaire gebruiker: sales (intern bij Creates)
 Publiek van de sales calls: mix van technische en business stakeholders
 Taal: Nederlands
 
@@ -130,7 +131,7 @@ Taal: Nederlands
 De twee-routes redesign is live. Kern:
 
 - **Segmented route-toggle** `[🧭 Gids] | [🤖 Assistent]` gecentreerd boven de content, compact geformatteerd. Keuze onthouden in localStorage (`sn.route`), default `gids` — nieuwe gebruikers starten in de guided flow; de assistent is één klik weg. Volgorde bewust: Gids eerst (links = meest voor-de-hand liggend startpunt), Assistent rechts.
-- **Assistent-route:** ChatPanel als hoofdscherm via `variant="inline"` (open staat altijd op `true`). Geen persona-strip — Gersy benoemt de rol gewoon in haar vraag. Chat-naar-case vanaf hier switcht naar Gids-route + zet de zoekopdracht.
+- **Assistent-route:** ChatPanel als hoofdscherm via `variant="inline"` (open staat altijd op `true`). Chat heet **Nova** (zichtbaar in header + welkomsttekst). Geen persona-strip — de gebruiker benoemt de rol gewoon in de vraag. Chat-naar-case vanaf hier switcht naar Gids-route + zet de zoekopdracht.
 - **Gids-route:** persona + guided flow (tabs → filter-knoppen → talking points → cases) in een gecentreerde wrapper. Persona hoort uitsluitend bij deze route. Klantsignalen-toggle leeft nu binnen de `.context-strip--card` naast de tabs (logisch op hun plek).
 - **Geen topbar-chat-knop meer:** de chat ís het scherm wanneer Assistent-route actief.
 - **Mobiele topbar één regel:** `[brand | 🔍 | view-toggle]`. Zoekbalk collapse't tot icon; tik → veld expandt naar rij 2.

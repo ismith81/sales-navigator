@@ -34,11 +34,11 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>2. Assistent-route — chat met Gersy's AI-collega</h3>
+        <h3>2. Assistent-route — chat met Nova</h3>
         <p>
-          De assistent is geen algemene chatbot: hij praat alleen over de cases, talking points en
-          persona-coaching die in deze app staan. Feiten (bedrijfsnamen, cijfers, tags) komen uit de
-          database — de assistent verzint die niet.
+          <strong>Nova</strong> is je AI-collega in deze app. Geen algemene chatbot: hij praat
+          alleen over de cases, talking points en persona-coaching die hier staan. Feiten
+          (bedrijfsnamen, cijfers, tags) komen uit de database — Nova verzint die niet.
         </p>
         <ul>
           <li>
@@ -46,14 +46,14 @@ export default function Instructies() {
             om direct te starten. Klik of typ je eigen vraag.
           </li>
           <li>
-            <strong>Klikbare bedrijfsnamen</strong> — als de assistent <em>AkzoNobel</em>, <em>CITO</em>,
+            <strong>Klikbare bedrijfsnamen</strong> — als Nova <em>AkzoNobel</em>, <em>CITO</em>,
             <em>Tulp Group</em> of andere case-namen noemt, kun je daarop klikken om direct naar de
             volledige case te springen (de app switcht dan naar de Gids-route met die case geopend).
           </li>
           <li>
             <strong>Persona in je vraag</strong> — in deze route is er geen aparte persona-selector.
-            Vermeld de rol gewoon in je vraag ("Ik heb zo een gesprek met een CFO…") en de assistent
-            stemt het advies daarop af.
+            Vermeld de rol gewoon in je vraag ("Ik heb zo een gesprek met een CFO…") en Nova stemt
+            het advies daarop af.
           </li>
           <li>
             <strong>Feedback</strong> — bij elk antwoord staan 👍/👎-knoppen. Feedback helpt om de
@@ -125,8 +125,7 @@ export default function Instructies() {
           </li>
           <li>
             <strong>Match redenen</strong> — per gemapte tag kun je een korte uitleg geven waarom
-            de case daarbij past. Die verschijnt onder de case-titel én de assistent gebruikt 'm
-            in antwoorden.
+            de case daarbij past. Die verschijnt onder de case-titel én Nova gebruikt 'm in antwoorden.
           </li>
           <li>
             <strong>Exporteren</strong> — per case kun je een <em>.docx</em> of <em>.pptx</em>
@@ -196,14 +195,14 @@ export default function Instructies() {
           </li>
           <li>
             Vul match redenen zoveel mogelijk in: die maken direct duidelijk waarom een case
-            relevant is, en de assistent haalt er z'n onderbouwing uit.
+            relevant is, en Nova haalt er z'n onderbouwing uit.
           </li>
           <li>
             Persona-coaching werkt alleen goed als je 'm ook echt invult — laat 'm anders leeg,
             dan verschijnt er geen helper.
           </li>
           <li>
-            Geef 👍/👎 op assistent-antwoorden — dat is de snelste manier om content-gaten
+            Geef 👍/👎 op Nova's antwoorden — dat is de snelste manier om content-gaten
             (ontbrekende cases, zwakke talking points) op te sporen.
           </li>
           <li>

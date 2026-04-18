@@ -258,12 +258,13 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
         className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${open ? 'open' : ''}`}
         aria-hidden={!open}
         role={inline ? 'region' : 'dialog'}
-        aria-label="Sales assistent"
+        aria-label="Nova — sales assistent"
       >
         <header className="chat-header">
           <div className="chat-header-title">
             <span className="chat-header-dot" aria-hidden="true" />
-            <strong>Sales assistent</strong>
+            <strong>Nova</strong>
+            <span className="chat-header-subtitle">sales-assistent</span>
           </div>
           <div className="chat-header-actions">
             {messages.length > 0 && (
@@ -280,7 +281,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
         <div className="chat-messages" ref={listRef}>
           {messages.length === 0 && (
             <div className="chat-welcome">
-              <p>Hoi, ik help je je voorbereiden op een klantgesprek. Stel een vraag of kies een starter:</p>
+              <p>Hoi, ik ben <strong>Nova</strong> — ik help je je voorbereiden op een klantgesprek. Stel een vraag of kies een starter:</p>
               <div className="chat-quickprompts">
                 {QUICK_PROMPTS.map(q => (
                   <button key={q} type="button" className="chat-quickprompt" onClick={() => send(q)} disabled={busy}>

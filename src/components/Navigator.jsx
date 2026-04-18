@@ -101,7 +101,7 @@ export default function Navigator() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    // Géén auto-selectie — laat Gersy bewust kiezen, of de assistent gebruiken.
+    // Géén auto-selectie — laat de gebruiker bewust kiezen, of Nova gebruiken.
     setActiveFilter(null);
   };
 

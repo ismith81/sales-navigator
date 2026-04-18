@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Empty-state hero die de chat-assistent als primaire entry point positioneert.
-// Toont alleen als er geen filter/zoekopdracht actief is én Gersy 'm niet gesloten heeft.
+// Toont alleen als er geen filter/zoekopdracht actief is én de gebruiker 'm niet gesloten heeft.
 // Drempel-verlagend: drie quick-prompts die 1-klik een gesprek starten.
 
 const QUICK_PROMPTS = [

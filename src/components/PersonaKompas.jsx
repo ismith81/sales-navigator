@@ -13,7 +13,7 @@ function bucketOf(p) {
 
 export default function PersonaKompas({ personas = {}, activePersona, onSelect }) {
   // Start ingeklapt: persona is een optionele coach-laag, niet stap 1 in de flow.
-  // Gersy opent het alleen als ze weet wie ze spreekt.
+  // De gebruiker opent het alleen als ze weet wie ze spreekt.
   const [collapsed, setCollapsed] = useState(true);
   const [showSignals, setShowSignals] = useState(false);
 
