@@ -18,7 +18,36 @@ const QUICK_PROMPTS = [
   'Wat zijn goede vervolgvragen bij realtime data?',
 ];
 
-export default function ChatPanel({ open, onClose, context = {} }) {
+export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase }) {
+  // Namen van bestaande cases — gebruikt om in assistent-antwoorden klikbare links te maken.
+  // Langste eerst zodat "AkzoNobel (Paint Company)" vóór "AkzoNobel" wordt gematcht.
+  const caseNames = React.useMemo(
+    () => cases.map(c => c.name).filter(Boolean).sort((a, b) => b.length - a.length),
+    [cases]
+  );
+
+  // Markdown-component override: vervangt <strong> inhoud door een klikbare link
+  // als de tekst exact overeenkomt met een case-naam. Niet-case-bold blijft gewoon bold.
+  const markdownComponents = React.useMemo(() => ({
+    strong: ({ children }) => {
+      const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
+      const matched = caseNames.find(n => n === text || text.startsWith(n));
+      if (matched && onNavigateToCase) {
+        return (
+          <button
+            type="button"
+            className="chat-case-link"
+            onClick={() => onNavigateToCase(matched)}
+            title={`Bekijk case: ${matched}`}
+          >
+            {children}
+          </button>
+        );
+      }
+      return <strong>{children}</strong>;
+    },
+  }), [caseNames, onNavigateToCase]);
+
   const [messages, setMessages] = useState(readStored);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -229,7 +258,7 @@ export default function ChatPanel({ open, onClose, context = {} }) {
                 <div className="chat-msg-bubble">
                   {hasContent ? (
                     isAssistant
-                      ? <ReactMarkdown>{m.content}</ReactMarkdown>
+                      ? <ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>
