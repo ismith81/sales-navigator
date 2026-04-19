@@ -3174,6 +3174,9 @@ body::before {
   align-items: start;
 }
 .pm-meta-grid .fm-field { margin-bottom: 0; }
+/* Popover (icon-picker) moet uit het veld kunnen uitklappen */
+.pm-field-icon { overflow: visible; }
+.pm-field-icon .fm-field-body { overflow: visible; }
 .pm-field-icon .fm-input {
   text-align: center;
   font-size: 1.25rem;
