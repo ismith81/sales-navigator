@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TAB_CONFIG } from '../data/filters';
 import { loadAll, saveCases, saveConfig } from '../lib/store';
-import { useAuthSession, signOut } from '../lib/auth';
+import { useAuthSession, signOut, signInWithPassword } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 import FilterBar from './FilterBar';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
@@ -27,8 +28,34 @@ function useDebouncedSave(value, hydratedRef, saver, label) {
   }, [value]);
 }
 
+// Dev-only auto-login: als we in `npm run dev` draaien én er staan
+// VITE_DEV_EMAIL + VITE_DEV_PASSWORD in .env.local, logt de app automatisch in.
+// Productie raakt dit niet (DEV is false én env-vars bestaan daar niet).
+const DEV_AUTOLOGIN_EMAIL = import.meta.env.DEV ? import.meta.env.VITE_DEV_EMAIL : null;
+const DEV_AUTOLOGIN_PASSWORD = import.meta.env.DEV ? import.meta.env.VITE_DEV_PASSWORD : null;
+
 export default function Navigator() {
   const { session, user, loading: authLoading } = useAuthSession();
+  // Password-recovery flow: Supabase vuurt PASSWORD_RECOVERY mét een geldige
+  // session. Zonder deze flag zou Navigator direct renderen en zou de
+  // gebruiker nooit een nieuw wachtwoord kunnen zetten.
+  const [inRecovery, setInRecovery] = useState(false);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setInRecovery(true);
+    });
+    return () => sub.subscription?.unsubscribe();
+  }, []);
+
+  // Dev-bypass: probeer één keer auto-login wanneer er geen session is.
+  useEffect(() => {
+    if (authLoading || session) return;
+    if (!DEV_AUTOLOGIN_EMAIL || !DEV_AUTOLOGIN_PASSWORD) return;
+    signInWithPassword(DEV_AUTOLOGIN_EMAIL, DEV_AUTOLOGIN_PASSWORD).then(({ error }) => {
+      if (error) console.warn('[dev-autologin] faalde:', error.message);
+    });
+  }, [authLoading, session]);
+
   const [cases, setCases] = useState([]);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
@@ -302,8 +329,8 @@ export default function Navigator() {
       </div>
     );
   }
-  if (!session) {
-    return <Login />;
+  if (!session || inRecovery) {
+    return <Login forceRecovery={inRecovery} onRecoveryDone={() => setInRecovery(false)} />;
   }
 
   if (loading) {
