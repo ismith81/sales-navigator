@@ -3755,3 +3755,94 @@ body::before {
   color: var(--text-light);
   text-align: center;
 }
+
+/* ---- Persona-koppeling op cases ---- */
+/* CaseEditor: persona-chips met icon + label (multi-select, klikbaar) */
+.ce-persona-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ce-persona-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem 0.4rem 0.5rem;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ce-persona-chip:hover:not(.active) {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #F3F5F8;
+}
+.ce-persona-chip.active {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+}
+.ce-persona-chip-icon { font-size: 1rem; line-height: 1; }
+.ce-persona-chip-label { line-height: 1.1; }
+
+/* Kleine persona-strip: ronde badges in lijst-views (CaseManager + CasesOverview) */
+.cm-persona-strip,
+.co-persona-strip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+}
+.cm-persona-badge,
+.co-persona-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #F3F5F8;
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+/* ReferenceCard persona-blok — grotere rij met naam + eventuele match-reason */
+.ref-persona-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ref-persona-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #F9FAFC;
+}
+.ref-persona-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.ref-persona-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+.ref-persona-reason {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
