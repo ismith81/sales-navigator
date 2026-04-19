@@ -103,6 +103,13 @@ function CasePreviewCard({ caseData, personas = {} }) {
           )}
         </div>
       </div>
+      {(caseData.mapping?.branches || []).length > 0 && (
+        <div className="co-branches">
+          {(caseData.mapping.branches || []).map(b => (
+            <span key={b} className="tag branche small">{b}</span>
+          ))}
+        </div>
+      )}
       {preview && <div className="co-preview">{preview}</div>}
       {tags.length > 0 && (
         <div className="co-tags">

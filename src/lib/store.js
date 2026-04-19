@@ -3,6 +3,7 @@ import seedCases from '../data/cases.json';
 import seedTopics from '../data/topics.json';
 import seedPersonas from '../data/personas.json';
 import { DEFAULT_FILTERS, DEFAULT_PAINPOINTS } from '../data/filters';
+import { DEFAULT_BRANCHES } from '../data/branches';
 
 // Map tussen DB-kolommen (snake_case) en het JS-model (camelCase) dat de UI al kent.
 function rowToCase(r) {
@@ -27,6 +28,7 @@ function rowToCase(r) {
       behoeften: m.behoeften || [],
       diensten: m.diensten || [],
       personas: m.personas || [],
+      branches: m.branches || [],
     },
     talkingPoints: r.talking_points || [],
     followUps: r.follow_ups || [],
@@ -158,12 +160,13 @@ function applyTopicMigrations(topics, fromVersion) {
 }
 
 export async function loadAll() {
-  const [{ data: caseRows, error: caseErr }, filters, painpoints, topics, personas, seedVersion] = await Promise.all([
+  const [{ data: caseRows, error: caseErr }, filters, painpoints, topics, personas, branches, seedVersion] = await Promise.all([
     supabase.from('cases').select('*').order('name'),
     fetchConfig('filters', null),
     fetchConfig('painpoints', null),
     fetchConfig('topics', null),
     fetchConfig('personas', null),
+    fetchConfig('branches', null),
     fetchConfig('topics_seed_version', 0),
   ]);
   if (caseErr) throw caseErr;
@@ -176,6 +179,7 @@ export async function loadAll() {
       filters: DEFAULT_FILTERS,
       topics: normalizeTopics(seedTopics, DEFAULT_PAINPOINTS),
       personas: normalizePersonas(seedPersonas),
+      branches: DEFAULT_BRANCHES,
     };
   }
 
@@ -198,6 +202,7 @@ export async function loadAll() {
     filters: filters || DEFAULT_FILTERS,
     topics: normalizeTopics(effectiveTopics, painpoints || DEFAULT_PAINPOINTS),
     personas: normalizePersonas(personas),
+    branches: Array.isArray(branches) && branches.length ? branches : DEFAULT_BRANCHES,
   };
 }
 
@@ -212,6 +217,7 @@ async function seedInitial() {
     { key: 'painpoints', value: DEFAULT_PAINPOINTS },
     { key: 'topics', value: seedTopics },
     { key: 'personas', value: seedPersonas },
+    { key: 'branches', value: DEFAULT_BRANCHES },
     { key: 'topics_seed_version', value: TOPIC_SEED_VERSION },
   ];
   const { error } = await supabase.from('app_config').upsert(configRows);

@@ -60,6 +60,7 @@ export default function Navigator() {
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
   const [personas, setPersonas] = useState({});
+  const [branches, setBranches] = useState([]);
   const [activePersona, setActivePersona] = useState(null); // session-only, niet persistent
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -105,6 +106,7 @@ export default function Navigator() {
         setTopics(data.topics);
         setFilters(data.filters);
         setPersonas(data.personas || {});
+        setBranches(data.branches || []);
         // Géén default-filter: lege state toont de assistent-hero (primaire entry).
         setLoading(false);
         // Zet hydrated pas in de volgende tick, zodat de eerste setState-renders geen save triggeren.
@@ -548,6 +550,7 @@ export default function Navigator() {
               <CasesOverview
                 cases={cases}
                 personas={personas}
+                branches={branches}
                 searchQuery={searchQuery}
                 heading={`Zoekresultaten voor "${searchQuery}"`}
               />
@@ -597,6 +600,7 @@ export default function Navigator() {
                   topicData={currentTopic}
                   cases={cases}
                   personas={personas}
+                  branches={branches}
                   onUpdateTopic={handleUpdateTopic}
                   hideReferences
                   hideTitle
@@ -607,6 +611,7 @@ export default function Navigator() {
               <CasesOverview
                 cases={cases}
                 personas={personas}
+                branches={branches}
                 activeTab={activeTab}
                 activeFilter={activeFilter}
                 heading={activeFilter ? `Referenties voor "${activeFilter}"` : 'Alle cases'}
@@ -624,6 +629,7 @@ export default function Navigator() {
           filters={filters}
           topics={topics}
           personas={personas}
+          branches={branches}
           onUpdate={handleUpdateCase}
           onImport={handleImport}
           onRemove={handleRemove}

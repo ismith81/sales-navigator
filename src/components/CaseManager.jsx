@@ -8,7 +8,7 @@ import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function CaseManager({ section = 'cases', cases, filters, topics, personas, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onUpdatePersona, onAddPersona, onDeletePersona, onBackup, onRestore }) {
+export default function CaseManager({ section = 'cases', cases, filters, topics, personas, branches = [], onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onUpdatePersona, onAddPersona, onDeletePersona, onBackup, onRestore }) {
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -33,6 +33,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
           caseData={editingCase}
           filters={filters}
           personas={personas}
+          branches={branches}
           onSave={handleSave}
           onCancel={() => setEditingId(null)}
         />
@@ -68,7 +69,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
               situatie: '', doel: '', oplossing: '', resultaat: '',
               keywords: [],
               businessImpact: '',
-              mapping: { doelen: [], behoeften: [], diensten: [] },
+              mapping: { doelen: [], behoeften: [], diensten: [], personas: [], branches: [] },
               talkingPoints: [], followUps: [],
               matchReasons: { doelen: {}, behoeften: {}, diensten: {} },
             });
@@ -141,12 +142,15 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
                 </div>
               </div>
               <div className="cm-col-tags">
+                {(c.mapping.branches || []).map(b => (
+                  <span key={`b-${b}`} className="tag branche small">{b}</span>
+                ))}
                 {['doelen', 'behoeften', 'diensten'].map(cat =>
                   c.mapping[cat].map(tag => (
                     <span key={tag} className={`tag ${TAG_CLASS[cat]} small`}>{tag}</span>
                   ))
                 )}
-                {totalTags === 0 && <span className="cm-empty">Geen tags</span>}
+                {totalTags === 0 && (c.mapping.branches || []).length === 0 && <span className="cm-empty">Geen tags</span>}
               </div>
               <div className="cm-col-status">
                 <span className={`cm-badge ${isComplete ? 'complete' : 'incomplete'}`}>

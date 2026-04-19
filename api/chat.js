@@ -20,7 +20,7 @@ CONTEXT OVER HET AANBOD:
 - 4 Diensten: "Data modernisatie", "Governance", "Data kwaliteit", "Training"
 Doelen → vertalen in behoeften → worden ingevuld door diensten.
 
-Daarnaast zijn cases gekoppeld aan persona's (rollen waarmee sales in gesprek gaat). Elke persona heeft eigen coaching-stijl, klantsignalen en match-redenen per case. Gebruik dit om advies écht op de rol te richten — niet generiek.
+Daarnaast zijn cases gekoppeld aan persona's (rollen waarmee sales in gesprek gaat) én aan een of meer branches (sectoren, bv. Financial services, Onderwijs, Retail). Gebruik die koppelingen om advies écht op de rol én sector te richten — niet generiek. Als de gebruiker een branche noemt, filter er ook op via `search_cases({ branche: "..." })`.
 
 WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Voorbereiding**: maak een mini-belscript-draaiboek (opening → discovery-vragen → relevante case → bezwaren → afsluiting).
@@ -66,7 +66,7 @@ async function fetchConfig(supabase, key) {
 }
 
 // ─── Tool implementaties ─────────────────────────────────────────────────
-async function toolSearchCases({ doel, behoefte, dienst, persona, keyword }) {
+async function toolSearchCases({ doel, behoefte, dienst, persona, branche, keyword }) {
   const supabase = getSupabase();
   let query = supabase.from('cases').select('id,name,subtitle,keywords,business_impact,mapping,match_reasons,situatie,doel,oplossing,resultaat');
   const { data, error } = await query;
@@ -99,6 +99,10 @@ async function toolSearchCases({ doel, behoefte, dienst, persona, keyword }) {
     if (behoefte && !(m.behoeften || []).includes(behoefte)) return false;
     if (dienst && !(m.diensten || []).includes(dienst)) return false;
     if (personaId && !(m.personas || []).includes(personaId)) return false;
+    if (branche) {
+      const list = (m.branches || []).map(b => String(b).toLowerCase());
+      if (!list.includes(String(branche).toLowerCase())) return false;
+    }
     if (keyword) {
       const hay = [
         c.name, c.subtitle, c.situatie, c.doel, c.oplossing, c.resultaat, c.business_impact,
@@ -168,7 +172,7 @@ const tools = [{
   functionDeclarations: [
     {
       name: 'search_cases',
-      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona en/of een vrij trefwoord (klantnaam, sector, technologie). Cases zijn gekoppeld aan persona\'s — gebruik de persona-filter als de gebruiker aangeeft met wie hij praat.',
+      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona, branche en/of een vrij trefwoord (klantnaam, technologie). Cases zijn gekoppeld aan persona\'s én een of meer branches — gebruik die filters als de gebruiker aangeeft met wie hij praat of in welke sector.',
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -176,6 +180,7 @@ const tools = [{
           behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
           dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
           persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
+          branche: { type: SchemaType.STRING, description: 'Branche/sector van de klant (bv. "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services"). Case-insensitive match.' },
           keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
         },
       },
