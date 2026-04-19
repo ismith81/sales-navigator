@@ -8,7 +8,7 @@ import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
-export default function CaseManager({ cases, filters, topics, personas, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onUpdatePersona, onAddPersona, onDeletePersona, onBackup, onRestore }) {
+export default function CaseManager({ section = 'cases', cases, filters, topics, personas, onUpdate, onImport, onRemove, onAddFilter, onRenameFilter, onDeleteFilter, onUpdateTopicMeta, onUpdatePersona, onAddPersona, onDeletePersona, onBackup, onRestore }) {
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -39,13 +39,21 @@ export default function CaseManager({ cases, filters, topics, personas, onUpdate
     );
   }
 
+  const sectionHeading = section === 'onderwerpen'
+    ? { title: 'Onderwerpen', sub: 'Beheer doelen, behoeften, diensten en hun talking points.' }
+    : section === 'personas'
+    ? { title: "Persona's", sub: 'Beheer persona-coaching per rol.' }
+    : { title: 'Cases', sub: 'Beheer, bewerk en importeer cases.' };
+
   return (
     <div className="case-manager">
       <div className="cm-header">
-        <h2>Beheer</h2>
-        <p>Beheer, bewerk en importeer cases.</p>
+        <h2>{sectionHeading.title}</h2>
+        <p>{sectionHeading.sub}</p>
       </div>
 
+      {section === 'cases' && (
+        <>
       <div className="cm-actions">
         <button
           className="btn btn-teal"
@@ -172,27 +180,31 @@ export default function CaseManager({ cases, filters, topics, personas, onUpdate
           </div>
         )}
       </div>
+        </>
+      )}
 
-      {/* Filter Manager */}
-      <FilterManager
-        filters={filters}
-        cases={cases}
-        topics={topics}
-        onAdd={onAddFilter}
-        onRename={onRenameFilter}
-        onDelete={onDeleteFilter}
-        onUpdateTopicMeta={onUpdateTopicMeta}
-      />
+      {section === 'onderwerpen' && (
+        <FilterManager
+          filters={filters}
+          cases={cases}
+          topics={topics}
+          onAdd={onAddFilter}
+          onRename={onRenameFilter}
+          onDelete={onDeleteFilter}
+          onUpdateTopicMeta={onUpdateTopicMeta}
+        />
+      )}
 
-      {/* Persona Manager */}
-      <PersonaManager
-        personas={personas}
-        onUpdate={onUpdatePersona}
-        onAdd={onAddPersona}
-        onDelete={onDeletePersona}
-      />
+      {section === 'personas' && (
+        <PersonaManager
+          personas={personas}
+          onUpdate={onUpdatePersona}
+          onAdd={onAddPersona}
+          onDelete={onDeletePersona}
+        />
+      )}
 
-      {/* Backup / Restore */}
+      {/* Backup / Restore — altijd zichtbaar (beheer-niveau actie). */}
       <div className="cm-backup-bar">
         <button className="btn btn-secondary" onClick={onBackup}>
           Backup downloaden

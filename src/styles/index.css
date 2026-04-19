@@ -984,6 +984,46 @@ body::before {
   color: #fff;
 }
 
+/* ═══ TOPBAR SUB-NAV (tweede regel, NOS-stijl) ═════════════════════════════
+   Sub-items van de actieve hoofdweergave. Zelfde text-nav-look als de main
+   view-toggle maar iets kleiner en met teal underline — accent-rood blijft
+   zo gereserveerd voor het hoofdniveau. Flex-basis 100% + order 5 zodat 'ie
+   op rij 2 valt, vóór een eventueel open search-row (order 10). */
+.topbar-subnav {
+  display: flex;
+  gap: 1.25rem;
+  flex-basis: 100%;
+  order: 5;
+  padding: 0;
+  margin-top: 0.1rem;
+}
+.topbar-subnav-btn {
+  flex: 0 0 auto;
+  padding: 0.3rem 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.topbar-subnav-btn.active {
+  color: #fff;
+  font-weight: 700;
+  border-bottom-color: var(--teal);
+}
+.topbar-subnav-btn:not(.active):hover {
+  color: rgba(255,255,255,0.9);
+}
+@media (max-width: 640px) {
+  .topbar-subnav { gap: 1rem; }
+  .topbar-subnav-btn { font-size: 0.8rem; }
+}
+
 /* ---- Case Manager (table) ---- */
 .case-manager {
   animation: fadeUp 0.3s ease;
