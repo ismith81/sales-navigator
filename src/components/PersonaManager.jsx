@@ -110,8 +110,7 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
 
   return (
     <div className="pm-container">
-      <div className="fm-section-header">
-        <h3>Overzicht</h3>
+      <div className="pm-toolbar">
         <button className="btn-add-small" onClick={onAdd}>+ Toevoegen</button>
       </div>
 
