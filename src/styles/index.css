@@ -1287,42 +1287,20 @@ body::before {
   align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
-  padding: 0.75rem 0;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
-  /* Sticky onder de app-topbar zodat titel + acties altijd in beeld blijven.
-     top-offset houdt ruimte voor de globale topbar (sticky, ~100px incl subnav). */
+  /* Sticky onder de app-topbar. Top-offset = hoogte van globale topbar
+     (incl subnav) zodat deze bar precies daaronder vastplakt tijdens scroll.
+     Desktop ~100px, mobiel ~88px — zie media query onder. */
   position: sticky;
-  top: 0;
+  top: 100px;
   z-index: 20;
   background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(44,60,82,0.06);
 }
-.ce-topbar-title {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  justify-content: center;
-}
-.ce-topbar-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.75rem;
-  flex-shrink: 0;
-}
-.ce-topbar-name {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--navy);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (max-width: 768px) {
+  .ce-topbar { top: 88px; }
 }
 
 .ce-identity {
