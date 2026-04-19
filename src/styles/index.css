@@ -1301,6 +1301,70 @@ body::before {
   box-shadow: 0 1px 3px rgba(44,60,82,0.06);
 }
 
+.ce-topbar-title-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.ce-topbar-eyebrow {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7785);
+}
+
+.ce-topbar-title {
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ce-topbar .ce-topbar-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .ce-topbar {
+    gap: 0.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+  .ce-topbar .ce-topbar-btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.9rem;
+    min-width: 44px;
+    min-height: 40px;
+    justify-content: center;
+  }
+  /* Back op mobiel: icon-only — label verbergen maar behouden voor SR via aria-label */
+  .ce-topbar-back .ce-topbar-btn-label {
+    display: none;
+  }
+  .ce-topbar-eyebrow {
+    display: none;
+  }
+  .ce-topbar-title {
+    font-size: 0.9rem;
+  }
+}
+
 .ce-identity {
   display: flex;
   align-items: center;
