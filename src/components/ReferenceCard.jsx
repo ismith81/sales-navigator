@@ -8,7 +8,7 @@ const DETAIL_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function ReferenceCard({ caseData, matchReason, defaultExpanded = false, lockOpen = false }) {
+export default function ReferenceCard({ caseData, matchReason, personas = {}, defaultExpanded = false, lockOpen = false }) {
   const [expanded, setExpanded] = useState(defaultExpanded || lockOpen);
   const isOpen = lockOpen || expanded;
 
@@ -38,6 +38,27 @@ export default function ReferenceCard({ caseData, matchReason, defaultExpanded =
 
       {isOpen && (
         <div className="ref-details">
+          {(caseData.mapping?.personas || []).length > 0 && (
+            <div className="detail-field">
+              <div className="detail-label">Relevant voor</div>
+              <div className="ref-persona-list">
+                {(caseData.mapping.personas || []).map(pid => {
+                  const p = personas[pid];
+                  if (!p) return null;
+                  const reason = caseData.matchReasons?.personas?.[pid];
+                  return (
+                    <div key={pid} className="ref-persona-item" title={reason || p.label}>
+                      <span className="ref-persona-icon" aria-hidden="true">{p.icon || '👤'}</span>
+                      <div>
+                        <div className="ref-persona-name">{p.label}</div>
+                        {reason && <div className="ref-persona-reason">{reason}</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {DETAIL_FIELDS.map(({ key, label }) =>
             caseData[key] ? (
               <div key={key} className="detail-field">

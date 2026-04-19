@@ -547,6 +547,7 @@ export default function Navigator() {
               </div>
               <CasesOverview
                 cases={cases}
+                personas={personas}
                 searchQuery={searchQuery}
                 heading={`Zoekresultaten voor "${searchQuery}"`}
               />
@@ -595,6 +596,7 @@ export default function Navigator() {
                   tab={activeTab}
                   topicData={currentTopic}
                   cases={cases}
+                  personas={personas}
                   onUpdateTopic={handleUpdateTopic}
                   hideReferences
                   hideTitle
@@ -604,6 +606,7 @@ export default function Navigator() {
 
               <CasesOverview
                 cases={cases}
+                personas={personas}
                 activeTab={activeTab}
                 activeFilter={activeFilter}
                 heading={activeFilter ? `Referenties voor "${activeFilter}"` : 'Alle cases'}

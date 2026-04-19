@@ -20,6 +20,8 @@ CONTEXT OVER HET AANBOD:
 - 4 Diensten: "Data modernisatie", "Governance", "Data kwaliteit", "Training"
 Doelen → vertalen in behoeften → worden ingevuld door diensten.
 
+Daarnaast zijn cases gekoppeld aan persona's (rollen waarmee sales in gesprek gaat). Elke persona heeft eigen coaching-stijl, klantsignalen en match-redenen per case. Gebruik dit om advies écht op de rol te richten — niet generiek.
+
 WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Voorbereiding**: maak een mini-belscript-draaiboek (opening → discovery-vragen → relevante case → bezwaren → afsluiting).
 - **Synthese**: combineer een case + persona → concrete openingszin of pitch op maat voor dít gesprek.
@@ -29,7 +31,8 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
-2. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met de juiste filter, dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
+2. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
+   - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
 3. **Synthetiseer** — vat niet samen wat de tools terugstuurden, maar *gebruik* het om een antwoord op maat te maken. Koppel altijd expliciet: "voor [persona] is [case] sterk omdat [reden uit de data]".
 
 REGELS:
@@ -63,11 +66,31 @@ async function fetchConfig(supabase, key) {
 }
 
 // ─── Tool implementaties ─────────────────────────────────────────────────
-async function toolSearchCases({ doel, behoefte, dienst, keyword }) {
+async function toolSearchCases({ doel, behoefte, dienst, persona, keyword }) {
   const supabase = getSupabase();
-  let query = supabase.from('cases').select('id,name,subtitle,keywords,business_impact,mapping,situatie,doel,oplossing,resultaat');
+  let query = supabase.from('cases').select('id,name,subtitle,keywords,business_impact,mapping,match_reasons,situatie,doel,oplossing,resultaat');
   const { data, error } = await query;
   if (error) throw error;
+
+  // Persona-filter mag op id óf label matchen — LLM's gebruiken vaak de label.
+  let personaId = null;
+  let personaLabel = null;
+  if (persona) {
+    const personas = await fetchConfig(supabase, 'personas');
+    const byId = personas?.[persona];
+    if (byId) {
+      personaId = persona;
+      personaLabel = byId.label;
+    } else {
+      const matchByLabel = Object.values(personas || {}).find(
+        p => (p.label || '').toLowerCase() === persona.toLowerCase()
+      );
+      if (matchByLabel) {
+        personaId = matchByLabel.id;
+        personaLabel = matchByLabel.label;
+      }
+    }
+  }
 
   // Filter in JS omdat mapping jsonb is en keywords een array.
   const filtered = (data || []).filter(c => {
@@ -75,6 +98,7 @@ async function toolSearchCases({ doel, behoefte, dienst, keyword }) {
     if (doel && !(m.doelen || []).includes(doel)) return false;
     if (behoefte && !(m.behoeften || []).includes(behoefte)) return false;
     if (dienst && !(m.diensten || []).includes(dienst)) return false;
+    if (personaId && !(m.personas || []).includes(personaId)) return false;
     if (keyword) {
       const hay = [
         c.name, c.subtitle, c.situatie, c.doel, c.oplossing, c.resultaat, c.business_impact,
@@ -95,6 +119,9 @@ async function toolSearchCases({ doel, behoefte, dienst, keyword }) {
     resultaat_kort: (c.resultaat || '').slice(0, 220),
     business_impact: c.business_impact,
     mapping: c.mapping,
+    // Geef de persona-match-reasons expliciet terug zodat Nova "waarom resoneert dit bij persona X" kan gebruiken.
+    persona_match_reasons: (c.match_reasons && c.match_reasons.personas) || {},
+    ...(personaLabel ? { gefilterd_op_persona: personaLabel } : {}),
   }));
 }
 
@@ -141,13 +168,14 @@ const tools = [{
   functionDeclarations: [
     {
       name: 'search_cases',
-      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst en/of een vrij trefwoord (klantnaam, sector, technologie).',
+      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona en/of een vrij trefwoord (klantnaam, sector, technologie). Cases zijn gekoppeld aan persona\'s — gebruik de persona-filter als de gebruiker aangeeft met wie hij praat.',
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
           doel: { type: SchemaType.STRING, description: 'Exacte waarde: "Meer waarde halen uit data" of "Data als business model"' },
           behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
           dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
+          persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
           keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
         },
       },

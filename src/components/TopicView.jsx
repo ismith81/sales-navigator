@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReferenceCard from './ReferenceCard';
 
-export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTopic, hideReferences = false, hideTitle = false, activePersona = null }) {
+export default function TopicView({ topicKey, tab, topicData, cases, personas = {}, onUpdateTopic, hideReferences = false, hideTitle = false, activePersona = null }) {
   const [editingTP, setEditingTP] = useState(null);
   const [editingFU, setEditingFU] = useState(null);
   const [addingTP, setAddingTP] = useState(false);
@@ -174,6 +174,7 @@ export default function TopicView({ topicKey, tab, topicData, cases, onUpdateTop
               <ReferenceCard
                 key={c.id}
                 caseData={c}
+                personas={personas}
                 matchReason={c.matchReasons?.[tab]?.[topicKey]}
               />
             ))}

@@ -24,7 +24,7 @@ function matches(caseData, query) {
   return haystack.includes(q);
 }
 
-export default function CasesOverview({ cases, searchQuery, heading, hint, activeTab, activeFilter }) {
+export default function CasesOverview({ cases, personas = {}, searchQuery, heading, hint, activeTab, activeFilter }) {
   let filtered = cases;
   if (searchQuery?.trim()) {
     filtered = filtered.filter(c => matches(c, searchQuery.trim()));
@@ -49,7 +49,7 @@ export default function CasesOverview({ cases, searchQuery, heading, hint, activ
       ) : (
         <div className="co-grid">
           {filtered.map(c => (
-            <CasePreviewCard key={c.id} caseData={c} />
+            <CasePreviewCard key={c.id} caseData={c} personas={personas} />
           ))}
         </div>
       )}
@@ -57,7 +57,7 @@ export default function CasesOverview({ cases, searchQuery, heading, hint, activ
   );
 }
 
-function CasePreviewCard({ caseData }) {
+function CasePreviewCard({ caseData, personas = {} }) {
   const [expanded, setExpanded] = React.useState(false);
   const preview = stripHtml(caseData.businessImpact) || stripHtml(caseData.resultaat);
   const tags = [
@@ -70,7 +70,7 @@ function CasePreviewCard({ caseData }) {
     return (
       <div className="co-card co-card--expanded">
         <button className="co-collapse" onClick={() => setExpanded(false)} title="Inklappen">✕</button>
-        <ReferenceCard caseData={caseData} lockOpen />
+        <ReferenceCard caseData={caseData} personas={personas} lockOpen />
       </div>
     );
   }
@@ -88,6 +88,19 @@ function CasePreviewCard({ caseData }) {
         <div className="co-title-wrap">
           <div className="co-name">{caseData.name}</div>
           <div className="co-subtitle">{caseData.subtitle}</div>
+          {(caseData.mapping?.personas || []).length > 0 && (
+            <div className="co-persona-strip" title="Gekoppelde persona's">
+              {(caseData.mapping.personas || []).map(pid => {
+                const p = personas[pid];
+                if (!p) return null;
+                return (
+                  <span key={pid} className="co-persona-badge" title={p.label}>
+                    <span aria-hidden="true">{p.icon || '👤'}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
       {preview && <div className="co-preview">{preview}</div>}

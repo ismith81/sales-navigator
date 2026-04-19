@@ -32,6 +32,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
         <CaseEditor
           caseData={editingCase}
           filters={filters}
+          personas={personas}
           onSave={handleSave}
           onCancel={() => setEditingId(null)}
         />
@@ -124,6 +125,19 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
                 <div>
                   <div className="cm-name">{c.name}</div>
                   <div className="cm-subtitle">{c.subtitle}</div>
+                  {(c.mapping.personas || []).length > 0 && (
+                    <div className="cm-persona-strip" title="Gekoppelde persona's">
+                      {(c.mapping.personas || []).map(pid => {
+                        const p = personas?.[pid];
+                        if (!p) return null;
+                        return (
+                          <span key={pid} className="cm-persona-badge" title={p.label}>
+                            <span aria-hidden="true">{p.icon || '👤'}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="cm-col-tags">

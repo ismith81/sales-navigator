@@ -6,6 +6,8 @@ import { DEFAULT_FILTERS, DEFAULT_PAINPOINTS } from '../data/filters';
 
 // Map tussen DB-kolommen (snake_case) en het JS-model (camelCase) dat de UI al kent.
 function rowToCase(r) {
+  const m = r.mapping || {};
+  const mr = r.match_reasons || {};
   return {
     id: r.id,
     name: r.name,
@@ -18,10 +20,22 @@ function rowToCase(r) {
     resultaat: r.resultaat || '',
     keywords: r.keywords || [],
     businessImpact: r.business_impact || '',
-    mapping: r.mapping || { doelen: [], behoeften: [], diensten: [] },
+    // mapping.personas + matchReasons.personas zijn nieuw — defaulten naar leeg
+    // voor bestaande cases zonder deze key (backwards-compatible met jsonb).
+    mapping: {
+      doelen: m.doelen || [],
+      behoeften: m.behoeften || [],
+      diensten: m.diensten || [],
+      personas: m.personas || [],
+    },
     talkingPoints: r.talking_points || [],
     followUps: r.follow_ups || [],
-    matchReasons: r.match_reasons || { doelen: {}, behoeften: {}, diensten: {} },
+    matchReasons: {
+      doelen: mr.doelen || {},
+      behoeften: mr.behoeften || {},
+      diensten: mr.diensten || {},
+      personas: mr.personas || {},
+    },
   };
 }
 

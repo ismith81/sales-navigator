@@ -15,8 +15,9 @@ const RICH_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, onCancel }) {
+export default function CaseEditor({ caseData, filters: dynamicFilters, personas = {}, onSave, onCancel }) {
   const FILTERS = dynamicFilters || DEFAULT_FILTERS;
+  const personaList = Object.values(personas).sort((a, b) => (a.order || 99) - (b.order || 99));
   const [form, setForm] = useState({
     name: caseData.name || '',
     subtitle: caseData.subtitle || '',
@@ -30,11 +31,13 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
       doelen: [...caseData.mapping.doelen],
       behoeften: [...caseData.mapping.behoeften],
       diensten: [...caseData.mapping.diensten],
+      personas: [...(caseData.mapping.personas || [])],
     },
     matchReasons: {
       doelen: { ...(caseData.matchReasons?.doelen || {}) },
       behoeften: { ...(caseData.matchReasons?.behoeften || {}) },
       diensten: { ...(caseData.matchReasons?.diensten || {}) },
+      personas: { ...(caseData.matchReasons?.personas || {}) },
     },
   });
 
@@ -79,10 +82,10 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
   const handleSave = () => {
     const cleaned = { ...form };
     cleaned.keywords = cleaned.keywords.filter(kw => kw.trim());
-    // Clean matchReasons
-    for (const category of ['doelen', 'behoeften', 'diensten']) {
-      const mapped = cleaned.mapping[category];
-      const reasons = { ...cleaned.matchReasons[category] };
+    // Clean matchReasons — ook voor personas (zelfde shape als overige mappings)
+    for (const category of ['doelen', 'behoeften', 'diensten', 'personas']) {
+      const mapped = cleaned.mapping[category] || [];
+      const reasons = { ...(cleaned.matchReasons[category] || {}) };
       for (const key of Object.keys(reasons)) {
         if (!mapped.includes(key) || !reasons[key]?.trim()) delete reasons[key];
       }
@@ -188,6 +191,32 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
             </div>
           </div>
         ))}
+
+        {/* Personas — "voor wie" is deze case relevant */}
+        <div className="ce-field">
+          <label className="ce-label">Persona's</label>
+          {personaList.length === 0 ? (
+            <p className="ce-hint">Nog geen persona's geconfigureerd. Voeg er eerst toe via Beheer → Persona's.</p>
+          ) : (
+            <div className="ce-persona-options">
+              {personaList.map(p => {
+                const active = form.mapping.personas.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`ce-persona-chip ${active ? 'active' : ''}`}
+                    onClick={() => toggleTag('personas', p.id)}
+                    title={p.label}
+                  >
+                    <span className="ce-persona-chip-icon" aria-hidden="true">{p.icon || '👤'}</span>
+                    <span className="ce-persona-chip-label">{p.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Match reasons */}
@@ -207,8 +236,27 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, onSave, 
             </div>
           ))
         )}
-        {form.mapping.doelen.length + form.mapping.behoeften.length + form.mapping.diensten.length === 0 && (
-          <p className="ce-hint">Selecteer eerst tags in de mapping hierboven.</p>
+        {/* Match-reasons per gekoppelde persona */}
+        {form.mapping.personas.map(pid => {
+          const p = personas[pid];
+          if (!p) return null;
+          return (
+            <div key={`persona-${pid}`} className="ce-field">
+              <label className="ce-label">
+                <span aria-hidden="true" style={{ marginRight: '0.35rem' }}>{p.icon || '👤'}</span>
+                persona — {p.label}
+              </label>
+              <textarea
+                value={form.matchReasons.personas?.[pid] ?? ''}
+                onChange={(e) => updateMatchReason('personas', pid, e.target.value)}
+                placeholder={`Waarom resoneert deze case bij een ${p.label}?`}
+                rows={2}
+              />
+            </div>
+          );
+        })}
+        {form.mapping.doelen.length + form.mapping.behoeften.length + form.mapping.diensten.length + form.mapping.personas.length === 0 && (
+          <p className="ce-hint">Selecteer eerst tags of persona's in de mapping hierboven.</p>
         )}
       </div>
 
