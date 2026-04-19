@@ -68,6 +68,10 @@ export default function Navigator() {
   const [activeFilter, setActiveFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [chatInitialPrompt, setChatInitialPrompt] = useState(null);
+  // Sub-nav sectie per hoofdweergave. Blijft hangen zolang je op die view bent,
+  // reset bij de volgende mount — bewust niet persisted (geen verwachting).
+  const [beheerSection, setBeheerSection] = useState('cases'); // cases | onderwerpen | personas
+  const [instructiesSection, setInstructiesSection] = useState('algemeen'); // algemeen | nova | beheer
   const [route, setRoute] = useState(() => {
     try {
       // One-time migratie: de default was eerder 'assistent'; nu 'gids'.
@@ -451,44 +455,64 @@ export default function Navigator() {
           </svg>
         </button>
         </div>
+
+        {/* Sub-nav: tweede regel in de topbar met items per hoofdweergave. */}
+        <nav className="topbar-subnav" role="tablist" aria-label="Sub-navigatie">
+          {view === 'navigator' && (
+            <>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={route === 'gids'}
+                className={`topbar-subnav-btn ${route === 'gids' ? 'active' : ''}`}
+                onClick={() => changeRoute('gids')}
+              >
+                Gids
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={route === 'assistent'}
+                className={`topbar-subnav-btn ${route === 'assistent' ? 'active' : ''}`}
+                onClick={() => changeRoute('assistent')}
+              >
+                Assistent
+              </button>
+            </>
+          )}
+          {view === 'beheer' && (
+            <>
+              <button type="button" role="tab" aria-selected={beheerSection === 'cases'}
+                className={`topbar-subnav-btn ${beheerSection === 'cases' ? 'active' : ''}`}
+                onClick={() => setBeheerSection('cases')}>Cases</button>
+              <button type="button" role="tab" aria-selected={beheerSection === 'onderwerpen'}
+                className={`topbar-subnav-btn ${beheerSection === 'onderwerpen' ? 'active' : ''}`}
+                onClick={() => setBeheerSection('onderwerpen')}>Onderwerpen</button>
+              <button type="button" role="tab" aria-selected={beheerSection === 'personas'}
+                className={`topbar-subnav-btn ${beheerSection === 'personas' ? 'active' : ''}`}
+                onClick={() => setBeheerSection('personas')}>Persona's</button>
+            </>
+          )}
+          {view === 'instructies' && (
+            <>
+              <button type="button" role="tab" aria-selected={instructiesSection === 'algemeen'}
+                className={`topbar-subnav-btn ${instructiesSection === 'algemeen' ? 'active' : ''}`}
+                onClick={() => setInstructiesSection('algemeen')}>Algemeen</button>
+              <button type="button" role="tab" aria-selected={instructiesSection === 'nova'}
+                className={`topbar-subnav-btn ${instructiesSection === 'nova' ? 'active' : ''}`}
+                onClick={() => setInstructiesSection('nova')}>Nova</button>
+              <button type="button" role="tab" aria-selected={instructiesSection === 'beheer'}
+                className={`topbar-subnav-btn ${instructiesSection === 'beheer' ? 'active' : ''}`}
+                onClick={() => setInstructiesSection('beheer')}>Beheer</button>
+            </>
+          )}
+        </nav>
       </header>
 
       {view === 'instructies' ? (
-        <Instructies />
+        <Instructies section={instructiesSection} />
       ) : view === 'navigator' ? (
         <>
-          {/* Route-toggle: Assistent (AI-chat) vs. Gids (guided flow) */}
-          <div className="route-toggle-wrap">
-          <div className="route-toggle" role="tablist" aria-label="Kies je werkwijze">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={route === 'gids'}
-              className={`route-toggle-btn ${route === 'gids' ? 'active' : ''}`}
-              onClick={() => changeRoute('gids')}
-            >
-              <svg className="route-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" />
-                <polygon points="15.5 8.5 12.5 13.5 8.5 15.5 11.5 10.5" />
-              </svg>
-              <span>Gids</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={route === 'assistent'}
-              className={`route-toggle-btn ${route === 'assistent' ? 'active' : ''}`}
-              onClick={() => changeRoute('assistent')}
-            >
-              <svg className="route-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5L12 3z" />
-                <path d="M18 14l.8 1.7L20.5 16.5l-1.7.8L18 19l-.8-1.7L15.5 16.5l1.7-.8L18 14z" />
-              </svg>
-              <span>Assistent</span>
-            </button>
-          </div>
-          </div>
-
           {searchQuery.trim() ? (
             <>
               <div className="active-filter-bar">
@@ -574,6 +598,7 @@ export default function Navigator() {
         </>
       ) : (
         <CaseManager
+          section={beheerSection}
           cases={cases}
           filters={filters}
           topics={topics}

@@ -1,18 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-// Instructies-pagina met drie sub-tabs:
-//  - Algemeen: inloggen, routes, Gids-flow, opslag, tips
-//  - Nova:     alles rond de AI-assistent (groeit met de roadmap)
-//  - Beheer:   cases + content beheren
-const SUB_TABS = [
-  { id: 'algemeen', label: 'Algemeen' },
-  { id: 'nova', label: 'Nova' },
-  { id: 'beheer', label: 'Beheer' },
-];
-
-export default function Instructies() {
-  const [tab, setTab] = useState('algemeen');
-
+// Instructies-pagina met drie secties (Algemeen / Nova / Beheer).
+// De sub-nav zit in de topbar (Navigator.jsx) en stuurt de actieve sectie
+// via de `section`-prop mee.
+export default function Instructies({ section = 'algemeen' }) {
   return (
     <div className="instructies">
       <div className="ins-header">
@@ -20,24 +11,9 @@ export default function Instructies() {
         <p>Hoe werk je met de Sales Navigator?</p>
       </div>
 
-      <div className="ins-subtabs" role="tablist">
-        {SUB_TABS.map(t => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            className={`ins-subtab ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'algemeen' && <TabAlgemeen />}
-      {tab === 'nova' && <TabNova />}
-      {tab === 'beheer' && <TabBeheer />}
+      {section === 'algemeen' && <TabAlgemeen />}
+      {section === 'nova' && <TabNova />}
+      {section === 'beheer' && <TabBeheer />}
     </div>
   );
 }
