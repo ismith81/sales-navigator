@@ -1789,6 +1789,8 @@ body::before {
 .fm-row-wrap.expanded {
   border-color: var(--teal);
   box-shadow: 0 4px 16px rgba(44,60,82,0.06);
+  /* Overflow vrij zodat popovers (bv. icon-picker) buiten de wrap mogen uitklappen */
+  overflow: visible;
 }
 .fm-row {
   display: flex;
@@ -3060,6 +3062,7 @@ body::before {
 .pm-icon-trigger {
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   gap: 0.5rem;
   padding: 0.4rem 0.7rem;
   background: #fff;
@@ -3165,9 +3168,10 @@ body::before {
 /* Meta-grid (icon / domein / niveau) — licht thema, passend bij .fm-field cards */
 .pm-meta-grid {
   display: grid;
-  grid-template-columns: 130px 1fr 1fr;
+  grid-template-columns: auto 1fr 1fr;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  align-items: start;
 }
 .pm-meta-grid .fm-field { margin-bottom: 0; }
 .pm-field-icon .fm-input {
