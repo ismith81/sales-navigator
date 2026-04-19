@@ -222,11 +222,11 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
 
       {/* Backup / Restore — altijd zichtbaar (beheer-niveau actie). */}
       <div className="cm-backup-bar">
-        <button className="btn btn-secondary" onClick={onBackup}>
-          Backup downloaden
+        <button className="btn-add-small" onClick={onBackup}>
+          ⬇ Backup downloaden
         </button>
-        <button className="btn btn-secondary" onClick={onRestore}>
-          Backup herstellen
+        <button className="btn-add-small" onClick={onRestore}>
+          ⬆ Backup herstellen
         </button>
       </div>
 
