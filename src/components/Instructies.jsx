@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+// Instructies-pagina met drie sub-tabs:
+//  - Algemeen: inloggen, routes, Gids-flow, opslag, tips
+//  - Nova:     alles rond de AI-assistent (groeit met de roadmap)
+//  - Beheer:   cases + content beheren
+const SUB_TABS = [
+  { id: 'algemeen', label: 'Algemeen' },
+  { id: 'nova', label: 'Nova' },
+  { id: 'beheer', label: 'Beheer' },
+];
 
 export default function Instructies() {
+  const [tab, setTab] = useState('algemeen');
+
   return (
     <div className="instructies">
       <div className="ins-header">
@@ -8,6 +20,31 @@ export default function Instructies() {
         <p>Hoe werk je met de Sales Navigator?</p>
       </div>
 
+      <div className="ins-subtabs" role="tablist">
+        {SUB_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`ins-subtab ${tab === t.id ? 'active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'algemeen' && <TabAlgemeen />}
+      {tab === 'nova' && <TabNova />}
+      {tab === 'beheer' && <TabBeheer />}
+    </div>
+  );
+}
+
+function TabAlgemeen() {
+  return (
+    <>
       <section className="ins-section">
         <h3>1. Inloggen</h3>
         <p>
@@ -49,10 +86,8 @@ export default function Instructies() {
             "Met wie praat je?". Handig als je gericht een onderwerp of doelgroep wilt verkennen.
           </li>
           <li>
-            <strong>Assistent</strong> — een AI-chat die automatisch door alle cases, talking points en
-            persona-coaching heen zoekt. Stel gewoon een vraag in natuurlijke taal
-            ("Welke cases passen bij AI ready?", "Bereid CFO-gesprek voor over dataplatform-migratie")
-            en de assistent zoekt zelf de feiten erbij.
+            <strong>Assistent</strong> — een AI-chat met <strong>Nova</strong> die automatisch door
+            alle cases, talking points en persona-coaching heen zoekt. Zie de Nova-tab voor details.
           </li>
         </ul>
         <p>
@@ -62,40 +97,7 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>3. Assistent-route — chat met Nova</h3>
-        <p>
-          <strong>Nova</strong> is je AI-collega in deze app. Geen algemene chatbot: hij praat
-          alleen over de cases, talking points en persona-coaching die hier staan. Feiten
-          (bedrijfsnamen, cijfers, tags) komen uit de database — Nova verzint die niet.
-        </p>
-        <ul>
-          <li>
-            <strong>Quick-prompts</strong> — onder het welkomstbericht staan drie voorgestelde vragen
-            om direct te starten. Klik of typ je eigen vraag.
-          </li>
-          <li>
-            <strong>Klikbare bedrijfsnamen</strong> — als Nova <em>AkzoNobel</em>, <em>CITO</em>,
-            <em>Tulp Group</em> of andere case-namen noemt, kun je daarop klikken om direct naar de
-            volledige case te springen (de app switcht dan naar de Gids-route met die case geopend).
-          </li>
-          <li>
-            <strong>Persona in je vraag</strong> — in deze route is er geen aparte persona-selector.
-            Vermeld de rol gewoon in je vraag ("Ik heb zo een gesprek met een CFO…") en Nova stemt
-            het advies daarop af.
-          </li>
-          <li>
-            <strong>Feedback</strong> — bij elk antwoord staan 👍/👎-knoppen. Feedback helpt om de
-            systeemprompt en content achter de schermen scherp te stellen.
-          </li>
-          <li>
-            <strong>Geschiedenis</strong> — de chat blijft bewaard binnen deze browser-sessie. Na een
-            tab-refresh is 'ie leeg. Er is (nog) geen cross-device geschiedenis.
-          </li>
-        </ul>
-      </section>
-
-      <section className="ins-section">
-        <h3>4. Gids-route — guided belscript</h3>
+        <h3>3. Gids-route — guided belscript</h3>
         <p>
           De Gids-route is de klikbare belscript-flow. Alles op één pagina, in één kaartje: persona,
           tabs en filter-knoppen.
@@ -132,7 +134,192 @@ export default function Instructies() {
       </section>
 
       <section className="ins-section">
-        <h3>5. Beheer — cases, categorieën en persona's</h3>
+        <h3>4. Opslag &amp; synchronisatie</h3>
+        <p>
+          De app werkt met een <strong>centrale database</strong> (Supabase). Alle cases, categorieën,
+          talking points, persona's en feedback worden automatisch opgeslagen en zijn direct zichtbaar
+          voor iedereen die de app opent — op elk apparaat, zonder import of export.
+        </p>
+        <p>
+          Wijzigingen verschijnen vrijwel direct (binnen een seconde). Er is geen handmatige
+          synchronisatie nodig.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>5. Lokale snapshot (optioneel)</h3>
+        <p>
+          Onderaan in <em>Beheer</em> staan twee knoppen:
+          <strong> Backup downloaden</strong> en <strong>Backup herstellen</strong>.
+          Die zijn <em>geen</em> vervanging voor de database, maar een vangnet:
+        </p>
+        <ul>
+          <li>
+            <strong>Backup downloaden</strong> — slaat een JSON-snapshot op van wat er nu in de
+            database staat (cases, categorieën, topics én persona's). Handig als je een tussenversie
+            wilt bewaren voordat je grotere wijzigingen maakt.
+          </li>
+          <li>
+            <strong>Backup herstellen</strong> — laadt een eerder gedownloade JSON terug.
+            Let op: dit <strong>overschrijft</strong> de huidige database-inhoud voor iedereen.
+            Gebruik alleen bij disaster recovery of bewuste rollback.
+          </li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
+        <h3>6. Tips</h3>
+        <ul>
+          <li>
+            <strong>Niet zeker waar te beginnen?</strong> Begin in de Assistent-route met een open
+            vraag — Nova leidt je vanzelf naar de juiste cases en onderwerpen.
+          </li>
+          <li>
+            <strong>Bekend onderwerp?</strong> Gids-route is sneller: 2–3 klikken en je hebt
+            talking points + cases op het scherm.
+          </li>
+          <li>
+            Gebruik korte, herkenbare namen voor Doelen/Behoeften/Diensten — die verschijnen als
+            knoppen tijdens het gesprek.
+          </li>
+          <li>
+            Vul match redenen zoveel mogelijk in: die maken direct duidelijk waarom een case
+            relevant is, en Nova haalt er z'n onderbouwing uit.
+          </li>
+          <li>
+            Persona-coaching werkt alleen goed als je 'm ook echt invult — laat 'm anders leeg,
+            dan verschijnt er geen helper.
+          </li>
+          <li>
+            Maak voor grote wijzigingen eerst een lokale snapshot (zie punt 5), zodat je kunt
+            terugrollen.
+          </li>
+        </ul>
+      </section>
+    </>
+  );
+}
+
+function TabNova() {
+  return (
+    <>
+      <section className="ins-section">
+        <h3>Wie is Nova?</h3>
+        <p>
+          <strong>Nova</strong> is je AI-collega in deze app. Geen algemene chatbot: ze praat
+          alleen over de cases, talking points en persona-coaching die hier staan. Feiten
+          (bedrijfsnamen, cijfers, tags) komen altijd uit de database — Nova verzint die niet.
+        </p>
+        <p>
+          Nova is géén bibliothecaris die cases opsomt. Ze is een <strong>sparring-partner</strong>:
+          ze combineert wat ze uit de database haalt tot concreet advies voor jouw gesprek. Vraag
+          niet "welke cases passen?", vraag "wat zeg ik tegen deze CFO volgende week?".
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>Wat Nova voor je kan doen</h3>
+        <p>
+          Vijf skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Nova herkent zelf wat voor type verzoek het is.
+        </p>
+        <ul>
+          <li>
+            <strong>Voorbereiding</strong> — compleet mini-belscript: opening, discovery-vragen,
+            relevante case, bezwaren, afsluiting.<br />
+            <em>Voorbeeld:</em> "Bereid een gesprek voor met de CDO van een verzekeraar over AI-readiness."
+          </li>
+          <li>
+            <strong>Synthese</strong> — combineert een case en een persona tot een openingszin of
+            pitch op maat.<br />
+            <em>Voorbeeld:</em> "Hoe open ik richting een CFO met de AkzoNobel-case?"
+          </li>
+          <li>
+            <strong>Rollenspel</strong> — Nova speelt de persona, valt aan op zwakke plekken, blijft
+            in karakter tot je "stop" zegt.<br />
+            <em>Voorbeeld:</em> "Speel de IT-manager van een bank en val me aan op governance."
+          </li>
+          <li>
+            <strong>Checklist / review</strong> — plak je pitch of mailconcept, Nova toetst 'm
+            tegen de talking points en follow-ups en noemt wat ontbreekt.<br />
+            <em>Voorbeeld:</em> "Ik heb deze opening geschreven: [...]. Wat mis ik nog?"
+          </li>
+          <li>
+            <strong>Vergelijken</strong> — zet meerdere cases naast elkaar per doel, sector of aanpak.<br />
+            <em>Voorbeeld:</em> "Zet AkzoNobel en CITO naast elkaar qua aanpak."
+          </li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
+        <h3>Hoe je het meeste uit Nova haalt</h3>
+        <ul>
+          <li>
+            <strong>Quick-prompts</strong> — onder het welkomstbericht staan drie voorgestelde vragen
+            om direct te starten. Handig als je niet meteen weet hoe je het wilt formuleren.
+          </li>
+          <li>
+            <strong>Context in je vraag</strong> — noem de rol (CFO, CDO, IT-manager), de sector
+            (retail, bank, overheid) en het onderwerp. Hoe specifieker, hoe beter het antwoord.
+          </li>
+          <li>
+            <strong>Persona in de vraag, niet in een selector</strong> — in de Assistent-route is
+            er geen aparte persona-kompas. Vermeld de rol gewoon in je vraag.
+          </li>
+          <li>
+            <strong>Doorvragen mag</strong> — Nova is een chat, niet een zoekmachine. Vraag om een
+            kortere versie, een andere toon, of "geef me ook de tegenargumenten".
+          </li>
+          <li>
+            <strong>Eindig een rollenspel expliciet</strong> — typ "stop" of "uit rol" om Nova uit
+            karakter te halen en feedback te vragen op hoe je het deed.
+          </li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
+        <h3>Klikbare bedrijfsnamen</h3>
+        <p>
+          Als Nova <em>AkzoNobel</em>, <em>CITO</em>, <em>Tulp Group</em> of andere case-namen
+          noemt (standaard in <strong>vet</strong>), kun je daarop klikken om direct naar de
+          volledige case te springen. De app switcht dan naar de Gids-route met die case geopend.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>Feedback &amp; geschiedenis</h3>
+        <ul>
+          <li>
+            <strong>Feedback</strong> — bij elk antwoord staan 👍/👎-knoppen. Dit is de snelste
+            manier om content-gaten (ontbrekende cases, zwakke talking points) en promptfouten
+            op te sporen. Gebruik 'm ook gewoon voor "dit antwoord was perfect" — dat helpt ook.
+          </li>
+          <li>
+            <strong>Chatgeschiedenis</strong> — blijft bewaard binnen deze browser-tab. Na een
+            refresh of op een ander device is 'ie leeg. Cross-device geschiedenis staat op de
+            roadmap.
+          </li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
+        <h3>Wat Nova (nog) niet doet</h3>
+        <ul>
+          <li>Nova verzint geen cases, cijfers of klantnamen — als iets niet in de database staat, zegt ze dat.</li>
+          <li>Nova heeft geen kennis van de buitenwereld: geen nieuws, geen LinkedIn, geen bedrijfssites. Dat staat op de roadmap (prospect-briefing).</li>
+          <li>Nova onthoudt niets tussen sessies of apparaten. Memory-laag staat op de roadmap.</li>
+          <li>Nova kan (nog) geen slide-decks of mails als bestand opleveren — alleen tekst in de chat.</li>
+        </ul>
+      </section>
+    </>
+  );
+}
+
+function TabBeheer() {
+  return (
+    <>
+      <section className="ins-section">
+        <h3>Cases</h3>
         <p>
           In <strong>Beheer</strong> (rechtsboven in de topbar) beheer je alle content die in beide
           routes verschijnt.
@@ -159,86 +346,56 @@ export default function Instructies() {
             <strong>Exporteren</strong> — per case kun je een <em>.docx</em> of <em>.pptx</em>
             downloaden in Creates-huisstijl.
           </li>
-          <li>
-            <strong>Doelen / Behoeften / Diensten</strong> — voeg items toe, hernoem of verwijder ze.
-            Per item leg je talking points, vervolgvragen, een omschrijving en klantsignalen vast.
-            Verwijderen kan alleen als geen enkele case ernaar verwijst.
-          </li>
-          <li>
-            <strong>Persona's</strong> — beheer de 4 standaard-kwadranten en voeg eventueel extra
-            persona's toe. Per persona leg je icoon, voorbeeldrollen, omschrijving, klantsignalen
-            en coaching-tekst vast.
-          </li>
         </ul>
       </section>
 
       <section className="ins-section">
-        <h3>6. Opslag &amp; synchronisatie</h3>
+        <h3>Doelen, Behoeften &amp; Diensten</h3>
         <p>
-          De app werkt met een <strong>centrale database</strong> (Supabase). Alle cases, categorieën,
-          talking points, persona's en feedback worden automatisch opgeslagen en zijn direct zichtbaar
-          voor iedereen die de app opent — op elk apparaat, zonder import of export.
+          Voeg items toe, hernoem of verwijder ze. Per item leg je <strong>talking points</strong>,
+          <strong> vervolgvragen</strong>, een <strong>omschrijving</strong> en <strong>klantsignalen</strong> vast.
+          Verwijderen kan alleen als geen enkele case ernaar verwijst.
         </p>
         <p>
-          Wijzigingen verschijnen vrijwel direct (binnen een seconde). Er is geen handmatige
-          synchronisatie nodig.
+          Alle content die je hier invult verschijnt in de Gids-route én wordt gebruikt door Nova
+          als feitenbron.
         </p>
       </section>
 
       <section className="ins-section">
-        <h3>7. Lokale snapshot (optioneel)</h3>
+        <h3>Persona's</h3>
         <p>
-          Onderaan in <em>Beheer</em> staan twee knoppen:
-          <strong> Backup downloaden</strong> en <strong>Backup herstellen</strong>.
-          Die zijn <em>geen</em> vervanging voor de database, maar een vangnet:
+          Beheer de 4 standaard-kwadranten (Business/Tech × Strategisch/Operationeel) en voeg
+          eventueel extra persona's toe. Per persona leg je icoon, voorbeeldrollen, omschrijving,
+          klantsignalen en coaching-tekst vast.
         </p>
+        <p>
+          De coaching-tekst verschijnt in de Gids-route als je een persona selecteert. De
+          klantsignalen helpen je te herkennen <em>wie</em> je aan de lijn hebt op basis van wat
+          ze zeggen.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>Tips voor beheer</h3>
         <ul>
           <li>
-            <strong>Backup downloaden</strong> — slaat een JSON-snapshot op van wat er nu in de
-            database staat (cases, categorieën, topics én persona's). Handig als je een tussenversie
-            wilt bewaren voordat je grotere wijzigingen maakt.
+            Gebruik korte, herkenbare namen voor tags — die verschijnen als knoppen tijdens het gesprek.
           </li>
           <li>
-            <strong>Backup herstellen</strong> — laadt een eerder gedownloade JSON terug.
-            Let op: dit <strong>overschrijft</strong> de huidige database-inhoud voor iedereen.
-            Gebruik alleen bij disaster recovery of bewuste rollback.
+            Vul match-redenen per case-tag in: ze maken direct duidelijk waarom een case relevant
+            is, en Nova gebruikt ze in haar onderbouwing.
+          </li>
+          <li>
+            Laat coaching-tekst leeg als je geen scherpe tip hebt — dan toont de app géén lege
+            helper, in plaats van een nietszeggende.
+          </li>
+          <li>
+            Maak voor grote content-wijzigingen eerst een lokale backup (Backup downloaden onderaan
+            Beheer).
           </li>
         </ul>
       </section>
-
-      <section className="ins-section">
-        <h3>8. Tips</h3>
-        <ul>
-          <li>
-            <strong>Niet zeker waar te beginnen?</strong> Begin in de Assistent-route met een open
-            vraag — die leidt je vanzelf naar de juiste cases en onderwerpen.
-          </li>
-          <li>
-            <strong>Bekend onderwerp?</strong> Gids-route is sneller: 2–3 klikken en je hebt
-            talking points + cases op het scherm.
-          </li>
-          <li>
-            Gebruik korte, herkenbare namen voor Doelen/Behoeften/Diensten — die verschijnen als
-            knoppen tijdens het gesprek.
-          </li>
-          <li>
-            Vul match redenen zoveel mogelijk in: die maken direct duidelijk waarom een case
-            relevant is, en Nova haalt er z'n onderbouwing uit.
-          </li>
-          <li>
-            Persona-coaching werkt alleen goed als je 'm ook echt invult — laat 'm anders leeg,
-            dan verschijnt er geen helper.
-          </li>
-          <li>
-            Geef 👍/👎 op Nova's antwoorden — dat is de snelste manier om content-gaten
-            (ontbrekende cases, zwakke talking points) op te sporen.
-          </li>
-          <li>
-            Maak voor grote wijzigingen eerst een lokale snapshot (zie punt 6), zodat je kunt
-            terugrollen.
-          </li>
-        </ul>
-      </section>
-    </div>
+    </>
   );
 }

@@ -1964,6 +1964,41 @@ body::before {
   font-size: 1rem;
 }
 
+/* Sub-tabs (Algemeen / Nova / Beheer) — segmented pill, zelfde look als route-toggle. */
+.ins-subtabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 1.75rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.ins-subtab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ins-subtab:hover {
+  color: var(--navy);
+}
+
+.ins-subtab.active {
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .ins-section {
   margin-bottom: 2.5rem;
 }
