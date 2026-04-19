@@ -150,10 +150,40 @@ export default function Navigator() {
     setActiveFilter(prev => prev === filter ? null : filter);
   };
 
-  // Cases CRUD
-  const handleImport = (newCase) => { setCases(prev => [...prev, newCase]); showToast('Case geimporteerd'); };
-  const handleUpdateCase = (updated) => { setCases(prev => prev.map(c => c.id === updated.id ? updated : c)); showToast('Case opgeslagen'); };
-  const handleRemove = (id) => { setCases(prev => prev.filter(c => c.id !== id)); showToast('Case verwijderd'); };
+  // Cases CRUD — bij expliciete user-acties (import/save/remove) direct naar
+  // Supabase schrijven i.p.v. op de 400ms debounce wachten. Anders kun je
+  // binnen dat venster wegnavigeren/sluiten → save verloren. Debounce blijft
+  // wel actief als vangnet voor overige state-wijzigingen.
+  const flushCases = (next) => {
+    Promise.resolve(saveCases(next)).catch(err => {
+      console.error('Supabase save error (cases):', err);
+      showToast('Opslaan mislukt — probeer opnieuw');
+    });
+  };
+  const handleImport = (newCase) => {
+    setCases(prev => {
+      const next = [...prev, newCase];
+      if (hydrated.current) flushCases(next);
+      return next;
+    });
+    showToast('Case geimporteerd');
+  };
+  const handleUpdateCase = (updated) => {
+    setCases(prev => {
+      const next = prev.map(c => c.id === updated.id ? updated : c);
+      if (hydrated.current) flushCases(next);
+      return next;
+    });
+    showToast('Case opgeslagen');
+  };
+  const handleRemove = (id) => {
+    setCases(prev => {
+      const next = prev.filter(c => c.id !== id);
+      if (hydrated.current) flushCases(next);
+      return next;
+    });
+    showToast('Case verwijderd');
+  };
 
   // Topic update
   const handleUpdateTopic = (topicData) => {
