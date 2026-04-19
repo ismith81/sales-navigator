@@ -4,6 +4,7 @@ import ImportCase from './ImportCase';
 import FilterManager from './FilterManager';
 import PersonaManager from './PersonaManager';
 import { exportCaseToDocx } from '../utils/exportCase';
+import { PersonaIcon } from '../lib/personaIcons.jsx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
@@ -139,7 +140,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
                         if (!p) return null;
                         return (
                           <span key={pid} className="cm-persona-badge" title={p.label}>
-                            <span aria-hidden="true">{p.icon || '👤'}</span>
+                            <PersonaIcon name={p.icon} size={14} />
                           </span>
                         );
                       })}

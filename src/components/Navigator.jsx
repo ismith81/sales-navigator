@@ -326,7 +326,7 @@ export default function Navigator() {
       [id]: {
         id,
         label: 'Nieuwe persona',
-        icon: '👤',
+        icon: 'user',
         domain: 'business',
         niveau: 'strategisch',
         order: nextOrder,

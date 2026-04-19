@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PersonaIcon } from '../lib/personaIcons.jsx';
 
 // Compacte 2x2 zonder redundante axis-labels — de quad-titels dragen die info al.
 
@@ -49,7 +50,9 @@ export default function PersonaKompas({ personas = {}, activePersona, onSelect }
         onClick={() => onSelect(isActive ? null : p.id)}
         title={p.roles || p.label}
       >
-        <span className="kompas-quad-icon" aria-hidden="true">{p.icon || '👤'}</span>
+        <span className="kompas-quad-icon" aria-hidden="true">
+          <PersonaIcon name={p.icon} size={22} />
+        </span>
         <span className="kompas-quad-title">{p.label}</span>
         {p.roles && <span className="kompas-quad-roles">{p.roles}</span>}
       </button>
@@ -85,7 +88,7 @@ export default function PersonaKompas({ personas = {}, activePersona, onSelect }
         )}
         {active && collapsed && (
           <span className="kompas-collapsed-chip">
-            <span aria-hidden="true">{active.icon}</span>
+            <PersonaIcon name={active.icon} size={14} />
             <strong>{active.label}</strong>
             <button
               type="button"
@@ -116,7 +119,7 @@ export default function PersonaKompas({ personas = {}, activePersona, onSelect }
                   className={`kompas-overflow-chip ${activePersona === p.id ? 'active' : ''}`}
                   onClick={() => onSelect(activePersona === p.id ? null : p.id)}
                 >
-                  <span aria-hidden="true">{p.icon}</span> {p.label}
+                  <PersonaIcon name={p.icon} size={14} /> {p.label}
                 </button>
               ))}
             </div>

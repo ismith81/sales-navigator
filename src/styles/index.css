@@ -2893,10 +2893,15 @@ body::before {
 .kompas-quad-empty-label { grid-column: 1 / -1; color: var(--muted); font-size: 12px; text-align: center; }
 .kompas-quad-icon {
   grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
   font-size: 18px;
   line-height: 1;
   align-self: center;
 }
+.kompas-quad-icon svg { display: block; }
 .kompas-quad-title { font-weight: 700; font-size: 13px; color: var(--text); line-height: 1.2; }
 .kompas-quad-roles {
   font-size: 11px;
@@ -3035,7 +3040,50 @@ body::before {
   gap: 0.9rem;
   align-items: center;
 }
-.pm-row-icon { font-size: 22px; text-align: center; line-height: 1; }
+.pm-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--navy);
+  font-size: 22px;
+  line-height: 1;
+}
+.pm-row-icon svg { display: block; }
+
+/* Icon-picker in PersonaManager: grid van Lucide-icons */
+.pm-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 0.4rem;
+  max-width: 480px;
+}
+.pm-icon-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 1px solid var(--border, #E6E8EC);
+  border-radius: 8px;
+  color: var(--navy);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.pm-icon-pick:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: rgba(49,183,185,0.05);
+}
+.pm-icon-pick.active {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(49,183,185,0.3);
+}
 .pm-row-title { font-weight: 700; font-size: 0.95rem; color: var(--navy); }
 .pm-row-axes { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 .pm-row-preview {
@@ -3977,7 +4025,15 @@ body::before {
   color: #fff;
   font-weight: 700;
 }
-.ce-persona-chip-icon { font-size: 1rem; line-height: 1; }
+.ce-persona-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  color: inherit;
+}
+.ce-persona-chip-icon svg { display: block; }
 .ce-persona-chip-label { line-height: 1.1; }
 
 /* Kleine persona-strip: ronde badges in lijst-views (CaseManager + CasesOverview) */
@@ -4018,11 +4074,16 @@ body::before {
   background: #F9FAFC;
 }
 .ref-persona-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
   font-size: 1.2rem;
   line-height: 1;
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
+.ref-persona-icon svg { display: block; }
 .ref-persona-name {
   font-weight: 700;
   color: var(--navy);

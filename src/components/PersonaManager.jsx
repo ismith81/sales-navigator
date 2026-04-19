@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RichTextEditor from './RichTextEditor';
+import { PersonaIcon, PERSONA_ICONS, PERSONA_ICON_KEYS } from '../lib/personaIcons.jsx';
 
 function stripHtml(html) {
   if (!html) return '';
@@ -65,7 +66,9 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(p.id); } }}
               >
-                <div className="pm-row-icon" aria-hidden="true">{p.icon || '👤'}</div>
+                <div className="pm-row-icon" aria-hidden="true">
+                  <PersonaIcon name={p.icon} size={20} />
+                </div>
                 <div className="fm-row-main">
                   <div className="pm-row-title">{p.label}</div>
                   <div className="pm-row-axes">
@@ -107,7 +110,7 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                     ) : (
                       <>
                         <span className="tag-large pm-tag-large">
-                          <span aria-hidden="true">{p.icon || '👤'}</span>
+                          <PersonaIcon name={p.icon} size={16} />
                           {p.label}
                         </span>
                         <button
@@ -130,15 +133,28 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                     <div className="fm-field pm-field-icon">
                       <div className="fm-field-header">
                         <span className="fm-field-label">Icoon</span>
+                        <span className="fm-field-hint">Kies een icoon dat past bij de rol</span>
                       </div>
                       <div className="fm-field-body">
-                        <input
-                          className="fm-input pm-input-icon"
-                          value={p.icon || ''}
-                          onChange={(e) => onUpdate(p.id, { icon: e.target.value })}
-                          maxLength={4}
-                          placeholder="👤"
-                        />
+                        <div className="pm-icon-picker">
+                          {PERSONA_ICON_KEYS.map(key => {
+                            const { label: iconLabel } = PERSONA_ICONS[key];
+                            const active = p.icon === key;
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                className={`pm-icon-pick ${active ? 'active' : ''}`}
+                                onClick={() => onUpdate(p.id, { icon: key })}
+                                title={iconLabel}
+                                aria-label={iconLabel}
+                                aria-pressed={active}
+                              >
+                                <PersonaIcon name={key} size={18} />
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                     <div className="fm-field">
