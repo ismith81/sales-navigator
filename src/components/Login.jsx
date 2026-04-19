@@ -14,8 +14,8 @@ import { supabase } from '../lib/supabase';
 // Plus een speciale "recovery"-modus die triggert wanneer Supabase terugkomt
 // na klik op reset-link (event PASSWORD_RECOVERY) — dan kan de gebruiker een
 // nieuw wachtwoord zetten.
-export default function Login() {
-  const [mode, setMode] = useState('password'); // password | magic | reset | recovery
+export default function Login({ forceRecovery = false, onRecoveryDone }) {
+  const [mode, setMode] = useState(forceRecovery ? 'recovery' : 'password'); // password | magic | reset | recovery
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -55,6 +55,8 @@ export default function Login() {
         const { error } = await updatePassword(newPassword);
         if (error) throw error;
         setMessage({ type: 'ok', text: 'Wachtwoord bijgewerkt. Je bent ingelogd.' });
+        // Laat de recovery-mode los zodat Navigator kan renderen.
+        if (onRecoveryDone) setTimeout(onRecoveryDone, 800);
       }
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Er ging iets mis.' });

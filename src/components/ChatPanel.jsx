@@ -14,9 +14,9 @@ function readStored() {
 }
 
 const QUICK_PROMPTS = [
-  'Welke cases passen bij AI ready?',
-  'Bereid CFO-gesprek voor over dataplatform-migratie',
-  'Wat zijn goede vervolgvragen bij realtime data?',
+  'Bereid een CFO-gesprek voor over dataplatform-migratie',
+  'Speel de IT-manager van een bank en val me aan op governance',
+  'Zet AkzoNobel en CITO naast elkaar qua aanpak',
 ];
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {

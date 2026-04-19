@@ -81,6 +81,9 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - **Server-gate:** alle serverless endpoints valideren de JWT via `requireUser()`.
 - **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan en policies voor `authenticated` role. SQL-script staat in `supabase/auth-rls.sql`. Anon key mag client-side blijven; RLS doet het werk.
 - **Uitlogknop:** rechtsboven in de topbar (logout-icon), toont e-mail in tooltip.
+- **Supabase Auth-config (live):** `Allow new users to sign up` = OFF (invite-only), `Confirm email` = ON, Email provider enabled. Magic Link werkt automatisch via `signInWithOtp` zodra Email provider aan staat — er is géén aparte toggle meer in recente Supabase-versies.
+- **Site URL / Redirect URLs:** staat op de productie Vercel-URL. Voor lokale dev moet `http://localhost:5173/**` in de Redirect URL-lijst; anders falen magic-links en resets stil.
+- **SMTP rate limit (open issue):** Supabase's ingebouwde mailer op free tier doet ~3-4 mails/uur. Volstaat voor eenmalige invites, maar kan bij piekgebruik knellen. Besloten om voorlopig op built-in mailer te blijven; als het storend wordt: custom SMTP via Resend (3k/maand gratis) of M365 aansluiten via Authentication → Emails → SMTP Settings. Niet urgent.
 
 ## Case JSON-formaat (Supabase `cases` tabel, snake_case)
 ```json
@@ -162,3 +165,90 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
 - Optioneel: route-toggle sticky maken (blijft zichtbaar bij scrollen). Vereist zorgvuldige top-offset tegen de sticky topbar — niet urgent.
 - `HeroAssistant.jsx` niet meer gebruikt — kan verwijderd worden, of laten staan als reserve/reference. Mockup in `Downloads/sales-navigator-mockup.html` is nog de oude versie en kan weg (of bijgewerkt worden naar de geïmplementeerde versie als referentie).
+- Custom SMTP (Resend of M365) inregelen wanneer de built-in mailer te krap wordt — zie Auth & security.
+
+## Nova-roadmap — van bibliothecaris naar sales-assistent
+Doel: Nova ontwikkelt zich van "ophalen uit database" naar een volwaardige sales-assistent
+die sparring biedt, content genereert (mail, decks) en uiteindelijk onthoudt. We werken
+in fasen; elke fase moet op zichzelf waarde leveren zodat het team 'm direct kan gebruiken.
+
+### Fase 1 — Prompt-upgrade (sparring-partner) — geen code-bouw, alleen prompt
+Herschrijf systeemprompt in `api/chat.js` van "wat mag je" naar "wie ben je en wat lever je op".
+Voeg expliciete `WAT JE KUNT DOEN`-sectie toe met 5 skills:
+- **Voorbereiding** — compleet belscript-draaiboek (opening, discovery-vragen, bezwaren, ask)
+- **Synthese** — case + persona → openingswoord op maat
+- **Rollenspel** — Nova speelt de persona, blijft in karakter tot "stop"
+- **Checklist** — sales plakt pitch, Nova toetst tegen talking points + follow-ups
+- **Vergelijken** — meerdere cases naast elkaar
+Plus `WERKWIJZE`-blok: begrijp → haal op (meerdere tool-calls als nodig) → synthetiseer.
+Quick-prompts in ChatPanel: eentje vervangen door een rollenspel-voorbeeld.
+
+### Fase 2 — Follow-up mail + gespreksnotes → actielijst
+Nieuwe chat-"skills" die Nova al kan met de huidige tools + prompt:
+- Sales plakt ruwe gespreksnotes → Nova genereert follow-up-mail concept in Creates-toon.
+- Notes-in → actielijst-uit met wie-wat-wanneer, in markdown-checklist.
+Geen tool-wijzigingen nodig; wel quick-prompt toevoegen en in docs noemen.
+
+### Fase 3 — Slide-deck-generator (pptx-opzet)
+Concrete content-generatie. Haalbaar in 2-3 dagen werk.
+- Gemini levert slide-JSON (titel, bullets, case-referenties); server genereert .pptx via
+  `pptxgenjs` (Node) of aparte Python-lambda met `python-pptx`.
+- Creates-huisstijl-template als basis.
+- UI: knop in ChatPanel bij een gegenereerd antwoord of aparte /decks-route.
+- 5-10 slides: titel, klantsituatie, Creates-aanpak, bewijs-case, ROI, next step.
+
+### Fase 4 — Prospect-briefing (web-fetch tool)
+Vierde tool voor Nova: `fetch_url({url})` — haalt HTML op, strips tags, geeft platte tekst.
+- Gebruik: sales plakt LinkedIn-URL of bedrijfssite → Nova maakt 1-pagina briefing.
+- Let op privacy + rate-limits; waarschijnlijk alleen publieke pagina's (geen login-walls).
+- LinkedIn blokkeert scraping; overwegen: LinkedIn API of handmatig-profiel-plakken i.p.v.
+  URL-fetch. Start met generieke URL-fetch voor bedrijfssites.
+
+### Fase 5 — Memory-laag + cross-device chat
+Huidige chat-geschiedenis is sessionStorage-only. Voor echte "Nova onthoudt" hebben we
+een persistence-laag nodig:
+- Nieuwe Supabase-tabel `chat_sessions` (user_id, title, messages[], created_at).
+- Client-side: lijst-view van eerdere sessies, resume-knop.
+- Optioneel later: `client_interactions`-tabel voor klant-specifieke memory
+  (wat besproken in vorige meeting met contact X).
+
+### Mapping: roadmap-fases ↔ sales-journey-fases
+Handig om in de gaten te houden welke fase van het klantgesprek we wanneer bedienen.
+De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-flow.
+
+| Roadmap-fase | Sales-journey-fase | Levert |
+|---|---|---|
+| Fase 1 — Prompt-upgrade | Vóór het gesprek (+ deels Coaching) | Belscript, rollenspel, pitch-checklist, synthese |
+| Fase 2 — Mail + notes | Ná het gesprek | Follow-up mail, actielijst uit gespreksnotes |
+| Fase 3 — Slide-deck-generator | Content-generatie (voor/tijdens gesprek) | Pitch-deck als voorbereiding of hand-out |
+| Fase 4 — Prospect-briefing | Vóór het gesprek | Research-brief uit publieke bedrijfssites |
+| Fase 5 — Memory-laag | Fundament (enables Vóór + Ná) | Cross-device history + per-klant memory |
+
+**Onderscheid tussen de drie "Vóór"-fases** (volgorde in gebruik, niet in bouw):
+1. **Fase 4** eerst — je weet weinig over de prospect, Nova maakt research-brief.
+2. **Fase 1** daarna — je hebt context, Nova helpt je je gesprek voorbereiden
+   (belscript, rollenspel, tegenargumenten oefenen).
+3. **Fase 3** als laatste — pitch-deck op basis van 1 + 2.
+
+**Gaten in de dekking** (bewust in backlog):
+- *Tijdens het gesprek* — audio/live-support technisch mogelijk maar complex + privacy-gevoelig.
+- *Coaching* — pitch-review, tone-coach, onboarding-mode.
+- *Integraties* — agenda-hook, CRM, Teams-bot.
+- *Nova eet zichzelf* — gap-analyse, auto-suggesties voor nieuwe talking points.
+
+### Later / backlog (niet nu)
+- Objection-handler als aparte mode (zit al in Fase 1 prompt-skills)
+- Agenda-hook (Outlook/Google) → 30 min vóór meeting auto-briefing in Teams
+- CRM-integratie (HubSpot/Salesforce)
+- Audio/live-support tijdens gesprek
+- Onboarding-mode voor nieuwe sales
+- Pitch-review / tone-coach
+- Auto-case-intake via chat (nu via skill)
+
+## Status (laatste sessie)
+- **Auth is live op productie** (`main` → Vercel). Supabase Auth + RLS actief, invite-only, magic-link werkt bevestigd.
+- **Users:** Ian is ingelogd (magic-link). Collega-uitnodiging voor `g.lommen@creates.nl` stuitte op rate limit — moet later opnieuw verstuurd worden zodra het uurtje voorbij is.
+- **Open op auth:** tweede user (`g.lommen@creates.nl`) opnieuw uitnodigen zodra SMTP-rate-limit voorbij is. Optioneel: Ian een wachtwoord laten zetten via password-recovery mail.
+- **Header opgeschoond:** kompas-icoon verplaatst naar de topbar als brand-icon (`.topbar-brand-icon`, teal). Mobiel (≤768px) verbergt titel + Creates-logo, toont alleen het icon (26×26). PersonaKompas-titel ("Met wie praat je?") heeft nu een persona-groep-SVG i.p.v. het kompas, zodat icons niet meer dubbelen.
+- **Nova-roadmap Fase 1 afgerond:** system prompt in `api/chat.js` herschreven van "bibliothecaris" naar "sparring-partner". Toegevoegd: expliciete skills (Voorbereiding, Synthese, Rollenspel, Checklist/review, Vergelijken), WERKWIJZE-sectie die meerdere tool-calls na elkaar aanmoedigt, bedrijfsnaam altijd **vet** voor klikbare links. Quick-prompts in ChatPanel vernieuwd met een rollenspel- en een vergelijk-voorbeeld.
+- **Volgende werk:** Instructies-pagina herstructureren met sub-tabs (Algemeen / Nova / Beheer) — de Nova-sectie wordt met Fase 1 significant groter en verdient eigen ruimte. Daarna Fase 2 (mail+notes als Nova-output).
