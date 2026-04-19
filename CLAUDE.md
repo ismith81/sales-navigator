@@ -212,6 +212,30 @@ een persistence-laag nodig:
 - Optioneel later: `client_interactions`-tabel voor klant-specifieke memory
   (wat besproken in vorige meeting met contact X).
 
+### Mapping: roadmap-fases ↔ sales-journey-fases
+Handig om in de gaten te houden welke fase van het klantgesprek we wanneer bedienen.
+De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-flow.
+
+| Roadmap-fase | Sales-journey-fase | Levert |
+|---|---|---|
+| Fase 1 — Prompt-upgrade | Vóór het gesprek (+ deels Coaching) | Belscript, rollenspel, pitch-checklist, synthese |
+| Fase 2 — Mail + notes | Ná het gesprek | Follow-up mail, actielijst uit gespreksnotes |
+| Fase 3 — Slide-deck-generator | Content-generatie (voor/tijdens gesprek) | Pitch-deck als voorbereiding of hand-out |
+| Fase 4 — Prospect-briefing | Vóór het gesprek | Research-brief uit publieke bedrijfssites |
+| Fase 5 — Memory-laag | Fundament (enables Vóór + Ná) | Cross-device history + per-klant memory |
+
+**Onderscheid tussen de drie "Vóór"-fases** (volgorde in gebruik, niet in bouw):
+1. **Fase 4** eerst — je weet weinig over de prospect, Nova maakt research-brief.
+2. **Fase 1** daarna — je hebt context, Nova helpt je je gesprek voorbereiden
+   (belscript, rollenspel, tegenargumenten oefenen).
+3. **Fase 3** als laatste — pitch-deck op basis van 1 + 2.
+
+**Gaten in de dekking** (bewust in backlog):
+- *Tijdens het gesprek* — audio/live-support technisch mogelijk maar complex + privacy-gevoelig.
+- *Coaching* — pitch-review, tone-coach, onboarding-mode.
+- *Integraties* — agenda-hook, CRM, Teams-bot.
+- *Nova eet zichzelf* — gap-analyse, auto-suggesties voor nieuwe talking points.
+
 ### Later / backlog (niet nu)
 - Objection-handler als aparte mode (zit al in Fase 1 prompt-skills)
 - Agenda-hook (Outlook/Google) → 30 min vóór meeting auto-briefing in Teams
