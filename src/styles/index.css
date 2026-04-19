@@ -1293,14 +1293,12 @@ body::before {
      (incl subnav) zodat deze bar precies daaronder vastplakt tijdens scroll.
      Desktop ~100px, mobiel ~88px — zie media query onder. */
   position: sticky;
-  top: 100px;
+  /* --topbar-height wordt live gezet door Navigator (ResizeObserver op .topbar). */
+  top: var(--topbar-height, 100px);
   z-index: 20;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(44,60,82,0.06);
-}
-@media (max-width: 768px) {
-  .ce-topbar { top: 88px; }
 }
 
 .ce-identity {

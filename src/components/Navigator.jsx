@@ -93,6 +93,24 @@ export default function Navigator() {
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
+  const topbarRef = useRef(null);
+
+  // Meet live de hoogte van de sticky topbar (inclusief subnav) en zet 'm als
+  // --topbar-height op <html>. Child-elementen die sticky onder de topbar
+  // willen plakken (zoals de case-editor topbar) gebruiken deze var.
+  useEffect(() => {
+    const el = topbarRef.current;
+    if (!el) return;
+    const setVar = () => {
+      const h = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--topbar-height', `${Math.round(h)}px`);
+    };
+    setVar();
+    const ro = new ResizeObserver(setVar);
+    ro.observe(el);
+    window.addEventListener('resize', setVar);
+    return () => { ro.disconnect(); window.removeEventListener('resize', setVar); };
+  }, [view, beheerSection]);
 
   // Initial load vanuit Supabase — pas laden als er een session is,
   // anders blokkeert RLS alles en krijgen we lege data.
@@ -399,7 +417,7 @@ export default function Navigator() {
   return (
     <div className="app">
       {/* Compact sticky header */}
-      <header className="topbar">
+      <header className="topbar" ref={topbarRef}>
         <div className="topbar-left">
           <button
             type="button"
