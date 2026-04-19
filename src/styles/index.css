@@ -3174,6 +3174,13 @@ body::before {
   align-items: start;
 }
 .pm-meta-grid .fm-field { margin-bottom: 0; }
+
+/* Hernoemen-knop rechts in expanded panel (titel zit al in row-header) */
+.pm-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+}
 /* Popover (icon-picker) moet uit het veld kunnen uitklappen */
 .pm-field-icon { overflow: visible; }
 .pm-field-icon .fm-field-body { overflow: visible; }
