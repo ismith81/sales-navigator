@@ -5,3 +5,4 @@ dist/
 _potx_unpacked/
 supabase.txt
 tmp/
+.claude/
