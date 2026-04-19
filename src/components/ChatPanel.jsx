@@ -16,7 +16,7 @@ function readStored() {
 const QUICK_PROMPTS = [
   'Bereid een CFO-gesprek voor over dataplatform-migratie',
   'Speel de IT-manager van een bank en val me aan op governance',
-  'Zet AkzoNobel en CITO naast elkaar qua aanpak',
+  'Welke cases passen bij AI ready?',
 ];
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
