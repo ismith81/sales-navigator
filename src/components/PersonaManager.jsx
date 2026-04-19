@@ -1,6 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import RichTextEditor from './RichTextEditor';
 import { PersonaIcon, PERSONA_ICONS, PERSONA_ICON_KEYS } from '../lib/personaIcons.jsx';
+
+/**
+ * Compacte popover-picker voor persona-iconen. Trigger toont het actieve
+ * icoon + label; klik opent een drijvend grid. Sluit bij outside-click,
+ * Escape, of na selectie.
+ */
+function IconPickerPopover({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const currentEntry = value && PERSONA_ICONS[value];
+  const currentLabel = currentEntry?.label || 'Kies icoon';
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="pm-icon-popover-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="pm-icon-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        <span className="pm-icon-trigger-icon">
+          <PersonaIcon name={value} size={18} />
+        </span>
+        <span className="pm-icon-trigger-label">{currentLabel}</span>
+        <span className="pm-icon-trigger-caret" aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="pm-icon-popover" role="dialog" aria-label="Kies een icoon">
+          <div className="pm-icon-picker">
+            {PERSONA_ICON_KEYS.map(key => {
+              const { label: iconLabel } = PERSONA_ICONS[key];
+              const active = value === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={`pm-icon-pick ${active ? 'active' : ''}`}
+                  onClick={() => { onChange(key); setOpen(false); }}
+                  title={iconLabel}
+                  aria-label={iconLabel}
+                  aria-pressed={active}
+                >
+                  <PersonaIcon name={key} size={18} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function stripHtml(html) {
   if (!html) return '';
@@ -136,25 +203,10 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                         <span className="fm-field-hint">Kies een icoon dat past bij de rol</span>
                       </div>
                       <div className="fm-field-body">
-                        <div className="pm-icon-picker">
-                          {PERSONA_ICON_KEYS.map(key => {
-                            const { label: iconLabel } = PERSONA_ICONS[key];
-                            const active = p.icon === key;
-                            return (
-                              <button
-                                key={key}
-                                type="button"
-                                className={`pm-icon-pick ${active ? 'active' : ''}`}
-                                onClick={() => onUpdate(p.id, { icon: key })}
-                                title={iconLabel}
-                                aria-label={iconLabel}
-                                aria-pressed={active}
-                              >
-                                <PersonaIcon name={key} size={18} />
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <IconPickerPopover
+                          value={p.icon}
+                          onChange={(key) => onUpdate(p.id, { icon: key })}
+                        />
                       </div>
                     </div>
                     <div className="fm-field">
