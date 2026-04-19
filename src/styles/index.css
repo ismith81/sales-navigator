@@ -1000,11 +1000,19 @@ body::before {
 }
 
 /* Sub-nav direct onder de actieve hoofd-knop. Teal underline voor actief
-   zodat accent-rood gereserveerd blijft voor het hoofdniveau. */
+   zodat accent-rood gereserveerd blijft voor het hoofdniveau.
+   Inactieve subnavs zijn onzichtbaar maar reserveren wel breedte, zodat
+   de hoofd-items niet verspringen bij van-view-wisselen. */
 .view-subnav {
   display: flex;
   gap: 1rem;
   padding: 0.1rem 0 0.1rem;
+  visibility: hidden;
+  pointer-events: none;
+}
+.view-subnav.is-active {
+  visibility: visible;
+  pointer-events: auto;
 }
 .view-subnav-btn {
   flex: 0 0 auto;
