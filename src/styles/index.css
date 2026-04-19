@@ -64,7 +64,7 @@ body::before {
   align-items: center;
   row-gap: 0.5rem;
   column-gap: 1rem;
-  padding: 0.6rem 1.5rem;
+  padding: 0.6rem 1.5rem 1.9rem; /* extra bottom-padding voor de absolute subnav-regel */
   background: var(--navy, #2C3C52);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   margin: -2rem -1.5rem 1.5rem;
@@ -76,15 +76,12 @@ body::before {
 
 .topbar-left {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1.5rem;
   min-width: 0;
   flex: 0 1 auto;
   margin-right: auto; /* duwt .topbar-actions naar rechts, nav blijft links */
 }
-/* Brand lijnt op dezelfde hoogte als de hoofd-nav-knoppen (rij 1 van de nav),
-   ongeacht of er een subnav-regel onder hangt. */
-.topbar-left .topbar-home { padding-top: 0.5rem; padding-bottom: 0.35rem; }
 
 .topbar-brand-icon {
   display: inline-flex;
@@ -960,18 +957,18 @@ body::before {
    alle hoofdknoppen op rij 1 lijnen, ongeacht welke actief is. */
 .view-toggle {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1.75rem;
   background: transparent;
   border: 0;
   padding: 0;
+  position: relative;
 }
 
 .view-item {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
+  align-items: center;
 }
 
 .view-toggle-btn {
@@ -999,20 +996,21 @@ body::before {
   color: #fff;
 }
 
-/* Sub-nav direct onder de actieve hoofd-knop. Teal underline voor actief
-   zodat accent-rood gereserveerd blijft voor het hoofdniveau.
-   Inactieve subnavs zijn onzichtbaar maar reserveren wel breedte, zodat
-   de hoofd-items niet verspringen bij van-view-wisselen. */
+/* Sub-nav absoluut gepositioneerd onder de parent hoofd-knop. Zo behouden
+   de hoofd-items hun natuurlijke spacing en mag de subnav onderdoor lopen
+   — ook voorbij andere inactieve hoofd-items (NOS-stijl).
+   Alleen de actieve view toont z'n subnav. */
 .view-subnav {
-  display: flex;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: none;
   gap: 1rem;
-  padding: 0.1rem 0 0.1rem;
-  visibility: hidden;
-  pointer-events: none;
+  padding: 0.15rem 0 0;
+  white-space: nowrap;
 }
 .view-subnav.is-active {
-  visibility: visible;
-  pointer-events: auto;
+  display: flex;
 }
 .view-subnav-btn {
   flex: 0 0 auto;
@@ -2394,6 +2392,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  margin-top: 1.4rem; /* zodat 'ie onder de absolute subnav-regel uitkomt */
 }
 .topbar-search {
   flex: 1;
