@@ -167,7 +167,62 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 - `HeroAssistant.jsx` niet meer gebruikt — kan verwijderd worden, of laten staan als reserve/reference. Mockup in `Downloads/sales-navigator-mockup.html` is nog de oude versie en kan weg (of bijgewerkt worden naar de geïmplementeerde versie als referentie).
 - Custom SMTP (Resend of M365) inregelen wanneer de built-in mailer te krap wordt — zie Auth & security.
 
+## Nova-roadmap — van bibliothecaris naar sales-assistent
+Doel: Nova ontwikkelt zich van "ophalen uit database" naar een volwaardige sales-assistent
+die sparring biedt, content genereert (mail, decks) en uiteindelijk onthoudt. We werken
+in fasen; elke fase moet op zichzelf waarde leveren zodat het team 'm direct kan gebruiken.
+
+### Fase 1 — Prompt-upgrade (sparring-partner) — geen code-bouw, alleen prompt
+Herschrijf systeemprompt in `api/chat.js` van "wat mag je" naar "wie ben je en wat lever je op".
+Voeg expliciete `WAT JE KUNT DOEN`-sectie toe met 5 skills:
+- **Voorbereiding** — compleet belscript-draaiboek (opening, discovery-vragen, bezwaren, ask)
+- **Synthese** — case + persona → openingswoord op maat
+- **Rollenspel** — Nova speelt de persona, blijft in karakter tot "stop"
+- **Checklist** — sales plakt pitch, Nova toetst tegen talking points + follow-ups
+- **Vergelijken** — meerdere cases naast elkaar
+Plus `WERKWIJZE`-blok: begrijp → haal op (meerdere tool-calls als nodig) → synthetiseer.
+Quick-prompts in ChatPanel: eentje vervangen door een rollenspel-voorbeeld.
+
+### Fase 2 — Follow-up mail + gespreksnotes → actielijst
+Nieuwe chat-"skills" die Nova al kan met de huidige tools + prompt:
+- Sales plakt ruwe gespreksnotes → Nova genereert follow-up-mail concept in Creates-toon.
+- Notes-in → actielijst-uit met wie-wat-wanneer, in markdown-checklist.
+Geen tool-wijzigingen nodig; wel quick-prompt toevoegen en in docs noemen.
+
+### Fase 3 — Slide-deck-generator (pptx-opzet)
+Concrete content-generatie. Haalbaar in 2-3 dagen werk.
+- Gemini levert slide-JSON (titel, bullets, case-referenties); server genereert .pptx via
+  `pptxgenjs` (Node) of aparte Python-lambda met `python-pptx`.
+- Creates-huisstijl-template als basis.
+- UI: knop in ChatPanel bij een gegenereerd antwoord of aparte /decks-route.
+- 5-10 slides: titel, klantsituatie, Creates-aanpak, bewijs-case, ROI, next step.
+
+### Fase 4 — Prospect-briefing (web-fetch tool)
+Vierde tool voor Nova: `fetch_url({url})` — haalt HTML op, strips tags, geeft platte tekst.
+- Gebruik: sales plakt LinkedIn-URL of bedrijfssite → Nova maakt 1-pagina briefing.
+- Let op privacy + rate-limits; waarschijnlijk alleen publieke pagina's (geen login-walls).
+- LinkedIn blokkeert scraping; overwegen: LinkedIn API of handmatig-profiel-plakken i.p.v.
+  URL-fetch. Start met generieke URL-fetch voor bedrijfssites.
+
+### Fase 5 — Memory-laag + cross-device chat
+Huidige chat-geschiedenis is sessionStorage-only. Voor echte "Nova onthoudt" hebben we
+een persistence-laag nodig:
+- Nieuwe Supabase-tabel `chat_sessions` (user_id, title, messages[], created_at).
+- Client-side: lijst-view van eerdere sessies, resume-knop.
+- Optioneel later: `client_interactions`-tabel voor klant-specifieke memory
+  (wat besproken in vorige meeting met contact X).
+
+### Later / backlog (niet nu)
+- Objection-handler als aparte mode (zit al in Fase 1 prompt-skills)
+- Agenda-hook (Outlook/Google) → 30 min vóór meeting auto-briefing in Teams
+- CRM-integratie (HubSpot/Salesforce)
+- Audio/live-support tijdens gesprek
+- Onboarding-mode voor nieuwe sales
+- Pitch-review / tone-coach
+- Auto-case-intake via chat (nu via skill)
+
 ## Status (laatste sessie)
 - **Auth is live op productie** (`main` → Vercel). Supabase Auth + RLS actief, invite-only, magic-link werkt bevestigd.
 - **Users:** Ian is ingelogd (magic-link). Collega-uitnodiging voor `g.lommen@creates.nl` stuitte op rate limit — moet later opnieuw verstuurd worden zodra het uurtje voorbij is.
-- **Open:** tweede user toevoegen (retry invite), en evt. Ian zelf een wachtwoord laten zetten via password-recovery mail zodat magic-link niet elke keer nodig is.
+- **Open op auth:** tweede user (`g.lommen@creates.nl`) opnieuw uitnodigen zodra SMTP-rate-limit voorbij is. Optioneel: Ian een wachtwoord laten zetten via password-recovery mail.
+- **Volgende werk:** Nova-roadmap Fase 1 (prompt-upgrade). Zie sectie "Nova-roadmap" hierboven — we werken van fase 1 → 5, elke fase levert op zichzelf waarde.
