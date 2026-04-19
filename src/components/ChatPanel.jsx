@@ -68,14 +68,43 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const [toolActivity, setToolActivity] = useState(null);
   const listRef = useRef(null);
   const abortRef = useRef(null);
+  const textareaRef = useRef(null);
+  // Auto-scroll alleen als gebruiker al ongeveer onderin stond — zodat ze kunnen
+  // terugscrollen om iets te lezen zonder dat streaming-updates je terugduwen.
+  const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch {}
   }, [messages]);
 
   useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [messages, busy]);
+    const el = listRef.current;
+    if (!el) return;
+    if (stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages, busy, toolActivity]);
+
+  // Track of de gebruiker "aan de bodem" zit (binnen 80px). Alleen dan
+  // volgt de viewport automatisch bij nieuwe content.
+  const handleMessagesScroll = (e) => {
+    const el = e.currentTarget;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < 80;
+  };
+
+  // Auto-grow textarea tot max-height (CSS), daarna intern scrollen.
+  const autosize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 220) + 'px';
+  };
+  useEffect(() => { autosize(); }, [input]);
+
+  const stopGenerating = () => {
+    abortRef.current?.abort();
+  };
 
   useEffect(() => {
     // Close on ESC — niet relevant voor inline-modus (geen sluit-actie).
@@ -279,7 +308,8 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
           </div>
         </header>
 
-        <div className="chat-messages" ref={listRef}>
+        <div className="chat-messages" ref={listRef} onScroll={handleMessagesScroll}>
+         <div className="chat-column">
           {messages.length === 0 && (
             <div className="chat-welcome">
               <p>Hoi, ik ben <strong>Nova</strong> — ik help je je voorbereiden op een klantgesprek. Stel een vraag of kies een starter:</p>
@@ -333,29 +363,40 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
           {toolActivity && (
             <div className="chat-tool-activity">🔎 zoekt in {toolActivity}…</div>
           )}
+         </div>
         </div>
 
         <form className="chat-input-row" onSubmit={handleSubmit}>
-          <textarea
-            className="chat-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-            placeholder="Stel een vraag…"
-            rows={1}
-            disabled={busy}
-          />
-          <button type="submit" className="chat-send" disabled={busy || !input.trim()} aria-label="Verstuur">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
+          <div className="chat-column chat-column--input">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Stel een vraag…"
+              rows={1}
+            />
+            {busy ? (
+              <button type="button" className="chat-send chat-stop" onClick={stopGenerating} aria-label="Stop genereren" title="Stop genereren">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+              </button>
+            ) : (
+              <button type="submit" className="chat-send" disabled={!input.trim()} aria-label="Verstuur">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            )}
+          </div>
         </form>
       </aside>
     </>
