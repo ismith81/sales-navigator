@@ -138,11 +138,13 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                 </div>
                 <div className="fm-row-main">
                   <div className="pm-row-title">{p.label}</div>
-                  <div className="pm-row-axes">
-                    {DOMAINS.find(d => d.value === p.domain)?.label || '—'}
-                    {' · '}
-                    {NIVEAUS.find(n => n.value === p.niveau)?.label || '—'}
-                  </div>
+                  {(() => {
+                    const axesStr = `${DOMAINS.find(d => d.value === p.domain)?.label || '—'} · ${NIVEAUS.find(n => n.value === p.niveau)?.label || '—'}`;
+                    // Verberg de axes-regel als 'ie precies gelijk is aan het label
+                    // (seed-personas heten immers naar hun assen).
+                    if (axesStr.trim().toLowerCase() === (p.label || '').trim().toLowerCase()) return null;
+                    return <div className="pm-row-axes">{axesStr}</div>;
+                  })()}
                 </div>
                 <div className="pm-row-preview">
                   {p.roles || (descText ? (descText.length > 90 ? descText.slice(0, 90) + '…' : descText) : <em style={{ color: 'var(--muted, #6B7A8F)' }}>Nog niets ingevuld</em>)}
@@ -157,43 +159,37 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
 
               {expanded && (
                 <div className="fm-expand-panel" onClick={(e) => e.stopPropagation()}>
-                  {/* Titel + hernoemen */}
-                  <div className="fm-panel-title-row">
-                    {isRenaming ? (
-                      <div className="fm-rename-row">
-                        <input
-                          className="fm-input"
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveRename(p.id);
-                            if (e.key === 'Escape') setRenamingId(null);
-                          }}
-                          autoFocus
-                        />
-                        <button className="btn btn-teal" onClick={() => saveRename(p.id)}>Opslaan</button>
-                        <button className="btn btn-secondary" onClick={() => setRenamingId(null)}>Annuleren</button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="tag-large pm-tag-large">
-                          <PersonaIcon name={p.icon} size={16} />
-                          {p.label}
-                        </span>
-                        <button
-                          className="fm-inline-rename"
-                          onClick={() => startRename(p)}
-                          title="Hernoemen"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                            <path d="M10 4l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                          </svg>
-                          <span>Hernoemen</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {/* Hernoemen — title staat al in de row-header erboven */}
+                  {isRenaming ? (
+                    <div className="fm-rename-row">
+                      <input
+                        className="fm-input"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveRename(p.id);
+                          if (e.key === 'Escape') setRenamingId(null);
+                        }}
+                        autoFocus
+                      />
+                      <button className="btn btn-teal" onClick={() => saveRename(p.id)}>Opslaan</button>
+                      <button className="btn btn-secondary" onClick={() => setRenamingId(null)}>Annuleren</button>
+                    </div>
+                  ) : (
+                    <div className="pm-panel-actions">
+                      <button
+                        className="fm-inline-rename"
+                        onClick={() => startRename(p)}
+                        title="Hernoemen"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                          <path d="M10 4l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                        </svg>
+                        <span>Hernoemen</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Icon + axes */}
                   <div className="pm-meta-grid">
