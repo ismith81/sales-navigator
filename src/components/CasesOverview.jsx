@@ -1,5 +1,6 @@
 import React from 'react';
 import ReferenceCard from './ReferenceCard';
+import { PersonaIcon } from '../lib/personaIcons.jsx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
@@ -95,7 +96,7 @@ function CasePreviewCard({ caseData, personas = {} }) {
                 if (!p) return null;
                 return (
                   <span key={pid} className="co-persona-badge" title={p.label}>
-                    <span aria-hidden="true">{p.icon || '👤'}</span>
+                    <PersonaIcon name={p.icon} size={14} />
                   </span>
                 );
               })}

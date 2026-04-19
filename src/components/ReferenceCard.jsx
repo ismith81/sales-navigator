@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PersonaIcon } from '../lib/personaIcons.jsx';
 
 const DETAIL_FIELDS = [
   { key: 'situatie', label: 'Situatie' },
@@ -58,7 +59,9 @@ export default function ReferenceCard({ caseData, matchReason, personas = {}, de
                   const reason = caseData.matchReasons?.personas?.[pid];
                   return (
                     <div key={pid} className="ref-persona-item" title={reason || p.label}>
-                      <span className="ref-persona-icon" aria-hidden="true">{p.icon || '👤'}</span>
+                      <span className="ref-persona-icon" aria-hidden="true">
+                        <PersonaIcon name={p.icon} size={18} />
+                      </span>
                       <div>
                         <div className="ref-persona-name">{p.label}</div>
                         {reason && <div className="ref-persona-reason">{reason}</div>}

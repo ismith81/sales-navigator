@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FILTERS as DEFAULT_FILTERS } from '../data/filters';
 import RichTextEditor from './RichTextEditor';
 import { exportCaseToDocx } from '../utils/exportCase';
+import { PersonaIcon } from '../lib/personaIcons.jsx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 const CATEGORY_LABELS = { doelen: 'Doelen', behoeften: 'Behoeften', diensten: 'Diensten' };
@@ -252,7 +253,9 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
                     onClick={() => toggleTag('personas', p.id)}
                     title={p.label}
                   >
-                    <span className="ce-persona-chip-icon" aria-hidden="true">{p.icon || '👤'}</span>
+                    <span className="ce-persona-chip-icon" aria-hidden="true">
+                      <PersonaIcon name={p.icon} size={16} />
+                    </span>
                     <span className="ce-persona-chip-label">{p.label}</span>
                   </button>
                 );
@@ -286,7 +289,9 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
           return (
             <div key={`persona-${pid}`} className="ce-field">
               <label className="ce-label">
-                <span aria-hidden="true" style={{ marginRight: '0.35rem' }}>{p.icon || '👤'}</span>
+                <span aria-hidden="true" style={{ marginRight: '0.35rem', display: 'inline-flex', verticalAlign: 'middle' }}>
+                  <PersonaIcon name={p.icon} size={14} />
+                </span>
                 persona — {p.label}
               </label>
               <textarea
