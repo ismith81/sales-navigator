@@ -98,19 +98,9 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
 
   return (
     <div className="ce-panel">
-      {/* Top bar — sticky zodat titel + acties altijd in beeld blijven */}
+      {/* Top bar — sticky zodat Terug + Opslaan altijd in beeld blijven */}
       <div className="ce-topbar">
         <button className="btn btn-secondary" onClick={onCancel}>← Terug naar overzicht</button>
-        <div className="ce-topbar-title" title={form.name || caseData.name}>
-          <span
-            className="ce-topbar-logo"
-            style={{ background: `linear-gradient(135deg, ${caseData.logoColor}, ${caseData.logoColor}cc)` }}
-            aria-hidden="true"
-          >
-            {caseData.logoText}
-          </span>
-          <span className="ce-topbar-name">{form.name || caseData.name || 'Nieuwe case'}</span>
-        </div>
         <button className="btn btn-primary" onClick={handleSave}>✓ Opslaan</button>
       </div>
 
