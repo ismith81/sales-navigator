@@ -365,72 +365,78 @@ export default function Navigator() {
       {/* Compact sticky header */}
       <header className="topbar">
         <div className="topbar-left">
-          <span className="topbar-brand-icon" aria-hidden="true" title="Sales Navigator">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-            </svg>
-          </span>
-          <div className="topbar-brand">
+          <button
+            type="button"
+            className="topbar-home"
+            onClick={() => setView('navigator')}
+            title="Terug naar home"
+            aria-label="Sales Navigator — terug naar home"
+          >
+            <span className="topbar-brand-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+            </span>
             <span className="topbar-title">Sales <span>Navigator</span></span>
-            <img src="/creates-logo.png" alt="Creates" className="topbar-logo" />
-          </div>
+          </button>
+          <nav className="view-toggle">
+            <button
+              className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
+              onClick={() => setView('navigator')}
+            >
+              Navigator
+            </button>
+            <button
+              className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
+              onClick={() => setView('beheer')}
+            >
+              Beheer
+            </button>
+            <button
+              className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
+              onClick={() => setView('instructies')}
+            >
+              Instructies
+            </button>
+          </nav>
         </div>
         {view === 'navigator' && (
-          <>
-            <button
-              type="button"
-              className="topbar-search-icon"
-              onClick={() => setSearchOpen(o => !o)}
-              title={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
-              aria-label={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
-              aria-expanded={searchOpen}
-            >
-              {searchOpen ? (
-                <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>✕</span>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16.5" y2="16.5" />
-                </svg>
+          <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
+            <div className="topbar-search">
+              <input
+                type="text"
+                placeholder="Zoek een case, klant of trefwoord..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus={searchOpen || undefined}
+              />
+              {searchQuery && (
+                <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
               )}
-            </button>
-            <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
-              <div className="topbar-search">
-                <input
-                  type="text"
-                  placeholder="Zoek een case, klant of trefwoord..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus={searchOpen || undefined}
-                />
-                {searchQuery && (
-                  <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
-                )}
-              </div>
             </div>
-          </>
+          </div>
         )}
-        <div className="view-toggle">
+        <div className="topbar-actions">
+        {view === 'navigator' && (
           <button
-            className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
-            onClick={() => setView('navigator')}
+            type="button"
+            className="topbar-search-icon"
+            onClick={() => setSearchOpen(o => !o)}
+            title={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+            aria-label={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+            aria-expanded={searchOpen}
           >
-            Navigator
+            {searchOpen ? (
+              <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>✕</span>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.5" y2="16.5" />
+              </svg>
+            )}
           </button>
-          <button
-            className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
-            onClick={() => setView('beheer')}
-          >
-            Beheer
-          </button>
-          <button
-            className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
-            onClick={() => setView('instructies')}
-          >
-            Instructies
-          </button>
-        </div>
+        )}
         <button
           type="button"
           className="topbar-logout"
@@ -444,6 +450,7 @@ export default function Navigator() {
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
         </button>
+        </div>
       </header>
 
       {view === 'instructies' ? (
