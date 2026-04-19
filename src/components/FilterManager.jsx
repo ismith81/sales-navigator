@@ -161,11 +161,6 @@ export default function FilterManager({ filters, cases, topics = {}, onAdd, onRe
 
   return (
     <div className="fm-container">
-      <div className="fm-header">
-        <h2>Doelen, Behoeften & Diensten</h2>
-        <p>Beheer de categorieën die beschikbaar zijn in de Navigator. Klik een item open om de omschrijving en klantsignalen te bewerken.</p>
-      </div>
-
       {Object.entries(TAB_CONFIG).map(([category, config]) => (
         <div key={category} className="fm-section">
           <div className="fm-section-header">

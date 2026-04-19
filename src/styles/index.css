@@ -76,12 +76,15 @@ body::before {
 
 .topbar-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1.5rem;
   min-width: 0;
   flex: 0 1 auto;
   margin-right: auto; /* duwt .topbar-actions naar rechts, nav blijft links */
 }
+/* Brand lijnt op dezelfde hoogte als de hoofd-nav-knoppen (rij 1 van de nav),
+   ongeacht of er een subnav-regel onder hangt. */
+.topbar-left .topbar-home { padding-top: 0.5rem; padding-bottom: 0.35rem; }
 
 .topbar-brand-icon {
   display: inline-flex;
@@ -950,18 +953,30 @@ body::before {
 }
 
 /* ---- View Toggle ---- */
-/* ═══ VIEW-TOGGLE (NOS-stijl tekst-nav, geen pills) ═══════════════════════ */
+/* ═══ VIEW-TOGGLE (NOS-stijl tekst-nav, geen pills) ═══════════════════════
+   Elke view-item is een kolom: hoofdknop op rij 1, sub-items direct daaronder.
+   Alleen de actieve view toont sub-items, waardoor die visueel onder z'n
+   parent hangen (NOS-stijl hiërarchie). align-items:flex-start zorgt dat
+   alle hoofdknoppen op rij 1 lijnen, ongeacht welke actief is. */
 .view-toggle {
   display: flex;
-  gap: 1.25rem;
+  align-items: flex-start;
+  gap: 1.75rem;
   background: transparent;
   border: 0;
   padding: 0;
 }
 
+.view-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
 .view-toggle-btn {
   flex: 0 0 auto;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0 0.35rem;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -984,49 +999,52 @@ body::before {
   color: #fff;
 }
 
-/* ═══ TOPBAR SUB-NAV (tweede regel, NOS-stijl) ═════════════════════════════
-   Sub-items van de actieve hoofdweergave. Zelfde text-nav-look als de main
-   view-toggle maar iets kleiner en met teal underline — accent-rood blijft
-   zo gereserveerd voor het hoofdniveau. Flex-basis 100% + order 5 zodat 'ie
-   op rij 2 valt, vóór een eventueel open search-row (order 10). */
-.topbar-subnav {
+/* Sub-nav direct onder de actieve hoofd-knop. Teal underline voor actief
+   zodat accent-rood gereserveerd blijft voor het hoofdniveau. */
+.view-subnav {
   display: flex;
-  gap: 1.25rem;
-  flex-basis: 100%;
-  order: 5;
-  padding: 0;
-  margin-top: 0.1rem;
+  gap: 1rem;
+  padding: 0.1rem 0 0.1rem;
 }
-.topbar-subnav-btn {
+.view-subnav-btn {
   flex: 0 0 auto;
-  padding: 0.3rem 0;
+  padding: 0.2rem 0;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
   background: transparent;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.55);
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
-.topbar-subnav-btn.active {
+.view-subnav-btn.active {
   color: #fff;
   font-weight: 700;
   border-bottom-color: var(--teal);
 }
-.topbar-subnav-btn:not(.active):hover {
+.view-subnav-btn:not(.active):hover {
   color: rgba(255,255,255,0.9);
 }
 @media (max-width: 640px) {
-  .topbar-subnav { gap: 1rem; }
-  .topbar-subnav-btn { font-size: 0.8rem; }
+  .view-toggle { gap: 1rem; }
+  .view-subnav { gap: 0.75rem; }
+  .view-subnav-btn { font-size: 0.78rem; }
 }
 
 /* ---- Case Manager (table) ---- */
 .case-manager {
   animation: fadeUp 0.3s ease;
+}
+
+/* Subtiele intro-regel per Beheer-sectie (subnav in topbar toont al de titel). */
+.cm-section-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
 }
 
 .cm-header {

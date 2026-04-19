@@ -42,15 +42,8 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
 
   return (
     <div className="pm-container">
-      <div className="pm-header">
-        <div>
-          <h2>Persona's</h2>
-          <p>Bepaalt hoe signalen en coaching in het kompas worden getoond. De 4 kwadranten zijn de standaard — je kunt extra persona's toevoegen (die komen dan als "Overige" onder het kompas).</p>
-        </div>
-      </div>
-
       <div className="fm-section-header">
-        <h3>Persona's</h3>
+        <h3>Overzicht</h3>
         <button className="btn-add-small" onClick={onAdd}>+ Toevoegen</button>
       </div>
 

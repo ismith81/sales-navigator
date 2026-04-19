@@ -6,11 +6,6 @@ import React from 'react';
 export default function Instructies({ section = 'algemeen' }) {
   return (
     <div className="instructies">
-      <div className="ins-header">
-        <h2>Instructies</h2>
-        <p>Hoe werk je met de Sales Navigator?</p>
-      </div>
-
       {section === 'algemeen' && <TabAlgemeen />}
       {section === 'nova' && <TabNova />}
       {section === 'beheer' && <TabBeheer />}
