@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FILTERS as DEFAULT_FILTERS } from '../data/filters';
 import RichTextEditor from './RichTextEditor';
 import { exportCaseToDocx } from '../utils/exportCase';
-import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 const CATEGORY_LABELS = { doelen: 'Doelen', behoeften: 'Behoeften', diensten: 'Diensten' };
@@ -99,9 +98,19 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
 
   return (
     <div className="ce-panel">
-      {/* Top bar */}
+      {/* Top bar — sticky zodat titel + acties altijd in beeld blijven */}
       <div className="ce-topbar">
         <button className="btn btn-secondary" onClick={onCancel}>← Terug naar overzicht</button>
+        <div className="ce-topbar-title" title={form.name || caseData.name}>
+          <span
+            className="ce-topbar-logo"
+            style={{ background: `linear-gradient(135deg, ${caseData.logoColor}, ${caseData.logoColor}cc)` }}
+            aria-hidden="true"
+          >
+            {caseData.logoText}
+          </span>
+          <span className="ce-topbar-name">{form.name || caseData.name || 'Nieuwe case'}</span>
+        </div>
         <button className="btn btn-primary" onClick={handleSave}>✓ Opslaan</button>
       </div>
 
@@ -286,7 +295,6 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
       <div className="ce-bottom-actions">
         <button className="btn btn-primary" onClick={handleSave}>✓ Opslaan</button>
         <button className="btn btn-secondary" onClick={() => exportCaseToDocx({ ...caseData, ...form })}>📄 Exporteer .docx</button>
-        <button className="btn btn-secondary" onClick={() => exportCaseToPptx({ ...caseData, ...form })}>📊 Exporteer .pptx</button>
         <button className="btn btn-danger" onClick={onCancel}>✕ Annuleren</button>
       </div>
     </div>

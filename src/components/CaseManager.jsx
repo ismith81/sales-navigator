@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CaseEditor from './CaseEditor';
 import ImportCase from './ImportCase';
 import FilterManager from './FilterManager';
 import PersonaManager from './PersonaManager';
 import { exportCaseToDocx } from '../utils/exportCase';
-import { exportCaseToPptx } from '../utils/exportPptx';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
@@ -12,6 +11,13 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
   const [editingId, setEditingId] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  // Verlaat de case-editor zodra de gebruiker naar een andere beheer-sectie gaat
+  // (Onderwerpen / Persona's). Anders zien ze nog steeds de editor ondanks dat de
+  // subnav een andere sectie aangeeft.
+  useEffect(() => {
+    if (section !== 'cases') setEditingId(null);
+  }, [section]);
 
   const editingCase = editingId ? cases.find(c => c.id === editingId) : null;
 
@@ -171,13 +177,6 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
                   title="Exporteren als .docx"
                 >
                   📄
-                </button>
-                <button
-                  className="btn-icon"
-                  onClick={(e) => { e.stopPropagation(); exportCaseToPptx(c); }}
-                  title="Exporteren als PowerPoint"
-                >
-                  📊
                 </button>
                 <button
                   className="btn-icon danger"

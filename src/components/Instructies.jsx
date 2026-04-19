@@ -314,7 +314,7 @@ function TabBeheer() {
             de case daarbij past. Die verschijnt onder de case-titel én Nova gebruikt 'm in antwoorden.
           </li>
           <li>
-            <strong>Exporteren</strong> — per case kun je een <em>.docx</em> of <em>.pptx</em>
+            <strong>Exporteren</strong> — per case kun je een <em>.docx</em>
             downloaden in Creates-huisstijl.
           </li>
         </ul>
