@@ -3572,28 +3572,37 @@ body::before {
 /* ═══ CHAT-PANEL INLINE-VARIANT (Assistent-route = hoofdscherm) ════════════
    Rendert als gewone pagina-content, geen drawer-gedrag.
    Lichte huisstijl-look: witte header, zachte border, geen donker navy-vlak. */
+/* Assistent-route als fullscreen chat (Claude/ChatGPT-stijl):
+   - Break out van .app-padding (full-bleed links/rechts/onder)
+   - Eén scroll-container (messages), header boven, composer onder
+   - Tekst in een gecentreerde kolom (max 760px) voor leesbaarheid
+   - Geen card-chrome: geen border, geen radius, geen shadow */
 .chat-panel--inline {
   position: static;
   transform: none !important;
-  width: 100%;
+  width: auto;
   max-width: none;
-  margin: 0 auto 1rem;
-  height: auto;
-  min-height: 420px;
-  max-height: calc(100vh - 220px);
+  /* Negatieve margins cancellen .app-padding (2rem 1.5rem 4rem desktop) — zie mobile override beneden. */
+  margin: 0 -1.5rem -4rem;
+  /* Viewport vullen: topbar (~100px desktop met subnav) + route-toggle (~55px) + kleine buffer. */
+  height: calc(100dvh - 165px);
+  min-height: 0;
+  max-height: none;
   background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(44,60,82,0.06);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 1px solid var(--border);
   overflow: hidden;
 }
-/* Header: wit, navy-tekst, subtiele onderscheiding in plaats van donkere bar. */
+/* Header: wit + navy-tekst, subtiele onderrand. */
 .chat-panel--inline .chat-header {
   background: #fff;
   color: var(--navy);
   border-bottom: 1px solid var(--border);
-  padding: 0.75rem 1rem;
   border-radius: 0;
+  padding: 0.65rem 1rem;
+  flex-shrink: 0;
 }
 .chat-panel--inline .chat-header-title { color: var(--navy); font-size: 0.9rem; }
 .chat-panel--inline .chat-header-btn {
@@ -3604,28 +3613,97 @@ body::before {
   background: var(--bg-soft, #F5F7FA);
   color: var(--navy);
 }
-/* Messages-vlak iets lichter om minder zwaar te voelen. */
-.chat-panel--inline .chat-messages { background: #fafbfc; }
+/* Messages-vlak = wit (zelfde oppervlak als composer). Horizontale padding via
+   .chat-column-wrapper, niet hier — anders breekt de gecentreerde kolom. */
+.chat-panel--inline .chat-messages {
+  background: #fff;
+  padding: 1.25rem 1rem 1.5rem;
+}
 /* Welkom-card mag wat meer ademruimte. */
 .chat-panel--inline .chat-welcome { padding: 1.1rem 1.15rem; }
 /* Sluitknop verbergen in inline-modus — route-toggle is de exit. */
 .chat-panel--inline .chat-close { display: none; }
+
+/* Gecentreerde content-kolom — messages + input-row. Zorgt voor leesbare
+   regellengte op desktop, maar oppervlak (achtergrond) loopt door tot edge. */
+.chat-panel--inline .chat-column {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.chat-panel--inline .chat-column--input {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: flex-end;
+  max-width: 760px;
+}
+
+/* Composer: onderaan vast, respecteert iOS safe-area. */
+.chat-panel--inline .chat-input-row {
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+}
+.chat-panel--inline .chat-input {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  min-height: 44px;
+  max-height: 220px;
+  line-height: 1.45;
+  font-size: 0.95rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(44,60,82,0.03);
+}
+.chat-panel--inline .chat-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+
+/* Claude-stijl: assistent-berichten zonder bubble-chrome, user-message met
+   zachte grijze pill. Bubble-styling in inline-variant overrulen. */
+.chat-panel--inline .chat-msg--assistant .chat-msg-bubble {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: 100%;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--navy);
+}
+.chat-panel--inline .chat-msg--user .chat-msg-bubble {
+  background: #eef1f5;
+  color: var(--navy);
+  border: 1px solid #e2e6eb;
+  border-radius: 16px;
+  max-width: 80%;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.95rem;
+}
+.chat-panel--inline .chat-msg { gap: 0.2rem; }
+
+/* Stop-knop tijdens streaming — zelfde footprint als send, donkere look. */
+.chat-stop {
+  background: var(--navy) !important;
+  color: #fff;
+}
+.chat-stop:hover { background: #1d2a3b !important; }
+
 @media (max-width: 640px) {
-  /* Op mobiel: chat volledig beeldvullend — géén window-in-window.
-     Breek uit de .app-padding (horizontaal én onder), verwijder border/radius,
-     en laat de chat zelf de enige scroll-container zijn. */
   .chat-panel--inline {
-    max-width: none;
-    margin: 0 -1rem -3rem;        /* cancel .app padding: 1rem horizontaal, 3rem onder */
-    height: calc(100dvh - 150px); /* topbar (~88px met subnav) + route-toggle (~50px) + buffer */
-    min-height: 0;
-    max-height: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+    /* Mobile: .app-padding is 1.25rem 1rem 3rem → match. */
+    margin: 0 -1rem -3rem;
+    /* Topbar ~88px met subnav + route-toggle ~50px + buffer. */
+    height: calc(100dvh - 150px);
   }
-  /* Header mag strakker: geen radius, full-bleed met de rest. */
-  .chat-panel--inline .chat-header { border-radius: 0; }
+  .chat-panel--inline .chat-messages { padding: 1rem 0.85rem 1.25rem; }
+  .chat-panel--inline .chat-input-row { padding: 0.6rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom, 0px)); }
+  .chat-panel--inline .chat-msg--user .chat-msg-bubble { max-width: 88%; }
 }
 
 /* ═══ TOPBAR SEARCH-COLLAPSE (mobile: icon → expand) ══════════════════════
