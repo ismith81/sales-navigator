@@ -1751,7 +1751,7 @@ body::before {
 
 .btn-add-small {
   background: transparent;
-  border: 1px dashed rgba(49,183,185,0.3);
+  border: 1px solid rgba(49,183,185,0.4);
   color: var(--teal);
   font-family: 'Nunito Sans', sans-serif;
   font-size: 0.75rem;
