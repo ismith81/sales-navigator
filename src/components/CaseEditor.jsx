@@ -15,7 +15,7 @@ const RICH_FIELDS = [
   { key: 'businessImpact', label: 'Business Impact' },
 ];
 
-export default function CaseEditor({ caseData, filters: dynamicFilters, personas = {}, onSave, onCancel }) {
+export default function CaseEditor({ caseData, filters: dynamicFilters, personas = {}, branches = [], onSave, onCancel }) {
   const FILTERS = dynamicFilters || DEFAULT_FILTERS;
   const personaList = Object.values(personas).sort((a, b) => (a.order || 99) - (b.order || 99));
   const [form, setForm] = useState({
@@ -32,6 +32,7 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
       behoeften: [...caseData.mapping.behoeften],
       diensten: [...caseData.mapping.diensten],
       personas: [...(caseData.mapping.personas || [])],
+      branches: [...(caseData.mapping.branches || [])],
     },
     matchReasons: {
       doelen: { ...(caseData.matchReasons?.doelen || {}) },
@@ -191,6 +192,27 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
             </div>
           </div>
         ))}
+
+        {/* Branches — in welke sector speelt deze case */}
+        <div className="ce-field">
+          <label className="ce-label">Branche</label>
+          {branches.length === 0 ? (
+            <p className="ce-hint">Nog geen branches geconfigureerd.</p>
+          ) : (
+            <div className="tag-options">
+              {branches.map(b => (
+                <button
+                  key={b}
+                  type="button"
+                  className={`tag branche ${form.mapping.branches.includes(b) ? '' : 'inactive'}`}
+                  onClick={() => toggleTag('branches', b)}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Personas — "voor wie" is deze case relevant */}
         <div className="ce-field">

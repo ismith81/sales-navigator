@@ -38,6 +38,16 @@ export default function ReferenceCard({ caseData, matchReason, personas = {}, de
 
       {isOpen && (
         <div className="ref-details">
+          {(caseData.mapping?.branches || []).length > 0 && (
+            <div className="detail-field">
+              <div className="detail-label">Branche</div>
+              <div className="detail-keywords">
+                {(caseData.mapping.branches || []).map(b => (
+                  <span key={b} className="tag branche small">{b}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {(caseData.mapping?.personas || []).length > 0 && (
             <div className="detail-field">
               <div className="detail-label">Relevant voor</div>

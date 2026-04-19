@@ -373,6 +373,22 @@ body::before {
 .tag.doel { background: rgba(237,23,75,0.08); color: var(--accent); }
 .tag.behoefte { background: rgba(49,183,185,0.08); color: var(--teal); }
 .tag.dienst { background: rgba(237,137,54,0.08); color: var(--orange); }
+.tag.branche {
+  background: rgba(44,60,82,0.06);
+  color: var(--navy);
+  border: 1px solid rgba(44,60,82,0.12);
+}
+.tag.branche.inactive {
+  background: transparent;
+  color: rgba(44,60,82,0.5);
+}
+
+.co-branches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0.6rem;
+}
 
 /* ---- Sections ---- */
 .section-title {
