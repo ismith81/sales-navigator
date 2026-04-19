@@ -56,7 +56,7 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 - `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback). Header toont **Nova** + subtitel "sales-assistent"; welkomsttekst introduceert Nova. Twee varianten via `variant`-prop: `'drawer'` (default, fixed side-panel met overlay + ESC-close) en `'inline'` (rendert als gewone pagina-content; witte header i.p.v. navy, geen overlay, geen close-knop — bedoeld voor Assistent-route als hoofdscherm). Accepteert `initialPrompt` voor auto-send bij openen.
 - `src/components/TopicView.jsx` — topic-detail (description/signals/talking points/follow-ups)
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
-- `src/components/Instructies.jsx` — handleiding-pagina
+- `src/components/Instructies.jsx` — handleiding met sub-tabs (Algemeen / Nova / Beheer). Nova-tab documenteert de 5 skills + "wat Nova (nog) niet doet" — hoort gelijk op te lopen met elke roadmap-fase.
 - `src/components/Login.jsx` — login-scherm (wachtwoord, magic-link, reset + recovery-flow) dat voor de rest van de app rendert als er geen session is.
 - `src/lib/supabase.js` — Supabase client
 - `src/lib/auth.js` — auth-wrapper rond `supabase.auth`: `useAuthSession()` hook, `signInWithPassword/MagicLink`, `sendPasswordReset`, `updatePassword`, `signOut`, plus `authedFetch` die het access-token als `Authorization: Bearer …` meestuurt naar `/api/*`.
@@ -134,8 +134,8 @@ Hybride RAG-achtig patroon:
 - **Layout-breedtes:** `.app` is 1200px (centraal max-width voor topbar + content). `.gids-route` heeft géén eigen max-width meer en neemt .app-breedte over — zo lijnen brand (links), view-toggle (rechts), filter-card en case-grid op dezelfde gutters uit. `.chat-panel--inline` neemt eveneens `.app`-breedte over (`max-width: none`) zodat de chat-card uitlijnt met brand + view-toggle links/rechts.
 - **Gids-route** (`.gids-route`): gecentreerd in .app. `.context-strip--card` wrapt persona + filters in een witte card met border en zachte shadow — persona + tabs/filters + klantsignalen-toggle leven als één blok.
 - **Assistent-route:** ChatPanel inline-variant (`.chat-panel--inline`) met witte header i.p.v. navy, zachte border, neemt `.app`-breedte over zodat de card uitlijnt met brand + view-toggle.
-- **Topbar** mobiel/tablet (≤768px): CSS grid één rij `[brand | search-icon | view-toggle]`. Zoekveld is collapsed tot 🔍-icon; tik → veld expandt naar rij 2 (`.topbar-search-row.is-open`). Desktop (>768px) behoudt inline zoekbalk. Breakpoint bewust op 768px zodat iPad-portrait en phones-in-landscape ook collapsed starten. Topbar-title heeft `overflow: hidden` + ellipsis als safety net tegen overlap met de search-icon op krappe schermen. De oude topbar-chat-knop is verwijderd — de chat zit nu in de Assistent-route zelf.
-- **CSS source-order let op:** display-regels voor `.topbar-search-row` en `.topbar-search-icon` zijn gescoped achter `@media (min-width: 769px)`. Als je base-defaults toevoegt met `display: flex/none/...`, plaats ze NIET ná het mobile @media-blok — dat overschrijft de collapse-logica. Bug-geschiedenis: drie keer gebeurd.
+- **Topbar (NOS-stijl, beide breedtes):** flex-container `[topbar-left | topbar-search-row? | topbar-actions]` met `flex-wrap: wrap` zodat de search-row op rij 2 valt via `flex-basis: 100% + order: 10` wanneer `.is-open`. `.topbar-left` bevat de home-knop (`.topbar-home` — brand-icon + titel, klik = terug naar Navigator) plus de `.view-toggle` (kale tekst-nav met accent-underline voor actief, géén pills). `.topbar-actions` bevat de zoek-icon én logout-icon als kale transparante buttons — die wrapper lost ook de latente grid-bug op (voorheen 4 children in 3 grid-slots → logout wrapte). Zoek is op álle breedtes collapsed tot icon; klik → input full-width op rij 2. Mobiel (≤768px) verbergt alleen `.topbar-title` — het icon blijft als klikbare home-knop, en `margin-right: auto` op `.topbar-left` duwt `.topbar-actions` rechts. De oude topbar-chat-knop is verwijderd — de chat zit in de Assistent-route zelf.
+- **CSS source-order let op:** display-regels voor `.topbar-search-row` worden nu aangestuurd via `.is-open`-klasse (base: `display: none`). Geen `@media`-gescoped gedrag meer nodig. Als je base-defaults voor topbar-elementen toevoegt: plaats ze vóór de `@media (max-width: 768px)`-block om overschrijving te voorkomen. Bug-geschiedenis: drie keer gebeurd.
 
 ## Doelgroep
 Primaire gebruiker: sales (intern bij Creates)
@@ -149,7 +149,7 @@ De twee-routes redesign is live. Kern:
 - **Assistent-route:** ChatPanel als hoofdscherm via `variant="inline"` (open staat altijd op `true`). Chat heet **Nova** (zichtbaar in header + welkomsttekst). Geen persona-strip — de gebruiker benoemt de rol gewoon in de vraag. Chat-naar-case vanaf hier switcht naar Gids-route + zet de zoekopdracht.
 - **Gids-route:** persona + guided flow (tabs → filter-knoppen → talking points → cases) in een gecentreerde wrapper. Persona hoort uitsluitend bij deze route. Klantsignalen-toggle leeft nu binnen de `.context-strip--card` naast de tabs (logisch op hun plek).
 - **Geen topbar-chat-knop meer:** de chat ís het scherm wanneer Assistent-route actief.
-- **Mobiele topbar één regel:** `[brand | 🔍 | view-toggle]`. Zoekbalk collapse't tot icon; tik → veld expandt naar rij 2.
+- **Topbar één regel, NOS-stijl:** `[🧭 Sales Navigator · Navigator · Beheer · Instructies] ... [🔍 ↗]`. Brand = home-knop, nav = kale tekst met underline voor actief (geen pills), acties rechts = kale transparante icons. Zoek op álle breedtes collapsed tot icon; klik → input full-width op rij 2. Mobiel toont alleen het icon + nav + acties (titel verborgen).
 
 Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natuurlijk met "Assistent" (rolnaam ↔ rolnaam), draagt de "guided"-betekenis expliciet, en is kort genoeg voor een segmented toggle.
 
@@ -246,9 +246,17 @@ De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-
 - Auto-case-intake via chat (nu via skill)
 
 ## Status (laatste sessie)
-- **Auth is live op productie** (`main` → Vercel). Supabase Auth + RLS actief, invite-only, magic-link werkt bevestigd.
-- **Users:** Ian is ingelogd (magic-link). Collega-uitnodiging voor `g.lommen@creates.nl` stuitte op rate limit — moet later opnieuw verstuurd worden zodra het uurtje voorbij is.
-- **Open op auth:** tweede user (`g.lommen@creates.nl`) opnieuw uitnodigen zodra SMTP-rate-limit voorbij is. Optioneel: Ian een wachtwoord laten zetten via password-recovery mail.
-- **Header opgeschoond:** kompas-icoon verplaatst naar de topbar als brand-icon (`.topbar-brand-icon`, teal). Mobiel (≤768px) verbergt titel + Creates-logo, toont alleen het icon (26×26). PersonaKompas-titel ("Met wie praat je?") heeft nu een persona-groep-SVG i.p.v. het kompas, zodat icons niet meer dubbelen.
-- **Nova-roadmap Fase 1 afgerond:** system prompt in `api/chat.js` herschreven van "bibliothecaris" naar "sparring-partner". Toegevoegd: expliciete skills (Voorbereiding, Synthese, Rollenspel, Checklist/review, Vergelijken), WERKWIJZE-sectie die meerdere tool-calls na elkaar aanmoedigt, bedrijfsnaam altijd **vet** voor klikbare links. Quick-prompts in ChatPanel vernieuwd met een rollenspel- en een vergelijk-voorbeeld.
-- **Volgende werk:** Instructies-pagina herstructureren met sub-tabs (Algemeen / Nova / Beheer) — de Nova-sectie wordt met Fase 1 significant groter en verdient eigen ruimte. Daarna Fase 2 (mail+notes als Nova-output).
+- **Alles live op `main` via Vercel** — auth, Nova Fase 1, NOS-style topbar, sub-tabs, password-recovery fix.
+- **Nova Fase 1 afgerond:** system prompt in `api/chat.js` is sparring-partner i.p.v. bibliothecaris — expliciete skills (Voorbereiding, Synthese, Rollenspel, Checklist/review, Vergelijken), WERKWIJZE die meerdere tool-calls na elkaar aanmoedigt, bedrijfsnamen altijd **vet** voor klikbare case-links. Quick-prompts vernieuwd (rollenspel + vergelijk-voorbeeld).
+- **Instructies herstructureerd** met sub-tabs (Algemeen / Nova / Beheer). Nova-tab bevat nu de 5 skills met voorbeeldvragen + een "wat Nova (nog) niet doet"-sectie die direct op de roadmap mapt.
+- **Topbar NOS-redesign:** view-toggle is kale tekst-nav met accent-underline voor actief (geen pill meer). Alles binnen `.topbar-left` zodat de nav altijd links uitgelijnd blijft — ongeacht welke view actief is. Brand is één `.topbar-home` button (icon + titel = klik = home). Brand-icon is accent-rood. Creates-wordmark weg. `.topbar-actions`-wrapper groepeert zoek-icon + logout-icon (kale styling, transparante bg). Zoek is op álle breedtes collapsed tot icon; klik → input verschijnt full-width op rij 2 via `flex-wrap + flex-basis:100%`. Mobiel verbergt alleen de tekst-titel (icon = home-knop blijft).
+- **Password-recovery flow gefixt:** Navigator luistert globaal op `PASSWORD_RECOVERY`-event. Supabase maakt direct een session bij de reset-link, dus de oude `if (!session) return <Login/>`-check sloeg de recovery-step over. Nu rendert Login in recovery-mode óók als er al een session is; Login roept `onRecoveryDone` aan zodra het nieuwe wachtwoord staat.
+- **Dev-bypass login:** als `import.meta.env.DEV` en `.env.local` bevat `VITE_DEV_EMAIL` + `VITE_DEV_PASSWORD`, roept Navigator één keer `signInWithPassword` aan → je slaat het loginscherm over in `npm run dev`. Productie raakt dit niet (DEV=false én env-vars ontbreken daar). Workaround voor SMTP-rate-limit: wachtwoord direct zetten via SQL:
+  ```sql
+  update auth.users
+  set encrypted_password = crypt('<wachtwoord>', gen_salt('bf')),
+      email_confirmed_at = coalesce(email_confirmed_at, now())
+  where email = '<email>';
+  ```
+- **Open op auth:** tweede user (`g.lommen@creates.nl`) opnieuw uitnodigen of SQL-wachtwoord zetten zodra gewenst.
+- **Volgende werk:** Fase 2 — follow-up mail + gespreksnotes→actielijst als Nova-skills. Geen tool-wijzigingen nodig, wel quick-prompt + Nova-tab update.
