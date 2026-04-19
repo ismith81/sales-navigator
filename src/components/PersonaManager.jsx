@@ -200,7 +200,6 @@ export default function PersonaManager({ personas = {}, onUpdate, onAdd, onDelet
                     <div className="fm-field pm-field-icon">
                       <div className="fm-field-header">
                         <span className="fm-field-label">Icoon</span>
-                        <span className="fm-field-hint">Kies een icoon dat past bij de rol</span>
                       </div>
                       <div className="fm-field-body">
                         <IconPickerPopover
