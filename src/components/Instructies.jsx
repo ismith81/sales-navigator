@@ -232,7 +232,7 @@ function TabNova() {
           <li>
             <strong>Synthese</strong> — combineert een case en een persona tot een openingszin of
             pitch op maat.<br />
-            <em>Voorbeeld:</em> "Hoe open ik richting een CFO met de AkzoNobel-case?"
+            <em>Voorbeeld:</em> "Hoe open ik richting een CFO met een migratie-case?"
           </li>
           <li>
             <strong>Rollenspel</strong> — Nova speelt de persona, valt aan op zwakke plekken, blijft
@@ -246,7 +246,7 @@ function TabNova() {
           </li>
           <li>
             <strong>Vergelijken</strong> — zet meerdere cases naast elkaar per doel, sector of aanpak.<br />
-            <em>Voorbeeld:</em> "Zet AkzoNobel en CITO naast elkaar qua aanpak."
+            <em>Voorbeeld:</em> "Zet twee cases uit de retail naast elkaar qua aanpak."
           </li>
         </ul>
       </section>
@@ -280,9 +280,9 @@ function TabNova() {
       <section className="ins-section">
         <h3>Klikbare bedrijfsnamen</h3>
         <p>
-          Als Nova <em>AkzoNobel</em>, <em>CITO</em>, <em>Tulp Group</em> of andere case-namen
-          noemt (standaard in <strong>vet</strong>), kun je daarop klikken om direct naar de
-          volledige case te springen. De app switcht dan naar de Gids-route met die case geopend.
+          Als Nova een case-naam noemt (standaard in <strong>vet</strong>), kun je daarop klikken
+          om direct naar de volledige case te springen. De app switcht dan naar de Gids-route met
+          die case geopend.
         </p>
       </section>
 
