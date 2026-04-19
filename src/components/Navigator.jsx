@@ -385,24 +385,69 @@ export default function Navigator() {
             <span className="topbar-title">Sales <span>Navigator</span></span>
           </button>
           <nav className="view-toggle">
-            <button
-              className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
-              onClick={() => setView('navigator')}
-            >
-              Navigator
-            </button>
-            <button
-              className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
-              onClick={() => setView('beheer')}
-            >
-              Beheer
-            </button>
-            <button
-              className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
-              onClick={() => setView('instructies')}
-            >
-              Instructies
-            </button>
+            {/* Navigator + subnav-kolom */}
+            <div className="view-item">
+              <button
+                className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
+                onClick={() => setView('navigator')}
+              >
+                Navigator
+              </button>
+              {view === 'navigator' && (
+                <div className="view-subnav" role="tablist">
+                  <button type="button" role="tab" aria-selected={route === 'gids'}
+                    className={`view-subnav-btn ${route === 'gids' ? 'active' : ''}`}
+                    onClick={() => changeRoute('gids')}>Gids</button>
+                  <button type="button" role="tab" aria-selected={route === 'assistent'}
+                    className={`view-subnav-btn ${route === 'assistent' ? 'active' : ''}`}
+                    onClick={() => changeRoute('assistent')}>Assistent</button>
+                </div>
+              )}
+            </div>
+            {/* Beheer + subnav-kolom */}
+            <div className="view-item">
+              <button
+                className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
+                onClick={() => setView('beheer')}
+              >
+                Beheer
+              </button>
+              {view === 'beheer' && (
+                <div className="view-subnav" role="tablist">
+                  <button type="button" role="tab" aria-selected={beheerSection === 'cases'}
+                    className={`view-subnav-btn ${beheerSection === 'cases' ? 'active' : ''}`}
+                    onClick={() => setBeheerSection('cases')}>Cases</button>
+                  <button type="button" role="tab" aria-selected={beheerSection === 'onderwerpen'}
+                    className={`view-subnav-btn ${beheerSection === 'onderwerpen' ? 'active' : ''}`}
+                    onClick={() => setBeheerSection('onderwerpen')}>Onderwerpen</button>
+                  <button type="button" role="tab" aria-selected={beheerSection === 'personas'}
+                    className={`view-subnav-btn ${beheerSection === 'personas' ? 'active' : ''}`}
+                    onClick={() => setBeheerSection('personas')}>Persona's</button>
+                </div>
+              )}
+            </div>
+            {/* Instructies + subnav-kolom */}
+            <div className="view-item">
+              <button
+                className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
+                onClick={() => setView('instructies')}
+              >
+                Instructies
+              </button>
+              {view === 'instructies' && (
+                <div className="view-subnav" role="tablist">
+                  <button type="button" role="tab" aria-selected={instructiesSection === 'algemeen'}
+                    className={`view-subnav-btn ${instructiesSection === 'algemeen' ? 'active' : ''}`}
+                    onClick={() => setInstructiesSection('algemeen')}>Algemeen</button>
+                  <button type="button" role="tab" aria-selected={instructiesSection === 'nova'}
+                    className={`view-subnav-btn ${instructiesSection === 'nova' ? 'active' : ''}`}
+                    onClick={() => setInstructiesSection('nova')}>Nova</button>
+                  <button type="button" role="tab" aria-selected={instructiesSection === 'beheer'}
+                    className={`view-subnav-btn ${instructiesSection === 'beheer' ? 'active' : ''}`}
+                    onClick={() => setInstructiesSection('beheer')}>Beheer</button>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
         <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
@@ -456,58 +501,6 @@ export default function Navigator() {
           </svg>
         </button>
         </div>
-
-        {/* Sub-nav: tweede regel in de topbar met items per hoofdweergave. */}
-        <nav className="topbar-subnav" role="tablist" aria-label="Sub-navigatie">
-          {view === 'navigator' && (
-            <>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={route === 'gids'}
-                className={`topbar-subnav-btn ${route === 'gids' ? 'active' : ''}`}
-                onClick={() => changeRoute('gids')}
-              >
-                Gids
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={route === 'assistent'}
-                className={`topbar-subnav-btn ${route === 'assistent' ? 'active' : ''}`}
-                onClick={() => changeRoute('assistent')}
-              >
-                Assistent
-              </button>
-            </>
-          )}
-          {view === 'beheer' && (
-            <>
-              <button type="button" role="tab" aria-selected={beheerSection === 'cases'}
-                className={`topbar-subnav-btn ${beheerSection === 'cases' ? 'active' : ''}`}
-                onClick={() => setBeheerSection('cases')}>Cases</button>
-              <button type="button" role="tab" aria-selected={beheerSection === 'onderwerpen'}
-                className={`topbar-subnav-btn ${beheerSection === 'onderwerpen' ? 'active' : ''}`}
-                onClick={() => setBeheerSection('onderwerpen')}>Onderwerpen</button>
-              <button type="button" role="tab" aria-selected={beheerSection === 'personas'}
-                className={`topbar-subnav-btn ${beheerSection === 'personas' ? 'active' : ''}`}
-                onClick={() => setBeheerSection('personas')}>Persona's</button>
-            </>
-          )}
-          {view === 'instructies' && (
-            <>
-              <button type="button" role="tab" aria-selected={instructiesSection === 'algemeen'}
-                className={`topbar-subnav-btn ${instructiesSection === 'algemeen' ? 'active' : ''}`}
-                onClick={() => setInstructiesSection('algemeen')}>Algemeen</button>
-              <button type="button" role="tab" aria-selected={instructiesSection === 'nova'}
-                className={`topbar-subnav-btn ${instructiesSection === 'nova' ? 'active' : ''}`}
-                onClick={() => setInstructiesSection('nova')}>Nova</button>
-              <button type="button" role="tab" aria-selected={instructiesSection === 'beheer'}
-                className={`topbar-subnav-btn ${instructiesSection === 'beheer' ? 'active' : ''}`}
-                onClick={() => setInstructiesSection('beheer')}>Beheer</button>
-            </>
-          )}
-        </nav>
       </header>
 
       {view === 'instructies' ? (

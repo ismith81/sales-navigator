@@ -39,18 +39,17 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
     );
   }
 
-  const sectionHeading = section === 'onderwerpen'
-    ? { title: 'Onderwerpen', sub: 'Beheer doelen, behoeften, diensten en hun talking points.' }
+  // Alleen een lichte context-regel per sectie — de subnav in de topbar
+  // toont al de sectie-titel, dus geen grote H2 meer.
+  const sectionSub = section === 'onderwerpen'
+    ? 'Beheer doelen, behoeften, diensten en hun talking points.'
     : section === 'personas'
-    ? { title: "Persona's", sub: 'Beheer persona-coaching per rol.' }
-    : { title: 'Cases', sub: 'Beheer, bewerk en importeer cases.' };
+    ? 'Beheer persona-coaching per rol.'
+    : 'Beheer, bewerk en importeer cases.';
 
   return (
     <div className="case-manager">
-      <div className="cm-header">
-        <h2>{sectionHeading.title}</h2>
-        <p>{sectionHeading.sub}</p>
-      </div>
+      <p className="cm-section-sub">{sectionSub}</p>
 
       {section === 'cases' && (
         <>
