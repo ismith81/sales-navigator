@@ -405,24 +405,26 @@ export default function Navigator() {
             </button>
           </nav>
         </div>
-        {view === 'navigator' && (
-          <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
-            <div className="topbar-search">
-              <input
-                type="text"
-                placeholder="Zoek een case, klant of trefwoord..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus={searchOpen || undefined}
-              />
-              {searchQuery && (
-                <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
-              )}
-            </div>
+        <div className={`topbar-search-row ${searchOpen ? 'is-open' : ''}`}>
+          <div className="topbar-search">
+            <input
+              type="text"
+              placeholder="Zoek een case, klant of trefwoord..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Zoeken is een case-actie → spring automatisch naar Navigator-view
+                // zodra de gebruiker vanuit Beheer/Instructies begint te typen.
+                if (view !== 'navigator') setView('navigator');
+              }}
+              autoFocus={searchOpen || undefined}
+            />
+            {searchQuery && (
+              <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
+            )}
           </div>
-        )}
+        </div>
         <div className="topbar-actions">
-        {view === 'navigator' && (
           <button
             type="button"
             className="topbar-search-icon"
@@ -440,10 +442,9 @@ export default function Navigator() {
               </svg>
             )}
           </button>
-        )}
-        <button
-          type="button"
-          className="topbar-logout"
+          <button
+            type="button"
+            className="topbar-logout"
           onClick={() => signOut()}
           title={user?.email ? `Uitloggen (${user.email})` : 'Uitloggen'}
           aria-label="Uitloggen"

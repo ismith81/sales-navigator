@@ -56,7 +56,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
         <>
       <div className="cm-actions">
         <button
-          className="btn btn-teal"
+          className="btn-add-small"
           onClick={() => {
             const id = `nieuwe-case-${Date.now()}`;
             onImport({
@@ -75,13 +75,13 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
             setEditingId(id);
           }}
         >
-          Nieuwe case
+          + Nieuwe case
         </button>
         <button
-          className={`btn ${showImport ? 'btn-danger' : 'btn-teal'}`}
+          className="btn-add-small"
           onClick={() => setShowImport(prev => !prev)}
         >
-          {showImport ? '✕ Sluiten' : 'Case importeren'}
+          {showImport ? '✕ Sluiten' : '+ Case importeren'}
         </button>
       </div>
 
