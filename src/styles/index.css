@@ -2295,7 +2295,7 @@ body::before {
   /* Topbar mobiel: zelfde flex-layout als desktop, met compactere paddings.
      Search-row blijft op rij 2 via flex-basis: 100% wanneer 'is-open'. */
   .topbar {
-    padding: 0.55rem 1rem;
+    padding: 0.55rem 1rem 1.75rem; /* ruimte onderin voor de absolute subnav-regel behouden */
     margin: -1.25rem -1rem 1rem;
     column-gap: 0.5rem;
   }
