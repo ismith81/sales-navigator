@@ -66,6 +66,18 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [toolActivity, setToolActivity] = useState(null);
+  const [copiedIdx, setCopiedIdx] = useState(null);
+
+  const copyMessage = async (text, idx) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(c => (c === idx ? null : c)), 1400);
+    } catch {
+      // Fallback: selecteer textarea om het handmatig te kopiëren
+      console.warn('Clipboard niet beschikbaar');
+    }
+  };
   const listRef = useRef(null);
   const abortRef = useRef(null);
   const textareaRef = useRef(null);
@@ -342,6 +354,24 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                   <div className="chat-feedback">
                     <button
                       type="button"
+                      className="chat-feedback-btn"
+                      onClick={() => copyMessage(m.content, i)}
+                      title={copiedIdx === i ? 'Gekopieerd' : 'Kopieer antwoord'}
+                      aria-label="Kopieer antwoord"
+                    >
+                      {copiedIdx === i ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
                       className={`chat-feedback-btn ${m.feedback === 1 ? 'active' : ''}`}
                       onClick={() => sendFeedback(i, 1)}
                       title="Goed antwoord"
@@ -354,7 +384,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                       title="Slecht antwoord"
                       aria-label="Slecht antwoord"
                     >👎</button>
-                    {m.feedback !== 0 && <span className="chat-feedback-thanks">Dank je.</span>}
+                    {m.feedback !== 0 && m.feedback !== undefined && <span className="chat-feedback-thanks">Dank je.</span>}
                   </div>
                 )}
               </div>

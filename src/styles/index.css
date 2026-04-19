@@ -1008,14 +1008,27 @@ body::before {
   color: #fff;
 }
 
-/* Eigen strook onder de hoofd-nav, gescheiden door subtiele divider (NOS-stijl). */
+/* Eigen strook onder de hoofd-nav, gescheiden door subtiele divider (NOS-stijl).
+   Divider moet edge-to-edge lopen, net als de topbar-achtergrond. De topbar zelf
+   gebruikt clip-path: inset(0 -100vmax) om dat mogelijk te maken — hier gebruiken
+   we een ::before dat overflowt naar de viewport-randen. */
 .topbar-subnav-row {
+  position: relative;
   flex-basis: 100%;
   order: 20;
   margin: 0.65rem -1.5rem 0;
   padding: 0.7rem 1.5rem 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.12);
   min-height: 2.5rem; /* reserveert hoogte ook als er geen subnav is — voorkomt layout-jump */
+}
+.topbar-subnav-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100vmax;
+  right: -100vmax;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  pointer-events: none;
 }
 
 .view-subnav {
@@ -1272,9 +1285,44 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
+  /* Sticky onder de app-topbar zodat titel + acties altijd in beeld blijven.
+     top-offset houdt ruimte voor de globale topbar (sticky, ~100px incl subnav). */
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+}
+.ce-topbar-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: center;
+}
+.ce-topbar-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.ce-topbar-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ce-identity {
