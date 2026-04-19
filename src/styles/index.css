@@ -64,7 +64,7 @@ body::before {
   align-items: center;
   row-gap: 0.5rem;
   column-gap: 1rem;
-  padding: 0.6rem 1.5rem 1.9rem; /* extra bottom-padding voor de absolute subnav-regel */
+  padding: 0.7rem 1.5rem 2.5rem; /* extra bottom-padding voor de absolute subnav-regel */
   background: var(--navy, #2C3C52);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   margin: -2rem -1.5rem 1.5rem;
@@ -1005,8 +1005,8 @@ body::before {
   top: 100%;
   left: 0;
   display: none;
-  gap: 1rem;
-  padding: 0.15rem 0 0;
+  gap: 1.4rem;
+  padding: 0.65rem 0 0; /* lucht tussen hoofd-item en subnav (NOS-stijl) */
   white-space: nowrap;
 }
 .view-subnav.is-active {
@@ -1021,7 +1021,7 @@ body::before {
   background: transparent;
   color: rgba(255,255,255,0.55);
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1036,9 +1036,12 @@ body::before {
   color: rgba(255,255,255,0.9);
 }
 @media (max-width: 640px) {
-  .view-toggle { gap: 1rem; }
-  .view-subnav { gap: 0.75rem; }
-  .view-subnav-btn { font-size: 0.78rem; }
+  .view-toggle { gap: 1.15rem; }
+  .view-subnav {
+    gap: 1rem;
+    padding-top: 0.8rem; /* iets meer lucht op mobiel */
+  }
+  .view-subnav-btn { font-size: 0.88rem; }
 }
 
 /* ---- Case Manager (table) ---- */
@@ -2295,7 +2298,7 @@ body::before {
   /* Topbar mobiel: zelfde flex-layout als desktop, met compactere paddings.
      Search-row blijft op rij 2 via flex-basis: 100% wanneer 'is-open'. */
   .topbar {
-    padding: 0.55rem 1rem 1.75rem; /* ruimte onderin voor de absolute subnav-regel behouden */
+    padding: 0.65rem 1rem 2.4rem; /* ruimte onderin voor de absolute subnav-regel + iets meer lucht op mobiel */
     margin: -1.25rem -1rem 1rem;
     column-gap: 0.5rem;
   }
@@ -2392,7 +2395,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 1.4rem; /* zodat 'ie onder de absolute subnav-regel uitkomt */
+  margin-top: 2rem; /* zodat 'ie onder de absolute subnav-regel uitkomt */
 }
 .topbar-search {
   flex: 1;
