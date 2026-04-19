@@ -2967,29 +2967,38 @@ body::before {
   min-width: 0;
 }
 
-/* Radio-chips voor assen */
+/* Segmented pill-toggle voor axes (NOS-stijl, gespiegeld voor witte achtergrond).
+   Omhulsel signaleert één-van-meer-keuze; actief item krijgt navy bg + witte tekst. */
 .pm-chip-group {
-  display: flex;
+  display: inline-flex;
   gap: 0.35rem;
+  padding: 0.25rem;
+  background: #F3F5F8;
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }
 .pm-axis-chip {
-  flex: 1;
-  padding: 0.5rem 0.6rem;
-  border: 1.5px solid var(--border);
-  border-radius: 6px;
-  background: #fff;
+  flex: 0 0 auto;
+  padding: 0.45rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--muted);
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
   font-family: 'Nunito Sans', sans-serif;
-  transition: all 0.15s ease;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
 }
-.pm-axis-chip:hover { border-color: var(--teal); color: var(--navy); }
+.pm-axis-chip:hover:not(.active) {
+  background: rgba(44,60,82,0.06);
+  color: var(--navy);
+}
 .pm-axis-chip.active {
-  border-color: var(--teal);
-  background: rgba(49,183,185,0.10);
-  color: var(--teal);
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
 }
 
 /* Coaching textarea — groter en lekker lezend */

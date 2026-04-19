@@ -57,7 +57,10 @@
       "Bash(PYTHONIOENCODING=utf-8 python \"C:\\\\Users\\\\ian_s\\\\repos\\\\creates\\\\Sales Navigator\\\\tmp\\\\fill_template.py\")",
       "Bash(ls supabase *)",
       "Bash(mkdir supabase *)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(start \"\" \"C:\\\\Users\\\\ian_s\\\\repos\\\\creates\\\\Sales Navigator\\\\tmp\\\\pill-mockup.html\")"
     ]
   }
 }
