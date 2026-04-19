@@ -64,7 +64,7 @@ body::before {
   align-items: center;
   row-gap: 0.5rem;
   column-gap: 1rem;
-  padding: 0.7rem 1.5rem 2.5rem; /* extra bottom-padding voor de absolute subnav-regel */
+  padding: 0.8rem 1.5rem 0; /* subnav-strook heeft z'n eigen padding */
   background: var(--navy, #2C3C52);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   margin: -2rem -1.5rem 1.5rem;
@@ -113,9 +113,10 @@ body::before {
 .topbar-title {
   font-family: 'Nunito Sans', sans-serif;
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   color: #fff;
   line-height: 1.05;
+  letter-spacing: -0.01em;
 }
 
 .topbar-title span {
@@ -955,93 +956,92 @@ body::before {
    Alleen de actieve view toont sub-items, waardoor die visueel onder z'n
    parent hangen (NOS-stijl hiërarchie). align-items:flex-start zorgt dat
    alle hoofdknoppen op rij 1 lijnen, ongeacht welke actief is. */
+/* Hoofd-nav — NOS-stijl: grote witte tekst, strakke witte underline onder actief */
 .view-toggle {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 1.75rem;
   background: transparent;
   border: 0;
   padding: 0;
-  position: relative;
-}
-
-.view-item {
-  position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .view-toggle-btn {
   flex: 0 0 auto;
-  padding: 0.5rem 0 0.35rem;
+  padding: 0.25rem 0;
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   border-radius: 0;
   background: transparent;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.75);
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .view-toggle-btn.active {
   color: #fff;
   font-weight: 800;
-  border-bottom-color: var(--accent);
+  border-bottom-color: #fff;
 }
 
 .view-toggle-btn:not(.active):hover {
   color: #fff;
 }
 
-/* Sub-nav absoluut gepositioneerd onder de parent hoofd-knop. Zo behouden
-   de hoofd-items hun natuurlijke spacing en mag de subnav onderdoor lopen
-   — ook voorbij andere inactieve hoofd-items (NOS-stijl).
-   Alleen de actieve view toont z'n subnav. */
+/* Eigen strook onder de hoofd-nav, gescheiden door subtiele divider (NOS-stijl). */
+.topbar-subnav-row {
+  flex-basis: 100%;
+  order: 20;
+  margin: 0.65rem -1.5rem 0;
+  padding: 0.7rem 1.5rem 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  min-height: 2.5rem; /* reserveert hoogte ook als er geen subnav is — voorkomt layout-jump */
+}
+
 .view-subnav {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  display: none;
-  gap: 1.4rem;
-  padding: 0.65rem 0 0; /* lucht tussen hoofd-item en subnav (NOS-stijl) */
-  white-space: nowrap;
-}
-.view-subnav.is-active {
   display: flex;
+  gap: 1.5rem;
+  white-space: nowrap;
+  align-items: center;
 }
+
+/* Subnav-items — NOS-stijl witte pill voor actief, kale tekst voor inactief */
 .view-subnav-btn {
   flex: 0 0 auto;
-  padding: 0.2rem 0;
+  padding: 0.4rem 1rem;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.75);
   font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
 .view-subnav-btn.active {
-  color: #fff;
+  background: #fff;
+  color: var(--navy, #2C3C52);
   font-weight: 700;
-  border-bottom-color: var(--teal);
 }
 .view-subnav-btn:not(.active):hover {
-  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
 }
+
 @media (max-width: 640px) {
-  .view-toggle { gap: 1.15rem; }
-  .view-subnav {
-    gap: 1rem;
-    padding-top: 0.8rem; /* iets meer lucht op mobiel */
+  .view-toggle { gap: 1.25rem; }
+  .view-toggle-btn { font-size: 1.05rem; }
+  .view-subnav { gap: 0.6rem; overflow-x: auto; }
+  .view-subnav-btn {
+    font-size: 0.9rem;
+    padding: 0.35rem 0.8rem;
   }
-  .view-subnav-btn { font-size: 0.88rem; }
 }
 
 /* ---- Case Manager (table) ---- */
@@ -2298,7 +2298,7 @@ body::before {
   /* Topbar mobiel: zelfde flex-layout als desktop, met compactere paddings.
      Search-row blijft op rij 2 via flex-basis: 100% wanneer 'is-open'. */
   .topbar {
-    padding: 0.65rem 1rem 2.4rem; /* ruimte onderin voor de absolute subnav-regel + iets meer lucht op mobiel */
+    padding: 0.7rem 1rem 0;
     margin: -1.25rem -1rem 1rem;
     column-gap: 0.5rem;
   }
@@ -2309,13 +2309,18 @@ body::before {
      plakt het icon tegen de viewportrand. */
   .topbar-home { margin-left: 0; padding-left: 0; }
   .view-toggle {
-    gap: 0.85rem;
+    gap: 1.1rem;
     padding: 0;
   }
   .view-toggle-btn {
-    font-size: 0.82rem;
-    padding: 0.4rem 0;
+    font-size: 1rem;
+    padding: 0.25rem 0;
     white-space: nowrap;
+  }
+  .topbar-subnav-row {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 0.6rem 1rem 0.7rem;
   }
   .topbar-search input {
     padding: 0.45rem 2rem 0.45rem 0.75rem;
@@ -2395,7 +2400,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 2rem; /* zodat 'ie onder de absolute subnav-regel uitkomt */
+  margin-top: 0.5rem;
 }
 .topbar-search {
   flex: 1;
