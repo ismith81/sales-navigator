@@ -102,14 +102,28 @@ export default function Navigator() {
     const el = topbarRef.current;
     if (!el) return;
     const setVar = () => {
-      const h = el.getBoundingClientRect().height;
-      document.documentElement.style.setProperty('--topbar-height', `${Math.round(h)}px`);
+      // offsetHeight = integer incl. padding+border; +2px veiligheidsbuffer
+      // zodat de sticky-child er nooit half achter valt bij subpixel-rounding.
+      const h = el.offsetHeight + 2;
+      document.documentElement.style.setProperty('--topbar-height', `${h}px`);
     };
     setVar();
+    // rAF-tick om na eerste paint opnieuw te meten (subnav-row rendert vaak
+    // een frame later in preview-iframes / trage fonts).
+    const raf1 = requestAnimationFrame(() => {
+      setVar();
+      requestAnimationFrame(setVar);
+    });
+    // Font-load kan de hoogte ook nog veranderen.
+    if (document.fonts?.ready) document.fonts.ready.then(setVar).catch(() => {});
     const ro = new ResizeObserver(setVar);
     ro.observe(el);
     window.addEventListener('resize', setVar);
-    return () => { ro.disconnect(); window.removeEventListener('resize', setVar); };
+    return () => {
+      cancelAnimationFrame(raf1);
+      ro.disconnect();
+      window.removeEventListener('resize', setVar);
+    };
   }, [view, beheerSection]);
 
   // Initial load vanuit Supabase — pas laden als er een session is,
