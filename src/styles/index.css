@@ -1962,6 +1962,62 @@ body::before {
   box-shadow: 0 0 0 2px rgba(49,183,185,0.1);
 }
 
+/* ---- FmListEditor (talking points / follow-ups in Beheer → Onderwerpen) ---- */
+.fm-list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0.85rem 0.85rem;
+}
+.fm-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: border-color 0.15s ease;
+}
+.fm-list-item:hover { border-color: rgba(49,183,185,0.4); }
+.fm-list-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: text;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.fm-list-remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.fm-list-item:hover .fm-list-remove { opacity: 1; }
+.fm-list-remove:hover { color: var(--accent); }
+.fm-list-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--teal);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(49,183,185,0.1);
+}
+
 .fm-add-row {
   margin-top: 0.5rem;
 }
@@ -2215,13 +2271,16 @@ body::before {
   /* Topbar mobiel: zelfde flex-layout als desktop, met compactere paddings.
      Search-row blijft op rij 2 via flex-basis: 100% wanneer 'is-open'. */
   .topbar {
-    padding: 0.55rem 0.75rem;
+    padding: 0.55rem 1rem;
     margin: -1.25rem -1rem 1rem;
     column-gap: 0.5rem;
   }
   .topbar-left { gap: 0.85rem; }
   .topbar-title { display: none; } /* op mobiel alleen het icon als home-knop */
   .topbar-brand-icon svg { width: 26px; height: 26px; }
+  /* Op mobiel de negatieve margin-left van .topbar-home resetten; anders
+     plakt het icon tegen de viewportrand. */
+  .topbar-home { margin-left: 0; padding-left: 0; }
   .view-toggle {
     gap: 0.85rem;
     padding: 0;

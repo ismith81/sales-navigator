@@ -4,6 +4,83 @@ import RichTextEditor from './RichTextEditor';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
+// Inline list-editor voor string-arrays (talking points + follow-ups).
+// Klik een item om te bewerken, Enter om op te slaan, Esc om af te breken.
+function FmListEditor({ items = [], onChange, placeholder = 'Nieuw item toevoegen...' }) {
+  const [editingIdx, setEditingIdx] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  const save = (idx, value) => {
+    const v = (value || '').trim();
+    if (!v) {
+      // Leeg opslaan = verwijderen
+      onChange(items.filter((_, i) => i !== idx));
+    } else {
+      const next = [...items];
+      next[idx] = v;
+      onChange(next);
+    }
+    setEditingIdx(null);
+  };
+
+  const add = (value) => {
+    const v = (value || '').trim();
+    if (!v) { setAdding(false); setDraft(''); return; }
+    onChange([...items, v]);
+    setAdding(false);
+    setDraft('');
+  };
+
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+
+  return (
+    <div className="fm-list-editor">
+      {items.map((item, i) => (
+        <div key={i} className="fm-list-item">
+          {editingIdx === i ? (
+            <textarea
+              className="fm-list-input"
+              defaultValue={item}
+              autoFocus
+              rows={2}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(i, e.target.value); }
+                if (e.key === 'Escape') setEditingIdx(null);
+              }}
+              onBlur={(e) => save(i, e.target.value)}
+            />
+          ) : (
+            <>
+              <span className="fm-list-text" onClick={() => setEditingIdx(i)}>{item}</span>
+              <button type="button" className="fm-list-remove" onClick={() => remove(i)} title="Verwijderen">✕</button>
+            </>
+          )}
+        </div>
+      ))}
+      {adding ? (
+        <textarea
+          className="fm-list-input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          autoFocus
+          rows={2}
+          placeholder={placeholder}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); add(draft); }
+            if (e.key === 'Escape') { setAdding(false); setDraft(''); }
+          }}
+          onBlur={() => add(draft)}
+        />
+      ) : (
+        <button type="button" className="btn-add-small" onClick={() => setAdding(true)}>
+          + Toevoegen
+        </button>
+      )}
+    </div>
+  );
+}
+
 function stripHtml(html) {
   if (!html) return '';
   const div = document.createElement('div');
@@ -200,6 +277,36 @@ export default function FilterManager({ filters, cases, topics = {}, onAdd, onRe
                             value={topic.signals || ''}
                             onChange={(html) => onUpdateTopicMeta(category, name, { signals: html })}
                             placeholder={`Klantsignalen bij "${name}"...`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Talking points: "Wat zeg je?" */}
+                      <div className="fm-field">
+                        <div className="fm-field-header">
+                          <span className="fm-field-label">Wat zeg je?</span>
+                          <span className="fm-field-hint">— talking points die je tijdens een gesprek gebruikt</span>
+                        </div>
+                        <div className="fm-field-body">
+                          <FmListEditor
+                            items={topic.talkingPoints || []}
+                            onChange={(next) => onUpdateTopicMeta(category, name, { talkingPoints: next })}
+                            placeholder="Nieuw talking point toevoegen..."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Follow-ups: "Wat vraag je?" */}
+                      <div className="fm-field">
+                        <div className="fm-field-header">
+                          <span className="fm-field-label">Wat vraag je?</span>
+                          <span className="fm-field-hint">— vervolgvragen om door te vragen</span>
+                        </div>
+                        <div className="fm-field-body">
+                          <FmListEditor
+                            items={topic.followUps || []}
+                            onChange={(next) => onUpdateTopicMeta(category, name, { followUps: next })}
+                            placeholder="Nieuwe vraag toevoegen..."
                           />
                         </div>
                       </div>
