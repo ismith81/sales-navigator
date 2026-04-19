@@ -3611,15 +3611,21 @@ body::before {
 /* Sluitknop verbergen in inline-modus — route-toggle is de exit. */
 .chat-panel--inline .chat-close { display: none; }
 @media (max-width: 640px) {
+  /* Op mobiel: chat volledig beeldvullend — géén window-in-window.
+     Breek uit de .app-padding (horizontaal én onder), verwijder border/radius,
+     en laat de chat zelf de enige scroll-container zijn. */
   .chat-panel--inline {
     max-width: none;
-    /* Vul de viewport: trek topbar (~52px) + toggle+marges (~60px) + app padding (~48px) af. */
-    height: calc(100dvh - 160px);
-    min-height: 420px;
+    margin: 0 -1rem -3rem;        /* cancel .app padding: 1rem horizontaal, 3rem onder */
+    height: calc(100dvh - 150px); /* topbar (~88px met subnav) + route-toggle (~50px) + buffer */
+    min-height: 0;
     max-height: none;
-    border-radius: 12px;
-    margin-bottom: 0.5rem;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
   }
+  /* Header mag strakker: geen radius, full-bleed met de rest. */
+  .chat-panel--inline .chat-header { border-radius: 0; }
 }
 
 /* ═══ TOPBAR SEARCH-COLLAPSE (mobile: icon → expand) ══════════════════════
