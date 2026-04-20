@@ -132,7 +132,11 @@ export default function Navigator() {
   // (bijna scrollY 0) komt hij terug.
   useEffect(() => {
     const updateSubnavVisibility = () => {
-      setShowTopbarSubnav(window.scrollY <= 8);
+      const y = window.scrollY;
+      setShowTopbarSubnav((prev) => {
+        if (prev) return y < 32;
+        return y < 12;
+      });
     };
     updateSubnavVisibility();
     window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
