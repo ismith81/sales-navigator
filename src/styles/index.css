@@ -154,7 +154,7 @@ body::before {
 }
 .filter-row .hints-toggle {
   flex: 0 0 auto;
-  margin-left: auto;
+  margin-left: 0;
   align-self: flex-start;
 }
 
@@ -196,7 +196,7 @@ body::before {
   .nav-tabs-row { flex-wrap: nowrap; align-items: center; }
   .filter-row { gap: 0.5rem; }
   .filter-row .hints-toggle {
-    margin-left: auto;
+    margin-left: 0;
     padding: 0.35rem 0.5rem;
     min-width: 32px;
     justify-content: center;
