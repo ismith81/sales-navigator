@@ -24,6 +24,16 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Voorkom horizontale pan op mobiel: geen enkel element mag buiten de
+   viewport-breedte scrollen. overflow-x: clip i.p.v. hidden — clip breekt
+   position: sticky niet (de topbar-subnav en case-editor bar blijven werken).
+   overflow-x: hidden als fallback voor browsers zonder 'clip'. */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 body {
   font-family: 'Nunito Sans', 'Avenir Next LT Pro', sans-serif;
   font-size: 16px;
