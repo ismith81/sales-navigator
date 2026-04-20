@@ -13,12 +13,28 @@ function readStored() {
   } catch { return []; }
 }
 
-const QUICK_PROMPTS = [
-  'Bereid een CFO-gesprek voor over dataplatform-migratie',
-  'Speel de IT-manager van een bank en val me aan op governance',
-  'Maak van deze gespreksnotities een follow-up mail',
-  'Haal uit mijn notes een actielijst met eigenaar en volgende stap',
+const QUICK_PROMPT_GROUPS = [
+  {
+    label: 'Voor het gesprek',
+    items: [
+      { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie' },
+      { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance' },
+    ],
+  },
+  {
+    label: 'Na het gesprek',
+    items: [
+      { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail' },
+      { kind: 'Actielijst', text: 'Haal uit mijn notes een actielijst met eigenaar en volgende stap' },
+    ],
+  },
 ];
+
+const TOOL_LABELS = {
+  search_cases: 'Cases',
+  get_topic: 'Topics',
+  list_personas: 'Persona’s',
+};
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
   const inline = variant === 'inline';
@@ -68,6 +84,12 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const [busy, setBusy] = useState(false);
   const [toolActivity, setToolActivity] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
+  const empty = messages.length === 0;
+
+  const formatToolLabels = (toolCalls = []) => {
+    const unique = [...new Set((toolCalls || []).map((name) => TOOL_LABELS[name] || name))];
+    return unique;
+  };
 
   const copyMessage = async (text, idx) => {
     try {
@@ -298,16 +320,19 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
         <div className={`chat-overlay ${open ? 'open' : ''}`} onClick={onClose} aria-hidden={!open} />
       )}
       <aside
-        className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${open ? 'open' : ''}`}
+        className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${empty ? 'chat-panel--empty' : ''} ${open ? 'open' : ''}`}
         aria-hidden={!open}
         role={inline ? 'region' : 'dialog'}
         aria-label="Nova — sales assistent"
       >
         <header className="chat-header">
-          <div className="chat-header-title">
-            <span className="chat-header-dot" aria-hidden="true" />
-            <strong>Nova</strong>
-            <span className="chat-header-subtitle">sales-assistent</span>
+          <div className="chat-header-meta">
+            <div className="chat-header-title">
+              <span className="chat-header-dot" aria-hidden="true" />
+              <strong>Nova</strong>
+              <span className="chat-header-subtitle">sales-assistent</span>
+            </div>
+            <div className="chat-header-trust">werkt met jullie cases, topics en persona’s</div>
           </div>
           <div className="chat-header-actions">
             {messages.length > 0 && (
@@ -325,12 +350,24 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
          <div className="chat-column">
           {messages.length === 0 && (
             <div className="chat-welcome">
-              <p>Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek. Stel een vraag, plak je notities, of kies een starter:</p>
-              <div className="chat-quickprompts">
-                {QUICK_PROMPTS.map(q => (
-                  <button key={q} type="button" className="chat-quickprompt" onClick={() => send(q)} disabled={busy}>
-                    {q}
-                  </button>
+              <div className="chat-welcome-intro">
+                <span className="chat-welcome-dot" aria-hidden="true" />
+                <p>Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</p>
+              </div>
+              <div className="chat-welcome-hint">Noem rol, sector of onderwerp voor een scherper antwoord.</div>
+              <div className="chat-quickgroups">
+                {QUICK_PROMPT_GROUPS.map((group) => (
+                  <section key={group.label} className="chat-quickgroup">
+                    <div className="chat-quickgroup-label">{group.label}</div>
+                    <div className="chat-quickprompts">
+                      {group.items.map((item) => (
+                        <button key={item.text} type="button" className="chat-quickprompt" onClick={() => send(item.text)} disabled={busy}>
+                          <span className="chat-quickprompt-kind">{item.kind}</span>
+                          <span className="chat-quickprompt-text">{item.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </div>
@@ -340,6 +377,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
             const isLast = i === messages.length - 1;
             const isStreaming = busy && isLast;
             const hasContent = !!m.content;
+            const contextTags = isAssistant ? formatToolLabels(m.toolCalls) : [];
             // Feedback-knoppen pas tonen na afgeronde assistent-berichten met echte inhoud.
             const showFeedback = isAssistant && hasContent && !isStreaming && !m.content.startsWith('⚠️');
             return (
@@ -351,6 +389,14 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>
+                {isAssistant && contextTags.length > 0 && (
+                  <div className="chat-context-used">
+                    <span className="chat-context-used-label">Gebruikte context</span>
+                    {contextTags.map((tag) => (
+                      <span key={tag} className="chat-context-tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
                 {showFeedback && (
                   <div className="chat-feedback">
                     <button
@@ -410,9 +456,10 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                   handleSubmit(e);
                 }
               }}
-              placeholder="Stel een vraag…"
+              placeholder="Plak notities of beschrijf je gesprek…"
               rows={1}
             />
+            <div className="chat-input-helper">Tip: noem rol, sector of onderwerp voor een sterker antwoord.</div>
             {busy ? (
               <button type="button" className="chat-send chat-stop" onClick={stopGenerating} aria-label="Stop genereren" title="Stop genereren">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -433,3 +480,4 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     </>
   );
 }
+
