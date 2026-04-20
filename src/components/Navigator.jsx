@@ -90,6 +90,7 @@ export default function Navigator() {
     } catch { return 'gids'; }
   });
   const [searchOpen, setSearchOpen] = useState(false); // mobile: collapsed search toggle
+  const [showTopbarSubnav, setShowTopbarSubnav] = useState(true);
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -125,6 +126,18 @@ export default function Navigator() {
       window.removeEventListener('resize', setVar);
     };
   }, [view, beheerSection]);
+
+  // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
+  // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
+  // (bijna scrollY 0) komt hij terug.
+  useEffect(() => {
+    const updateSubnavVisibility = () => {
+      setShowTopbarSubnav(window.scrollY <= 8);
+    };
+    updateSubnavVisibility();
+    window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
+    return () => window.removeEventListener('scroll', updateSubnavVisibility);
+  }, []);
 
   // Initial load vanuit Supabase — pas laden als er een session is,
   // anders blokkeert RLS alles en krijgen we lege data.
@@ -429,9 +442,9 @@ export default function Navigator() {
   }
 
   return (
-    <div className="app">
-      {/* Compact sticky header */}
-      <header className="topbar" ref={topbarRef}>
+    <div className="app app--with-topbar">
+      {/* Hoofdheader blijft altijd in beeld; subnav mag inklappen bij scroll. */}
+      <header className={`topbar ${showTopbarSubnav ? '' : 'topbar--subnav-hidden'}`} ref={topbarRef}>
         <div className="topbar-left">
           <button
             type="button"
@@ -470,7 +483,7 @@ export default function Navigator() {
           </nav>
         </div>
         {/* Eén gedeelde subnav-strook onder de hoofdnav — toont items van actieve view */}
-        <div className="topbar-subnav-row">
+        <div className={`topbar-subnav-row ${showTopbarSubnav ? '' : 'is-hidden'}`}>
           {view === 'navigator' && (
             <div className="view-subnav" role="tablist">
               <button type="button" role="tab" aria-selected={route === 'gids'}
@@ -560,6 +573,7 @@ export default function Navigator() {
         </button>
         </div>
       </header>
+      <div className="topbar-spacer" aria-hidden="true" />
 
       {view === 'instructies' ? (
         <Instructies section={instructiesSection} />

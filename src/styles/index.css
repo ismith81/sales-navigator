@@ -63,25 +63,38 @@ body::before {
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
+.app--with-topbar {
+  padding-top: 0;
+}
 
-/* ---- Compact Sticky Topbar ---- */
+/* ---- Compact Fixed Topbar ---- */
 .topbar {
-  position: sticky;
+  --topbar-gutter: max(1.5rem, calc((100vw - 1200px) / 2 + 1.5rem));
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100vw;
   z-index: 100;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   row-gap: 0.5rem;
   column-gap: 1rem;
-  padding: 0.8rem 1.5rem 0; /* subnav-strook heeft z'n eigen padding */
+  padding: 0.8rem var(--topbar-gutter) 0; /* subnav-strook heeft z'n eigen padding */
   background: var(--navy, #2C3C52);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  margin: -2rem -1.5rem 1.5rem;
-  /* Laat de navy achtergrond doorlopen tot de viewport-randen,
-     terwijl content binnen de max-width van .app blijft. */
-  box-shadow: 0 0 0 100vmax var(--navy, #2C3C52), 0 1px 0 rgba(0,0,0,0.08);
-  clip-path: inset(0 -100vmax);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
+.topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0 -100vmax 0 0;
+  background: var(--navy, #2C3C52);
+  z-index: -1;
+  pointer-events: none;
+}
+.topbar-spacer {
+  height: var(--topbar-height, 100px);
+  margin-bottom: 1.5rem;
 }
 
 .topbar-left {
@@ -1037,25 +1050,28 @@ body::before {
 }
 
 /* Eigen strook onder de hoofd-nav, gescheiden door subtiele divider (NOS-stijl).
-   Divider moet edge-to-edge lopen, net als de topbar-achtergrond. De topbar zelf
-   gebruikt clip-path: inset(0 -100vmax) om dat mogelijk te maken — hier gebruiken
-   we een ::before dat overflowt naar de viewport-randen. */
+   In de fixed-topbar variant is een gewone border-top stabieler dan een
+   viewport-brede pseudo-element hack. */
 .topbar-subnav-row {
   position: relative;
   flex-basis: 100%;
   order: 20;
-  margin: 0.65rem -1.5rem 0;
-  padding: 0.7rem 1.5rem 0.75rem;
+  margin: 0.65rem calc(-1 * var(--topbar-gutter)) 0;
+  padding: 0.7rem var(--topbar-gutter) 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.12);
   min-height: 2.5rem; /* reserveert hoogte ook als er geen subnav is — voorkomt layout-jump */
+  max-height: 4rem;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.18s ease, opacity 0.14s ease, margin 0.18s ease, padding 0.18s ease;
 }
-.topbar-subnav-row::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100vmax;
-  right: -100vmax;
-  height: 1px;
-  background: rgba(255,255,255,0.12);
+.topbar-subnav-row.is-hidden {
+  min-height: 0;
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   pointer-events: none;
 }
 
@@ -2460,10 +2476,11 @@ body::before {
   /* Topbar mobiel: zelfde flex-layout als desktop, met compactere paddings.
      Search-row blijft op rij 2 via flex-basis: 100% wanneer 'is-open'. */
   .topbar {
+    --topbar-gutter: 1rem;
     padding: 0.7rem 1rem 0;
-    margin: -1.25rem -1rem 1rem;
     column-gap: 0.5rem;
   }
+  .topbar-spacer { margin-bottom: 1rem; }
   .topbar-left {
     gap: 0.7rem;
     flex: 1 1 auto;
@@ -2486,8 +2503,8 @@ body::before {
     white-space: nowrap;
   }
   .topbar-subnav-row {
-    margin-left: -1rem;
-    margin-right: -1rem;
+    margin-left: calc(-1 * var(--topbar-gutter));
+    margin-right: calc(-1 * var(--topbar-gutter));
     padding: 0.6rem 1rem 0.7rem;
   }
   .topbar-search input {
@@ -2506,6 +2523,7 @@ body::before {
 
   .case-card { padding: 1.25rem; }
   .app { padding: 1.25rem 1rem 3rem; }
+  .app--with-topbar { padding-top: 0; }
   .import-actions { flex-direction: column; }
   .nav-tabs {
     gap: 0.4rem;
