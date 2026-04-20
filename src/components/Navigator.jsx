@@ -646,10 +646,8 @@ export default function Navigator() {
                 branches={branches}
                 activeTab={activeTab}
                 activeFilter={activeFilter}
-                heading={activeFilter ? `Referenties voor "${activeFilter}"` : 'Alle cases'}
-                hint={activeFilter
-                  ? null
-                  : 'Klik op een case voor de details, of kies een filter hierboven om talking points te zien.'}
+                heading={activeFilter ? `Referenties voor "${activeFilter}"` : null}
+                hint={null}
               />
             </div>
           )}
