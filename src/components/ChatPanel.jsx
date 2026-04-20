@@ -16,7 +16,8 @@ function readStored() {
 const QUICK_PROMPTS = [
   'Bereid een CFO-gesprek voor over dataplatform-migratie',
   'Speel de IT-manager van een bank en val me aan op governance',
-  'Welke cases passen bij AI ready?',
+  'Maak van deze gespreksnotities een follow-up mail',
+  'Haal uit mijn notes een actielijst met eigenaar en volgende stap',
 ];
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
@@ -324,7 +325,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
          <div className="chat-column">
           {messages.length === 0 && (
             <div className="chat-welcome">
-              <p>Hoi, ik ben <strong>Nova</strong> — ik help je je voorbereiden op een klantgesprek. Stel een vraag of kies een starter:</p>
+              <p>Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek. Stel een vraag, plak je notities, of kies een starter:</p>
               <div className="chat-quickprompts">
                 {QUICK_PROMPTS.map(q => (
                   <button key={q} type="button" className="chat-quickprompt" onClick={() => send(q)} disabled={busy}>

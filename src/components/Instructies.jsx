@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Vijf skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Zeven skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -224,6 +224,16 @@ function TabNova() {
             <strong>Vergelijken</strong> — zet meerdere cases naast elkaar per doel, sector of aanpak.<br />
             <em>Voorbeeld:</em> "Zet twee cases uit de retail naast elkaar qua aanpak."
           </li>
+          <li>
+            <strong>Follow-up mail</strong> — maakt van ruwe gespreksnotities een kort mailconcept in Creates-toon,
+            inclusief samenvatting en voorstel voor de volgende stap.<br />
+            <em>Voorbeeld:</em> "Maak van deze notes een follow-up mail voor de prospect."
+          </li>
+          <li>
+            <strong>Actielijst uit notities</strong> — haalt uit notes een concrete markdown-checklist
+            met eigenaar, actie en open punten.<br />
+            <em>Voorbeeld:</em> "Zet deze gespreksnotities om naar een actielijst."
+          </li>
         </ul>
       </section>
 
@@ -231,12 +241,16 @@ function TabNova() {
         <h3>Hoe je het meeste uit Nova haalt</h3>
         <ul>
           <li>
-            <strong>Quick-prompts</strong> — onder het welkomstbericht staan drie voorgestelde vragen
+            <strong>Quick-prompts</strong> — onder het welkomstbericht staan vier voorgestelde vragen
             om direct te starten. Handig als je niet meteen weet hoe je het wilt formuleren.
           </li>
           <li>
             <strong>Context in je vraag</strong> — noem de rol (CFO, CDO, IT-manager), de sector
             (retail, bank, overheid) en het onderwerp. Hoe specifieker, hoe beter het antwoord.
+          </li>
+          <li>
+            <strong>Voor notes-taken: plak ruw, niet perfect</strong> — je hoeft notities niet eerst
+            op te schonen. Nova kan losse bullets, halve zinnen en actiepunten omzetten naar nette output.
           </li>
           <li>
             <strong>Persona in de vraag, niet in een selector</strong> — in de Assistent-route is
@@ -284,7 +298,7 @@ function TabNova() {
           <li>Nova verzint geen cases, cijfers of klantnamen — als iets niet in de database staat, zegt ze dat.</li>
           <li>Nova heeft geen kennis van de buitenwereld: geen nieuws, geen LinkedIn, geen bedrijfssites. Dat staat op de roadmap (prospect-briefing).</li>
           <li>Nova onthoudt niets tussen sessies of apparaten. Memory-laag staat op de roadmap.</li>
-          <li>Nova kan (nog) geen slide-decks of mails als bestand opleveren — alleen tekst in de chat.</li>
+          <li>Nova kan wel mailtekst opstellen, maar nog geen slide-decks of mails als bestand opleveren — alleen tekst in de chat.</li>
         </ul>
       </section>
     </>
