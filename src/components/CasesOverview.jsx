@@ -25,13 +25,16 @@ function matches(caseData, query) {
   return haystack.includes(q);
 }
 
-export default function CasesOverview({ cases, personas = {}, searchQuery, heading, hint, activeTab, activeFilter }) {
+export default function CasesOverview({ cases, personas = {}, searchQuery, heading, hint, activeTab, activeFilter, activePersona }) {
   let filtered = cases;
   if (searchQuery?.trim()) {
     filtered = filtered.filter(c => matches(c, searchQuery.trim()));
   }
   if (activeFilter && activeTab) {
     filtered = filtered.filter(c => c.mapping?.[activeTab]?.includes(activeFilter));
+  }
+  if (activePersona) {
+    filtered = filtered.filter(c => (c.mapping?.personas || []).includes(activePersona));
   }
 
   return (
