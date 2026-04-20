@@ -445,42 +445,76 @@ export default function Navigator() {
     <div className="app app--with-topbar">
       {/* Hoofdheader blijft altijd in beeld; subnav mag inklappen bij scroll. */}
       <header className={`topbar ${showTopbarSubnav ? '' : 'topbar--subnav-hidden'}`} ref={topbarRef}>
-        <div className="topbar-left">
-          <button
-            type="button"
-            className="topbar-home"
-            onClick={() => setView('navigator')}
-            title="Terug naar home"
-            aria-label="Sales Navigator — terug naar home"
-          >
-            <span className="topbar-brand-icon" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-              </svg>
-            </span>
-            <span className="topbar-title">Sales <span>Navigator</span></span>
-          </button>
-          <nav className="view-toggle">
+        <div className="topbar-main-row">
+          <div className="topbar-left">
             <button
-              className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
+              type="button"
+              className="topbar-home"
               onClick={() => setView('navigator')}
+              title="Terug naar home"
+              aria-label="Sales Navigator — terug naar home"
             >
-              Navigator
+              <span className="topbar-brand-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                </svg>
+              </span>
+              <span className="topbar-title">Sales <span>Navigator</span></span>
+            </button>
+            <nav className="view-toggle">
+              <button
+                className={`view-toggle-btn ${view === 'navigator' ? 'active' : ''}`}
+                onClick={() => setView('navigator')}
+              >
+                Navigator
+              </button>
+              <button
+                className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
+                onClick={() => setView('beheer')}
+              >
+                Beheer
+              </button>
+              <button
+                className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
+                onClick={() => setView('instructies')}
+              >
+                Instructies
+              </button>
+            </nav>
+          </div>
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="topbar-search-icon"
+              onClick={() => setSearchOpen(o => !o)}
+              title={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+              aria-label={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
+              aria-expanded={searchOpen}
+            >
+              {searchOpen ? (
+                <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>✕</span>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.5" y2="16.5" />
+                </svg>
+              )}
             </button>
             <button
-              className={`view-toggle-btn ${view === 'beheer' ? 'active' : ''}`}
-              onClick={() => setView('beheer')}
+              type="button"
+              className="topbar-logout"
+              onClick={() => signOut()}
+              title={user?.email ? `Uitloggen (${user.email})` : 'Uitloggen'}
+              aria-label="Uitloggen"
             >
-              Beheer
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </button>
-            <button
-              className={`view-toggle-btn ${view === 'instructies' ? 'active' : ''}`}
-              onClick={() => setView('instructies')}
-            >
-              Instructies
-            </button>
-          </nav>
+          </div>
         </div>
         {/* Eén gedeelde subnav-strook onder de hoofdnav — toont items van actieve view */}
         <div className={`topbar-subnav-row ${showTopbarSubnav ? '' : 'is-hidden'}`}>
@@ -539,38 +573,6 @@ export default function Navigator() {
               <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
             )}
           </div>
-        </div>
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className="topbar-search-icon"
-            onClick={() => setSearchOpen(o => !o)}
-            title={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
-            aria-label={searchOpen ? 'Zoeken sluiten' : 'Zoeken'}
-            aria-expanded={searchOpen}
-          >
-            {searchOpen ? (
-              <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>✕</span>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <line x1="21" y1="21" x2="16.5" y2="16.5" />
-              </svg>
-            )}
-          </button>
-          <button
-            type="button"
-            className="topbar-logout"
-          onClick={() => signOut()}
-          title={user?.email ? `Uitloggen (${user.email})` : 'Uitloggen'}
-          aria-label="Uitloggen"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </button>
         </div>
       </header>
       <div className="topbar-spacer" aria-hidden="true" />

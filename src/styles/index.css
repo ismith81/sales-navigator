@@ -75,11 +75,6 @@ body::before {
   left: 0;
   width: 100vw;
   z-index: 100;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 0.5rem;
-  column-gap: 1rem;
   padding: 0.8rem var(--topbar-gutter) 0; /* subnav-strook heeft z'n eigen padding */
   background: var(--navy, #2C3C52);
   box-shadow: 0 1px 0 rgba(0,0,0,0.08);
@@ -96,10 +91,15 @@ body::before {
   height: var(--topbar-height, 100px);
   margin-bottom: 1.5rem;
 }
+.topbar-main-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
 
 .topbar-left {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 1.5rem;
   min-width: 0;
   flex: 0 1 auto;
@@ -112,15 +112,16 @@ body::before {
   justify-content: center;
   color: var(--accent);
   flex-shrink: 0;
+  transform: translateY(-1px);
 }
 .topbar-brand-icon svg { display: block; }
 
 /* Brand = knop die terug naar home (Navigator-view) navigeert. */
 .topbar-home {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.6rem;
-  padding: 0.25rem 0.5rem 0.25rem 0;
+  padding: 0.25rem 0.5rem 0.22rem 0;
   margin-left: -0.5rem;
   background: transparent;
   border: 0;
@@ -140,6 +141,7 @@ body::before {
   color: #fff;
   line-height: 1.05;
   letter-spacing: -0.01em;
+  transform: translateY(-1px);
 }
 
 .topbar-title span {
@@ -1021,13 +1023,14 @@ body::before {
   background: transparent;
   border: 0;
   padding: 0;
+  margin-bottom: -0.52rem;
 }
 
 .view-toggle-btn {
   flex: 0 0 auto;
-  padding: 0.25rem 0;
+  padding: 0.25rem 0 0.6rem;
   border: 0;
-  border-bottom: 3px solid transparent;
+  border-bottom: 4px solid transparent;
   border-radius: 0;
   background: transparent;
   color: rgba(255,255,255,0.75);
@@ -1056,8 +1059,8 @@ body::before {
   position: relative;
   flex-basis: 100%;
   order: 20;
-  margin: 0.65rem calc(-1 * var(--topbar-gutter)) 0;
-  padding: 0.7rem var(--topbar-gutter) 0.75rem;
+  margin: 0.32rem calc(-1 * var(--topbar-gutter)) 0;
+  padding: 0.52rem var(--topbar-gutter) 0.75rem;
   border-top: 1px solid rgba(255,255,255,0.12);
   min-height: 2.5rem; /* reserveert hoogte ook als er geen subnav is — voorkomt layout-jump */
   max-height: 4rem;
@@ -2478,9 +2481,11 @@ body::before {
   .topbar {
     --topbar-gutter: 1rem;
     padding: 0.7rem 1rem 0;
-    column-gap: 0.5rem;
   }
   .topbar-spacer { margin-bottom: 1rem; }
+  .topbar-main-row {
+    gap: 0.5rem;
+  }
   .topbar-left {
     gap: 0.7rem;
     flex: 1 1 auto;
@@ -2496,16 +2501,18 @@ body::before {
     padding: 0;
     min-width: 0;
     flex-wrap: nowrap;
+    margin-bottom: -0.42rem;
   }
   .view-toggle-btn {
     font-size: 0.92rem;
-    padding: 0.25rem 0;
+    padding: 0.25rem 0 0.48rem;
     white-space: nowrap;
   }
   .topbar-subnav-row {
     margin-left: calc(-1 * var(--topbar-gutter));
     margin-right: calc(-1 * var(--topbar-gutter));
-    padding: 0.6rem 1rem 0.7rem;
+    margin-top: 0.24rem;
+    padding: 0.45rem 1rem 0.7rem;
   }
   .topbar-search input {
     padding: 0.45rem 2rem 0.45rem 0.75rem;
