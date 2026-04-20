@@ -1704,9 +1704,7 @@ body::before {
 
 /* ---- Filter Manager ---- */
 .fm-container {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
+  margin-top: 0;
 }
 
 .fm-header {

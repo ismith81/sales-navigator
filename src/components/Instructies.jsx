@@ -76,9 +76,10 @@ function TabAlgemeen() {
         <ul>
           <li>
             <strong>Met wie praat je?</strong> — linksboven in de kaart zit het persona-kompas
-            (Business/Tech × Strategisch/Operationeel). Optioneel — vul alleen in als je weet wie je
-            aan de lijn hebt. Levert een coach-tekst ("denk in ROI, vermijd techjargon…") plus
-            klantsignalen ("zinnen die typisch bij deze persona horen").
+            (Business/Tech × Strategisch/Operationeel). Start <em>ingeklapt</em> — klik op de titel
+            om 'm open te klappen. Optioneel; vul alleen in als je weet wie je aan de lijn hebt.
+            Levert een coach-tekst ("denk in ROI, vermijd techjargon…") plus klantsignalen
+            ("zinnen die typisch bij deze persona horen").
           </li>
           <li>
             <strong>Tabs kiezen</strong> — <em>Doelen</em>, <em>Behoeften</em> of <em>Diensten</em>,
@@ -94,12 +95,15 @@ function TabAlgemeen() {
             Handig bij koud bellen.
           </li>
           <li>
-            <strong>Case openen</strong> — onder de filters verschijnt een case-overzicht. Klik op
-            een case voor situatie, doel, oplossing, resultaat, keywords en match-redenen per tag.
+            <strong>Case openen</strong> — onder de filters verschijnt een case-overzicht. Zonder
+            filter zie je alle cases; zodra je een filter kiest verandert de titel in "Referenties
+            voor …". Klik op een case voor situatie, doel, oplossing, resultaat, keywords en
+            match-redenen per tag.
           </li>
           <li>
-            <strong>Zoeken</strong> — de zoekbalk in de topbar (desktop: altijd zichtbaar; mobiel:
-            verstopt achter een 🔍-icoon) werkt dwars door alle cases op naam, trefwoord of technologie.
+            <strong>Zoeken</strong> — de 🔍-knop zit rechtsboven in de topbar en is op elke breedte
+            ingeklapt. Klik 'm open om een zoekveld uit te vouwen; typen switcht automatisch naar de
+            Navigator-view en zoekt dwars door alle cases op naam, trefwoord of technologie.
           </li>
         </ul>
       </section>
@@ -120,7 +124,8 @@ function TabAlgemeen() {
       <section className="ins-section">
         <h3>5. Lokale snapshot (optioneel)</h3>
         <p>
-          Onderaan in <em>Beheer</em> staan twee knoppen:
+          Onderaan in <em>Beheer → Cases</em> zit een inklapbaar blok
+          <strong> "Backup &amp; herstel"</strong>. Klik open en je ziet
           <strong> Backup downloaden</strong> en <strong>Backup herstellen</strong>.
           Die zijn <em>geen</em> vervanging voor de database, maar een vangnet:
         </p>
@@ -290,10 +295,26 @@ function TabBeheer() {
   return (
     <>
       <section className="ins-section">
+        <h3>Structuur van Beheer</h3>
+        <p>
+          <strong>Beheer</strong> zit rechtsboven in de topbar en heeft drie sub-tabs die in de
+          subnav eronder verschijnen:
+        </p>
+        <ul>
+          <li><strong>Cases</strong> — de klantcases zelf, inclusief backup/herstel.</li>
+          <li><strong>Onderwerpen</strong> — doelen, behoeften en diensten met hun talking points,
+            vervolgvragen, omschrijving en klantsignalen.</li>
+          <li><strong>Persona's</strong> — de vier kwadranten (plus eventuele extra's) met iconen,
+            rollen en coaching-tekst.</li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
         <h3>Cases</h3>
         <p>
-          In <strong>Beheer</strong> (rechtsboven in de topbar) beheer je alle content die in beide
-          routes verschijnt.
+          Beheer → Cases bevat alle klantcases. De tabel toont per case de gekoppelde tags
+          (Doelen · Behoeften · Diensten met hun kleur-dot), status (compleet/incompleet) en
+          actie-iconen rechts.
         </p>
         <ul>
           <li>
@@ -341,6 +362,12 @@ function TabBeheer() {
           klantsignalen en coaching-tekst vast.
         </p>
         <p>
+          <strong>Icoon kiezen:</strong> klik op de icoon-knop in het persona-paneel om de
+          icon-picker te openen — een raster met curated Lucide-iconen. Kies er een, klaar.
+          Bestaande emoji-persona's worden automatisch gekoppeld aan een passend Lucide-icoon;
+          je kunt handmatig upgraden via de picker.
+        </p>
+        <p>
           De coaching-tekst verschijnt in de Gids-route als je een persona selecteert. De
           klantsignalen helpen je te herkennen <em>wie</em> je aan de lijn hebt op basis van wat
           ze zeggen.
@@ -362,8 +389,8 @@ function TabBeheer() {
             helper, in plaats van een nietszeggende.
           </li>
           <li>
-            Maak voor grote content-wijzigingen eerst een lokale backup (Backup downloaden onderaan
-            Beheer).
+            Maak voor grote content-wijzigingen eerst een lokale backup (klap "Backup &amp; herstel"
+            open onderaan Beheer → Cases en klik Backup downloaden).
           </li>
         </ul>
       </section>
