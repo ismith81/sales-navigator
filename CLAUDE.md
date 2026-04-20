@@ -32,9 +32,12 @@ De app parseert deze templates client-side via mammoth.js (`src/utils/parseTempl
 De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit ruwe tekst.
 
 ### Huidige cases
-1. **AkzoNobel** — Refinish+ Insights: data-gedreven insights-module voor bodyshops. Lambda-architectuur op Azure. Raakt aan beide doelen. Type: greenfield.
-2. **CITO** — Dataplatform Modernisatie: migratie naar Microsoft Fabric. 600+ SQL-objecten, 8+ uur performancewinst. Primair doel 1. Type: modernisatie.
-3. **Tulp Group** — Tulp Dataplatform op Microsoft Fabric. Medaillon-architectuur (Bronze/Silver/Gold in OneLake), SFTP-ingest uit STATER/BCMGlobal, Paginated Reports + Power Automate voor geautomatiseerde investeerdersrapportage (80–90% tijdsbesparing). Raakt beide doelen.
+De live lijst leeft in de app (Beheer → Cases) en is de bron van waarheid — onderstaande is enkel context voor anker-cases. Stand april 2026: 5 cases in productie (CITO, Tulp Group, Int. verf & coating, Int. leverancier promo artikelen, Westland Kaas).
+
+Anker-cases die vaker terugkomen in redeneringen/defaults:
+- **CITO** — Dataplatform Modernisatie: migratie naar Microsoft Fabric. 600+ SQL-objecten, 8+ uur performancewinst. Primair doel 1. Type: modernisatie.
+- **Tulp Group** — Tulp Dataplatform op Microsoft Fabric. Medaillon-architectuur (Bronze/Silver/Gold in OneLake), SFTP-ingest uit STATER/BCMGlobal, Paginated Reports + Power Automate voor geautomatiseerde investeerdersrapportage (80–90% tijdsbesparing). Raakt beide doelen. Case-artefacten in `tmp/` (gegenereerd via `case-generator` skill, geïmporteerd via Beheer).
+- **Int. verf & coating** (AkzoNobel-afgeleid) — data-gedreven insights-module voor bodyshops. Lambda-architectuur op Azure. Raakt beide doelen. Type: greenfield.
 
 ## Tech stack
 - **Frontend:** React 18 + Vite, mammoth.js voor client-side .docx parsing, `react-markdown` voor chat-rendering, `lucide-react` voor stroke-SVG iconen (persona-picker)
@@ -46,11 +49,11 @@ De `anthropic-skills:case-generator` skill genereert ingevulde templates vanuit 
 ### Frontend
 - `src/components/Navigator.jsx` — hoofdcomponent met state management + view-router (navigator/beheer/instructies) én route-router (gids/assistent) binnen de navigator-view. Route onthouden in localStorage (`sn.route`), default `gids`. One-time migratie via `sn.route.migration` version-key leegt oude `'assistent'`-defaults eenmalig zodat bestaande gebruikers naar de nieuwe default vallen. Loading-state gebruikt een stroke-SVG spinner in huisstijl (`.loading-spinner` + `@keyframes sn-spin`), géén emoji. Rendert de segmented route-toggle (gecentreerd boven de content), de Gids-flow in een `.gids-route` wrapper (neemt volledige .app-breedte over), of het ChatPanel in `variant="inline"` als hoofdscherm.
 - `src/components/HeroAssistant.jsx` — **niet meer in gebruik** sinds de twee-routes redesign. Blijft op schijf als reserve/referentie; niet meer geïmporteerd in Navigator. Dezelfde quick-prompts zitten nu in de chat-welcome.
-- `src/components/CasesOverview.jsx` — zoekbare case-overzichtspagina
+- `src/components/CasesOverview.jsx` — zoekbare case-overzichtspagina. Filtert op `searchQuery`, `activeFilter` (tab + onderwerp) én `activePersona` (`mapping.personas`). Heading wordt alleen gerenderd bij actieve filter of persona (`Referenties voor "X"` / `Referenties voor <persona>` / gecombineerd `Referenties voor "X" · <persona>`). Default-state toont alleen het grid, géén "Alle cases"-H2 of counter — de grid spreekt voor zich.
 - `src/components/CaseCard.jsx` — case weergave met talking points + vervolgvragen
 - `src/components/CaseEditor.jsx` / `CaseManager.jsx` — case CRUD-UI tegen Supabase
 - `src/components/ImportCase.jsx` — upload UI met preview + bevestiging
-- `src/components/FilterBar.jsx` — tabs (doelen/behoeften/diensten) + filter knoppen
+- `src/components/FilterBar.jsx` — tabs (doelen/behoeften/diensten) + filter-chips. Layout is twee rijen: `.nav-tabs-row` (alleen tabs) en `.filter-row` (chips + klantsignalen-toggle op één regel). Toggle stond eerder rechts losgeslagen in de tabs-rij; nu zit 'ie direct na de laatste chip (`margin-left: 0`, links-uitgelijnd) zodat 'ie visueel bij het onderwerp hoort waarvoor je signalen toont.
 - `src/components/PersonaKompas.jsx` / `PersonaManager.jsx` — persona-laag. PersonaManager heeft een interne `IconPickerPopover` sub-component: compacte trigger-button (actief icoon + label) die een floating 6-koloms grid opent bij klik. Sluit bij outside-click, Escape, of na selectie. Backup-bar binnen CaseManager staat in een `<details>` collapsible onderaan — zeldzame admin-actie, niet evenveel gewicht als + Toevoegen.
 - `src/components/FilterManager.jsx` — beheer van topics/filters in `app_config`
 - `src/components/ChatPanel.jsx` — AI-chat UI (SSE streaming, sessionStorage, clickable case-links met fuzzy match, 👍/👎 feedback). Header toont **Nova** + subtitel "sales-assistent"; welkomsttekst introduceert Nova. Twee varianten via `variant`-prop: `'drawer'` (default, fixed side-panel met overlay + ESC-close) en `'inline'` (rendert als gewone pagina-content; witte header i.p.v. navy, geen overlay, geen close-knop — bedoeld voor Assistent-route als hoofdscherm). Accepteert `initialPrompt` voor auto-send bij openen.
@@ -163,6 +166,7 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 ## Bekende verbeterpunten / backlog
 - Talking points en follow-ups van geïmporteerde cases zijn auto-gegenereerd en kunnen beter
 - matchReasons worden nog niet gegenereerd bij import
+- **Persona-mapping op cases onvolledig** — niet alle cases hebben `mapping.personas` ingevuld. Zodra een gebruiker in de Gids-route een persona in het kompas kiest, filtert de case-grid op die persona; ontbrekende mappings = lege lijst. Content-taak: per case nalopen en persona's koppelen via Beheer → Cases.
 - Geen export-functie (bijv. case als PDF of slide genereren)
 - Training-dienst heeft nog geen referentie-case
 - Chat-geschiedenis is sessionStorage-only — geen cross-device geschiedenis
@@ -269,5 +273,16 @@ De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-
 - **Open op auth:** tweede user (`g.lommen@creates.nl`) opnieuw uitnodigen of SQL-wachtwoord zetten zodra gewenst.
 - **Case-editor sticky-fix:** `.ce-topbar` plakt nu correct onder de app-topbar via dynamisch gemeten `--topbar-height` (ResizeObserver + `document.fonts.ready` + dubbele rAF). Sticky bar toont [← Terug] [Bewerken / Casenaam] [✓ Opslaan]; mobiel krijgt icon-only back-knop + kleinere padding.
 - **PowerPoint-export verwijderd:** `pptxgenjs` dependency en `src/utils/exportPptx.js` weg. Decks komen mogelijk terug in Nova-roadmap Fase 3 (ander mechanisme: Gemini → slide-JSON → server-side pptx).
-- **Volgende werk:** Fase 2 — follow-up mail + gespreksnotes→actielijst als Nova-skills. Geen tool-wijzigingen nodig, wel quick-prompt + Nova-tab update.
-- **Klantcase Tulp Group (pending):** case-generator skill aangeroepen voor Tulp Group (Fabric medaillon-architectuur + geautomatiseerde investeerdersrapportage). Bronnen: offerte-docx, architectuur-plaat, Fabric-repo ZIP. Moet nog uitgewerkt worden tot .docx via `case-template.docx`-template; daarna handmatig via Beheer→Cases importeren. `tmp/` gebruiken voor de tussen-artefacten (niet committen).
+- **Klantcase Tulp Group geïmporteerd:** case-generator skill produceerde `case-tulp-group.docx` in `tmp/` (samen met `tulp_case.json` en `fill_template.py`). Handmatig geüpload via Beheer → Cases en nu zichtbaar in de Gids-route.
+- **Gids-route fine-tuning (deze sessie):**
+  - `CasesOverview` is in default-state strakker: geen `Alle cases`-H2 en geen `5 cases`-counter meer; alleen het grid. Heading verschijnt pas zodra een filter of persona actief is (`Referenties voor "X"` / `Referenties voor <persona>` / gecombineerd).
+  - **Persona filtert cases**: als de gebruiker een persona selecteert in het PersonaKompas filtert `CasesOverview` op `mapping.personas`. Heading adapteert.
+  - **Klantsignalen-toggle in flow:** verplaatst van `.nav-tabs-row` (zweefde rechts los) naar een nieuwe `.filter-row` naast de chips. Links-uitgelijnd, sluit direct aan op de laatste chip.
+  - Onderwerpen-beheer: overbodige horizontale lijn boven "Doelen" weg (`.fm-container` had nog `border-top` uit een tijd dat er een H2 boven stond).
+  - Cases-tabel: kolomtitel "Case" verwijderd (logo + naam zijn zelf-evident).
+- **Mobiele fixes (deze sessie):**
+  - Viewport meta: `maximum-scale=1, viewport-fit=cover`. Pinch-zoom uit zodat de layout niet halverwege een zoom blijft hangen; iOS-accessibility-zoom blijft als vangnet.
+  - CSS: `@media (max-width: 768px)` forceert form-inputs naar 16px om iOS Safari's auto-zoom-on-focus uit te zetten.
+  - `html, body { max-width: 100%; overflow-x: clip; }` (hidden fallback) — horizontaal uit de viewport pannen kan niet meer. `clip` i.p.v. `hidden` zodat `position: sticky` (topbar-subnav, case-editor-bar) blijft werken.
+- **Instructies bijgewerkt:** persona-kompas start ingeklapt, zoek is altijd collapsed icon (typen switcht naar Navigator), case-overview default-state zonder heading, backup zit in inklapbaar blok, nieuwe sectie introduceert de Beheer sub-tabs, Lucide icon-picker uitgelegd bij Persona's.
+- **Volgende werk:** Fase 2 — follow-up mail + gespreksnotes→actielijst als Nova-skills. Geen tool-wijzigingen nodig, wel quick-prompt + Nova-tab update. Content-kant: persona-mapping op cases aanvullen (zie backlog) — anders filtert persona-selectie naar een lege lijst voor niet-gemapte cases.
