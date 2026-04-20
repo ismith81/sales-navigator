@@ -90,7 +90,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
       {/* Cases table */}
       <div className="cm-table">
         <div className="cm-table-header">
-          <div className="cm-col-name">Case</div>
+          <div className="cm-col-name"></div>
           <div className="cm-col-tags">
             <span className="cm-legend">
               <span className="cm-legend-dot doel"></span>Doelen
