@@ -253,6 +253,11 @@ function TabNova() {
             op te schonen. Nova kan losse bullets, halve zinnen en actiepunten omzetten naar nette output.
           </li>
           <li>
+            <strong>Nova mag context bijtrekken</strong> — bij follow-up mails en actielijsten kan Nova
+            relevante persona-, topic- of case-context ophalen als jouw notes daar aanleiding toe geven.
+            Zo wordt de output minder generiek en beter passend bij het gesprek.
+          </li>
+          <li>
             <strong>Persona in de vraag, niet in een selector</strong> — in de Assistent-route is
             er geen aparte persona-kompas. Vermeld de rol gewoon in je vraag.
           </li>
@@ -273,6 +278,10 @@ function TabNova() {
           Als Nova een case-naam noemt (standaard in <strong>vet</strong>), kun je daarop klikken
           om direct naar de volledige case te springen. De app switcht dan naar de Gids-route met
           die case geopend.
+        </p>
+        <p>
+          Ook bij notes-taken geldt: als Nova een relevant referentie-haakje toevoegt op basis van
+          een echte case, blijft die bedrijfsnaam klikbaar zodat je de onderliggende case kunt checken.
         </p>
       </section>
 
