@@ -79,6 +79,29 @@ export default function FilterBar({ filters, topics = {}, activeTab, activeFilte
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="filter-row">
+        <div className={`button-grid ${showHints ? 'show-hints' : 'hide-hints'}`}>
+          {(filters[activeTab] || []).map(filter => {
+            const hint = topics?.[activeTab]?.[filter]?.signals || '';
+            return (
+              <button
+                key={filter}
+                className={`filter-btn ${activeFilter === filter ? 'active' : ''} ${hint ? 'has-hint' : ''}`}
+                onClick={() => onFilterChange(filter)}
+              >
+                <span className="filter-btn-label">{filter}</span>
+                {hint && showHints && (
+                  <span
+                    className="filter-btn-hint"
+                    dangerouslySetInnerHTML={{ __html: hint }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
         {hasAnyHints && (
           <button
             type="button"
@@ -103,27 +126,6 @@ export default function FilterBar({ filters, topics = {}, activeTab, activeFilte
             <span className="hints-toggle-label">Klantsignalen</span>
           </button>
         )}
-      </div>
-
-      <div className={`button-grid ${showHints ? 'show-hints' : 'hide-hints'}`}>
-        {(filters[activeTab] || []).map(filter => {
-          const hint = topics?.[activeTab]?.[filter]?.signals || '';
-          return (
-            <button
-              key={filter}
-              className={`filter-btn ${activeFilter === filter ? 'active' : ''} ${hint ? 'has-hint' : ''}`}
-              onClick={() => onFilterChange(filter)}
-            >
-              <span className="filter-btn-label">{filter}</span>
-              {hint && showHints && (
-                <span
-                  className="filter-btn-hint"
-                  dangerouslySetInnerHTML={{ __html: hint }}
-                />
-              )}
-            </button>
-          );
-        })}
       </div>
     </>
   );

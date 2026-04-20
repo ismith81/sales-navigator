@@ -646,7 +646,14 @@ export default function Navigator() {
                 branches={branches}
                 activeTab={activeTab}
                 activeFilter={activeFilter}
-                heading={activeFilter ? `Referenties voor "${activeFilter}"` : null}
+                activePersona={activePersona}
+                heading={
+                  activeFilter
+                    ? `Referenties voor "${activeFilter}"${activePersona && personas[activePersona] ? ` · ${personas[activePersona].label}` : ''}`
+                    : (activePersona && personas[activePersona]
+                        ? `Referenties voor ${personas[activePersona].label}`
+                        : null)
+                }
                 hint={null}
               />
             </div>
