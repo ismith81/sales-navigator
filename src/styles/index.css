@@ -4212,3 +4212,20 @@ body::before {
   margin-top: 0.2rem;
   line-height: 1.4;
 }
+
+/* Mobiel: voorkom iOS Safari auto-zoom op input-focus.
+   iOS zoomt automatisch in als het gefocuste veld < 16px is en
+   scrolt daarna niet terug. 16px minimum lost dat op. */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

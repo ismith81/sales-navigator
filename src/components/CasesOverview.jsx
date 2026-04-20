@@ -36,10 +36,11 @@ export default function CasesOverview({ cases, personas = {}, searchQuery, headi
 
   return (
     <div className="cases-overview">
-      <div className="co-header">
-        <h2>{heading}</h2>
-        <span className="co-count">{filtered.length} case{filtered.length === 1 ? '' : 's'}</span>
-      </div>
+      {heading && (
+        <div className="co-header">
+          <h2>{heading}</h2>
+        </div>
+      )}
       {hint && <p className="co-hint">{hint}</p>}
 
       {filtered.length === 0 ? (
