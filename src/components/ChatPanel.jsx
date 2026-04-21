@@ -17,15 +17,15 @@ const QUICK_PROMPT_GROUPS = [
   {
     label: 'Voor het gesprek',
     items: [
-      { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie' },
-      { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance' },
+      { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie', shortText: 'CFO-gesprek over dataplatform' },
+      { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance', shortText: 'IT-manager over governance' },
     ],
   },
   {
     label: 'Na het gesprek',
     items: [
-      { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail' },
-      { kind: 'Actielijst', text: 'Haal uit mijn notes een actielijst met eigenaar en volgende stap' },
+      { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail', shortText: 'Mail uit gespreksnotities' },
+      { kind: 'Actielijst', text: 'Haal uit mijn notes een actielijst met eigenaar en volgende stap', shortText: 'Acties uit notes' },
     ],
   },
 ];
@@ -352,9 +352,11 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
             <div className="chat-welcome">
               <div className="chat-welcome-intro">
                 <span className="chat-welcome-dot" aria-hidden="true" />
-                <p>Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</p>
+                <p>
+                  <span className="chat-welcome-copy-desktop">Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</span>
+                  <span className="chat-welcome-copy-mobile">Hoi, ik ben <strong>Nova</strong>. Ik help je vóór én na klantgesprekken met jullie cases, topics en persona’s.</span>
+                </p>
               </div>
-              <div className="chat-welcome-hint">Noem rol, sector of onderwerp voor een scherper antwoord.</div>
               <div className="chat-quickgroups">
                 {QUICK_PROMPT_GROUPS.map((group) => (
                   <section key={group.label} className="chat-quickgroup">
@@ -364,6 +366,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                         <button key={item.text} type="button" className="chat-quickprompt" onClick={() => send(item.text)} disabled={busy}>
                           <span className="chat-quickprompt-kind">{item.kind}</span>
                           <span className="chat-quickprompt-text">{item.text}</span>
+                          <span className="chat-quickprompt-short">{item.shortText || item.text}</span>
                         </button>
                       ))}
                     </div>
