@@ -6,3 +6,4 @@ _potx_unpacked/
 supabase.txt
 tmp/
 .claude/
+.agents/
