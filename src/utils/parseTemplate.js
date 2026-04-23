@@ -78,6 +78,7 @@ function extractSectionsFromHtml(body) {
     const labelText = (el.textContent || '').trim().toLowerCase();
     const key = SECTION_LABEL_TO_KEY[labelText];
     if (!key) continue;
+    if (sections[key]) continue; // eerste voorkomen wint (referentiesecties negeren)
 
     // Zoek de eerstvolgende <table> (skipping lege paragraphs).
     for (let j = i + 1; j < children.length; j++) {
@@ -100,6 +101,9 @@ function extractSectionsFromHtml(body) {
  * Info-tabel: bedrijfsnaam/korte omschrijving. Twee kolommen (label | value).
  */
 function extractInfoFields(body) {
+  // Eerste match wint: het template heeft onderaan een "Voorbeeld: CITO"-
+  // referentiesectie met een tweede info-tabel. Zonder first-match-wins
+  // overschrijft die de echte case.
   let bedrijfsnaam = '';
   let omschrijving = '';
   for (const row of body.querySelectorAll('tr')) {
@@ -107,8 +111,9 @@ function extractInfoFields(body) {
     if (cells.length < 2) continue;
     const label = (cells[0].textContent || '').trim().toLowerCase();
     const value = (cells[1].textContent || '').trim();
-    if (label.includes('bedrijfsnaam') && value) bedrijfsnaam = value;
-    else if (label.includes('omschrijving') && value) omschrijving = value;
+    if (!bedrijfsnaam && label.includes('bedrijfsnaam') && value) bedrijfsnaam = value;
+    else if (!omschrijving && label.includes('omschrijving') && value) omschrijving = value;
+    if (bedrijfsnaam && omschrijving) break;
   }
   return { bedrijfsnaam, omschrijving };
 }
