@@ -17,6 +17,7 @@ const QUICK_PROMPT_GROUPS = [
   {
     label: 'Voor het gesprek',
     items: [
+      { kind: 'Briefing', text: 'Maak een briefing over [bedrijfsnaam]: sector, grootte, recent nieuws en welke Creates-case past', shortText: 'Briefing over bedrijf' },
       { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie', shortText: 'CFO-gesprek over dataplatform' },
       { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance', shortText: 'IT-manager over governance' },
     ],
@@ -34,6 +35,7 @@ const TOOL_LABELS = {
   search_cases: 'Cases',
   get_topic: 'Topics',
   list_personas: 'Persona’s',
+  google_search: 'Web',
 };
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
@@ -237,6 +239,21 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
               }
               return copy;
             });
+          } else if (parsed.type === 'grounding') {
+            // Google Search grounding — web-bronnen + zoekqueries onder het antwoord.
+            setMessages(m => {
+              const copy = m.slice();
+              const last = copy[copy.length - 1];
+              if (last && last.role === 'assistant') {
+                const sources = parsed.value?.sources || [];
+                const queries = parsed.value?.queries || [];
+                const toolCalls = last.toolCalls || [];
+                // Voeg 'google_search' toe aan toolCalls zodat de Web-chip verschijnt.
+                const withWeb = toolCalls.includes('google_search') ? toolCalls : [...toolCalls, 'google_search'];
+                copy[copy.length - 1] = { ...last, groundingSources: sources, groundingQueries: queries, toolCalls: withWeb };
+              }
+              return copy;
+            });
           } else if (parsed.type === 'error') {
             setMessages(m => {
               const copy = m.slice();
@@ -398,6 +415,20 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                     {contextTags.map((tag) => (
                       <span key={tag} className="chat-context-tag">{tag}</span>
                     ))}
+                  </div>
+                )}
+                {isAssistant && m.groundingSources && m.groundingSources.length > 0 && (
+                  <div className="chat-sources">
+                    <span className="chat-sources-label">Bronnen (Google Search)</span>
+                    <ol className="chat-sources-list">
+                      {m.groundingSources.map((s, idx) => (
+                        <li key={`${s.uri}-${idx}`}>
+                          <a href={s.uri} target="_blank" rel="noopener noreferrer" title={s.uri}>
+                            {s.title || s.uri}
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 )}
                 {showFeedback && (

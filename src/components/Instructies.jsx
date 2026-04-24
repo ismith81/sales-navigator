@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Zeven skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Acht skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -233,6 +233,14 @@ function TabNova() {
             <strong>Actielijst uit notities</strong> — haalt uit notes een concrete markdown-checklist
             met eigenaar, actie en open punten.<br />
             <em>Voorbeeld:</em> "Zet deze gespreksnotities om naar een actielijst."
+          </li>
+          <li>
+            <strong>Prospect-briefing via web</strong> — noemt de gebruiker een prospect dat Nova niet
+            kent, dan zoekt ze via Google naar publieke info (sector, grootte, recent nieuws) en
+            koppelt dat aan een passende Creates-case. Onder het antwoord verschijnt een lijst met
+            bronnen (klikbare links) zodat je kunt checken waar de info vandaan komt. Alleen publieke
+            pagina's; géén LinkedIn-scrapes of CRM-data.<br />
+            <em>Voorbeeld:</em> "Maak een briefing over Bol.com — wat doen ze en welke case past?"
           </li>
         </ul>
       </section>
@@ -305,7 +313,7 @@ function TabNova() {
         <h3>Wat Nova (nog) niet doet</h3>
         <ul>
           <li>Nova verzint geen cases, cijfers of klantnamen — als iets niet in de database staat, zegt ze dat.</li>
-          <li>Nova heeft geen kennis van de buitenwereld: geen nieuws, geen LinkedIn, geen bedrijfssites. Dat staat op de roadmap (prospect-briefing).</li>
+          <li>Nova raadpleegt via Google Search alléén publieke webpagina's voor prospect-briefings. Ze logt niet in op LinkedIn of CRM-systemen en leest geen commerciële of gevoelige data.</li>
           <li>Nova onthoudt niets tussen sessies of apparaten. Memory-laag staat op de roadmap.</li>
           <li>Nova kan wel mailtekst opstellen, maar nog geen slide-decks of mails als bestand opleveren — alleen tekst in de chat.</li>
         </ul>

@@ -71,11 +71,12 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - `public/case-template.docx` — downloadbaar Word-template voor nieuwe cases
 
 ### Backend (Vercel serverless)
-- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + 3 tools:
-  - `search_cases({doel, behoefte, dienst, keyword})` — filtert cases-tabel
+- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + function calling + Google Search grounding:
+  - `search_cases({doel, behoefte, dienst, persona, branche, keyword})` — filtert cases-tabel
   - `get_topic({tab, name})` — haalt talking points/follow-ups uit `app_config.topics`
   - `list_personas()` — haalt persona-coaching uit `app_config.personas`
-  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'done'|'error'}`.
+  - `googleSearch: {}` — Gemini's ingebouwde web-grounding voor prospect-briefings. Géén aparte API-key; inclusief met `GEMINI_API_KEY`. SDK v0.24.1 kent deze tool niet in z'n types (alleen de oudere `googleSearchRetrieval`), maar passeert 'm ongewijzigd naar de REST API die 't voor 2.5-models wél accepteert. Combineren met function-calling is sinds Gemini 2.0 toegestaan.
+  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'grounding'|'done'|'error'}`. Het `grounding`-event bevat `{sources: [{uri, title}], queries: []}` en wordt één keer aan het eind gestuurd; ChatPanel rendert 'm als "Bronnen (Google Search)"-blok onder het antwoord en voegt een **Web**-chip toe aan "Gebruikte context".
 - `api/chat-feedback.js` — slaat 👍/👎 + context + tool-calls op in `chat_feedback`. Context wordt verrijkt met `user_email` uit de JWT.
 - `api/_lib/auth.js` — `requireUser(req, res)` valideert de `Authorization: Bearer <jwt>`-header via `supabase.auth.getUser(token)`. Zowel `/api/chat` als `/api/chat-feedback` retourneren 401 zonder geldige sessie.
 
@@ -205,12 +206,19 @@ Concrete content-generatie. Haalbaar in 2-3 dagen werk.
 - UI: knop in ChatPanel bij een gegenereerd antwoord of aparte /decks-route.
 - 5-10 slides: titel, klantsituatie, Creates-aanpak, bewijs-case, ROI, next step.
 
-### Fase 4 — Prospect-briefing (web-fetch tool)
-Vierde tool voor Nova: `fetch_url({url})` — haalt HTML op, strips tags, geeft platte tekst.
-- Gebruik: sales plakt LinkedIn-URL of bedrijfssite → Nova maakt 1-pagina briefing.
-- Let op privacy + rate-limits; waarschijnlijk alleen publieke pagina's (geen login-walls).
-- LinkedIn blokkeert scraping; overwegen: LinkedIn API of handmatig-profiel-plakken i.p.v.
-  URL-fetch. Start met generieke URL-fetch voor bedrijfssites.
+### Fase 4 — Prospect-briefing (Google Search grounding — live)
+Gemini's ingebouwde `googleSearch`-tool staat naast de custom function declarations in
+`api/chat.js`. Gebruik: de gebruiker noemt een prospect ("maak een briefing over Bol.com"),
+Nova besluit zelf om Google te raadplegen, combineert dat met `search_cases` op de
+gevonden sector, en levert een briefing met klikbare bronnen.
+- Geen aparte API-key; inclusief met `GEMINI_API_KEY`. Zie backend-sectie voor SDK-quirks.
+- Bronnen + zoekqueries komen via een `grounding`-SSE-event (één keer aan 't eind).
+  ChatPanel rendert ze als `.chat-sources`-blok; toevoegt "Web"-chip aan toolCalls.
+- **Privacy-regel die erin is geschoven:** alleen publiek web. Geen login-walls, geen
+  LinkedIn-scrapes, geen CRM-data. Systeemprompt bevat deze expliciet.
+- Niet verder uitgewerkt (backlog): een aparte `fetch_url({url})`-tool voor wanneer sales
+  een specifieke URL wil laten samenvatten. KvK-lookup ligt geparkeerd op branch
+  `nova-kvk-lookup` (wacht op API-key beslissing; usage-based betaald).
 
 ### Fase 5 — Memory-laag + cross-device chat
 Huidige chat-geschiedenis is sessionStorage-only. Voor echte "Nova onthoudt" hebben we
@@ -286,3 +294,4 @@ De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-
   - `html, body { max-width: 100%; overflow-x: clip; }` (hidden fallback) — horizontaal uit de viewport pannen kan niet meer. `clip` i.p.v. `hidden` zodat `position: sticky` (topbar-subnav, case-editor-bar) blijft werken.
 - **Instructies bijgewerkt:** persona-kompas start ingeklapt, zoek is altijd collapsed icon (typen switcht naar Navigator), case-overview default-state zonder heading, backup zit in inklapbaar blok, nieuwe sectie introduceert de Beheer sub-tabs, Lucide icon-picker uitgelegd bij Persona's.
 - **Volgende werk:** Fase 2 — follow-up mail + gespreksnotes→actielijst als Nova-skills. Geen tool-wijzigingen nodig, wel quick-prompt + Nova-tab update. Content-kant: persona-mapping op cases aanvullen (zie backlog) — anders filtert persona-selectie naar een lege lijst voor niet-gemapte cases.
+- **Nova Fase 4 — Google Search grounding (branch `nova-google-search`):** `api/chat.js` heeft nu naast de 3 custom tools ook `{ googleSearch: {} }` in de tools-array. Gemini 2.5 Flash staat deze combinatie toe; SDK v0.24.1 kent 't alleen niet in z'n TS-types maar forwardt 'm door. Streaming-loop verzamelt `groundingMetadata.groundingChunks[].web.uri` + `webSearchQueries` over alle rondes heen (dedup via Map/Set) en stuurt één `grounding`-SSE-event vóór `done`. ChatPanel handelt dat event af, hangt `groundingSources`/`groundingQueries` aan het message-object, voegt `'google_search'` toe aan `toolCalls` (→ Web-chip via `TOOL_LABELS`), en rendert een `.chat-sources` blok ("Bronnen (Google Search)" + genummerde lijst van klikbare links) onder het antwoord. Styling in `src/styles/index.css`. Systeemprompt heeft Prospect-briefing als 8e skill met regel: alleen publiek web, altijd daarna `search_cases` op gevonden sector. Quick-prompt "Briefing over bedrijf" in "Voor het gesprek"-groep. Instructies Nova-tab bijgewerkt. Geen aparte env var (grounding zit inclusief bij `GEMINI_API_KEY`). Nog niet verified tegen echte Gemini API — volgende sessie proefdraaien met een prospect-vraag, verifiëren dat bronnen verschijnen en Nova case-koppeling maakt. KvK-alternatief geparkeerd op `nova-kvk-lookup`.

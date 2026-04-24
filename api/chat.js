@@ -1,5 +1,5 @@
 // Vercel Serverless Function — streaming chat endpoint voor de Sales Navigator assistent.
-// Gebruikt Google Gemini 2.0 Flash + function calling tegen Supabase.
+// Gebruikt Google Gemini 2.5 Flash + function calling tegen Supabase + Google Search grounding.
 //
 // Env vars (Vercel + .env.local):
 //   GEMINI_API_KEY       — aistudio.google.com
@@ -30,6 +30,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
+- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt dat je niet direct herkent, gebruik dan Google Search (grounding) om publieke info op te halen: sector, grootte, hoofdkantoor, recent nieuws, strategische thema's. Baseer uitspraken alléén op wat de zoekresultaten teruggeven — verzin geen cijfers. Combineer daarna altijd met \`search_cases\` (op de gevonden branche/sector) om een relevante Creates-case aan de briefing te hangen. Beperking: gebruik alléén publiek web; haal géén login-walls, LinkedIn-scrapes of CRM-data op.
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
@@ -58,6 +59,7 @@ REGELS:
 - Wanneer een case wordt genoemd: zet de bedrijfsnaam **vet** zodat de UI er een klikbare link van maakt. Gebruik alléén bedrijfsnamen die letterlijk in de tool-resultaten terugkomen — verzin of generaliseer nooit.
 - Structureer lange antwoorden met korte kopjes + bullets; korte antwoorden mogen gewoon als lopende tekst.
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
+- Web-grounding: gebruik Google Search alleen voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Gebruik het **niet** om cases, talking points, persona's of Creates-interne info op te halen — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`. Als een web-resultaat tegen de interne case-data in gaat, volgt de interne data.
 
 TYPISCHE VRAGEN:
 - "Ik heb zo een CFO-gesprek over data-platform migratie — wat vertel ik?"
@@ -66,7 +68,8 @@ TYPISCHE VRAGEN:
 - "Zet twee cases uit de retail naast elkaar qua aanpak."
 - "Welke cases passen bij AI ready?"
 - "Maak van deze gespreksnotities een follow-up mail."
-- "Haal uit deze notes een actielijst met eigenaar en volgende stap."`;
+- "Haal uit deze notes een actielijst met eigenaar en volgende stap."
+- "Maak een briefing over [bedrijfsnaam] — wat doen ze, welke sector, recent nieuws?"`;
 
 // ─── Supabase (read-only) ────────────────────────────────────────────────
 function getSupabase() {
@@ -185,42 +188,51 @@ function stripHtml(s) {
 }
 
 // ─── Tool declaraties (Gemini function calling schema) ───────────────────
-const tools = [{
-  functionDeclarations: [
-    {
-      name: 'search_cases',
-      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona, branche en/of een vrij trefwoord (klantnaam, technologie). Cases zijn gekoppeld aan persona\'s én een of meer branches — gebruik die filters als de gebruiker aangeeft met wie hij praat of in welke sector.',
-      parameters: {
-        type: SchemaType.OBJECT,
-        properties: {
-          doel: { type: SchemaType.STRING, description: 'Exacte waarde: "Meer waarde halen uit data" of "Data als business model"' },
-          behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
-          dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
-          persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
-          branche: { type: SchemaType.STRING, description: 'Branche/sector van de klant (bv. "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services"). Case-insensitive match.' },
-          keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
+// Twee blokken: custom function declarations (Supabase) + Google Search grounding.
+// Gemini 2.5 Flash staat deze combinatie toe — model kiest zelf wanneer 't web-lookup doet
+// vs. een interne tool vs. een gewoon antwoord. SDK v0.24 kent `googleSearch` niet in z'n
+// types maar stuurt 't ongewijzigd door naar de REST API, die 't voor 2.5-models wél accepteert.
+const tools = [
+  {
+    functionDeclarations: [
+      {
+        name: 'search_cases',
+        description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona, branche en/of een vrij trefwoord (klantnaam, technologie). Cases zijn gekoppeld aan persona\'s én een of meer branches — gebruik die filters als de gebruiker aangeeft met wie hij praat of in welke sector.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            doel: { type: SchemaType.STRING, description: 'Exacte waarde: "Meer waarde halen uit data" of "Data als business model"' },
+            behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
+            dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
+            persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
+            branche: { type: SchemaType.STRING, description: 'Branche/sector van de klant (bv. "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services"). Case-insensitive match.' },
+            keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
+          },
         },
       },
-    },
-    {
-      name: 'get_topic',
-      description: 'Haal de talking points, vervolgvragen, omschrijving en klantsignalen op voor een specifiek doel, behoefte of dienst.',
-      parameters: {
-        type: SchemaType.OBJECT,
-        required: ['tab', 'name'],
-        properties: {
-          tab: { type: SchemaType.STRING, description: 'Een van: "doelen", "behoeften", "diensten"' },
-          name: { type: SchemaType.STRING, description: 'De exacte naam van het topic, bijv. "AI ready".' },
+      {
+        name: 'get_topic',
+        description: 'Haal de talking points, vervolgvragen, omschrijving en klantsignalen op voor een specifiek doel, behoefte of dienst.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['tab', 'name'],
+          properties: {
+            tab: { type: SchemaType.STRING, description: 'Een van: "doelen", "behoeften", "diensten"' },
+            name: { type: SchemaType.STRING, description: 'De exacte naam van het topic, bijv. "AI ready".' },
+          },
         },
       },
-    },
-    {
-      name: 'list_personas',
-      description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
-      parameters: { type: SchemaType.OBJECT, properties: {} },
-    },
-  ],
-}];
+      {
+        name: 'list_personas',
+        description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
+        parameters: { type: SchemaType.OBJECT, properties: {} },
+      },
+    ],
+  },
+  // Google Search grounding — voor prospect-briefings (publieke bedrijfsinfo, recent nieuws).
+  // Nova beslist zelf wanneer 't nodig is; zie systeemprompt voor de regels.
+  { googleSearch: {} },
+];
 
 async function runTool(name, args) {
   try {
@@ -296,8 +308,12 @@ export default async function handler(req, res) {
 
     // Multi-turn tool loop: zolang het model functionCalls terugstuurt, voer ze uit en feed de
     // responses terug. Zodra er tekst komt, streamen we naar de client.
+    // Grounding-metadata (Google Search) komt meestal mee in latere chunks van de laatste ronde;
+    // we verzamelen 't gedurende alle rondes en sturen één samengevoegd event vóór 'done'.
     let nextInput = latest;
     let safetyLoop = 0;
+    const groundingUris = new Map(); // uri → title (dedup)
+    const groundingQueries = new Set();
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -311,6 +327,16 @@ export default async function handler(req, res) {
         if (text) {
           sawText = true;
           send({ type: 'text', value: text });
+        }
+        // Grounding-metadata: web-bronnen + zoekqueries die Gemini intern deed.
+        const gm = chunk.candidates?.[0]?.groundingMetadata;
+        if (gm) {
+          for (const gc of gm.groundingChunks || []) {
+            if (gc.web?.uri && !groundingUris.has(gc.web.uri)) {
+              groundingUris.set(gc.web.uri, gc.web.title || gc.web.uri);
+            }
+          }
+          for (const q of gm.webSearchQueries || []) groundingQueries.add(q);
         }
       }
 
@@ -330,6 +356,17 @@ export default async function handler(req, res) {
       // Als het model zowel tekst als tool-calls gaf: we hebben tekst al gestreamd; loop opnieuw
       // voor de vervolg-tekst na de tool-resultaten.
       if (!sawText && safetyLoop >= 5) break;
+    }
+
+    // Grounding-bronnen pas aan 't eind sturen — client hangt ze onder het assistant-bericht.
+    if (groundingUris.size > 0 || groundingQueries.size > 0) {
+      send({
+        type: 'grounding',
+        value: {
+          sources: [...groundingUris.entries()].map(([uri, title]) => ({ uri, title })),
+          queries: [...groundingQueries],
+        },
+      });
     }
 
     send({ type: 'done' });

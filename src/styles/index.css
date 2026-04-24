@@ -3743,6 +3743,36 @@ body::before {
   font-size: 0.72rem;
   font-weight: 700;
 }
+/* Google Search bronnen onder een assistant-bericht. */
+.chat-sources {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 2px solid rgba(49,183,185,0.28);
+  background: rgba(49,183,185,0.04);
+  border-radius: 0 6px 6px 0;
+}
+.chat-sources-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+.chat-sources-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.chat-sources-list li { margin: 0.12rem 0; }
+.chat-sources-list a {
+  color: var(--teal);
+  text-decoration: none;
+  word-break: break-word;
+}
+.chat-sources-list a:hover { text-decoration: underline; }
 /* Case-naam als klikbare link — hergebruikt <strong> styling maar als knop. */
 .chat-case-link {
   background: transparent;
