@@ -30,10 +30,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
-- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt dat je niet direct herkent, doe een briefing via twee gerichte \`search_web\`-calls in deze volgorde:
-  1. **Algemeen**: \`search_web({query: "<bedrijf> bedrijfsinformatie sector omzet kerntaken"})\` voor sector, grootte, hoofdkantoor, kernactiviteit.
-  2. **Data/AI-hoek** (dit is Creates' angle): \`search_web({query: "<bedrijf> data platform AI digitalisering initiatieven 2024 2025"})\` — zoek specifiek naar persberichten, blogs, vacatures of keynotes waaruit blijkt wat ze met data/AI doen, welke tech ze gebruiken, of ze een CDO/Head of Data hebben benoemd, wat ze publiekelijk zeggen over hun data-strategie. Dit maakt het verschil tussen een generieke briefing en een scherpe voorbereiding.
-  Daarna \`search_cases\` (op de gevonden branche én op de opgepikte data/AI-thema's) om te checken óf er een écht relevante Creates-case bij past. **Forceer nooit een case-koppeling**: als de beste match zijdelings is of geen sterk verband heeft, zeg dat letterlijk ("onze portfolio raakt dit maar indirect — dit is eerder een gat dan een sterkte" / "hier hebben we nog geen directe case voor"). Baseer uitspraken alléén op wat de tools teruggeven — verzin geen cijfers. Beperking: \`search_web\` is voor externe publieke info, niet voor Creates-interne kennis (die komt uit \`search_cases\`/\`get_topic\`/\`list_personas\`).
+- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt, doe één gerichte \`search_web\`-call die beide angles in één query combineert: \`search_web({query: "<bedrijf> sector kerntaken grootte data platform AI initiatieven 2024 2025"})\`. Kijk in de output naar sector, grootte, hoofdkantoor, kernactiviteit én specifiek naar data/AI-signalen (data-platform, AI-projecten, CDO/Head of Data, publieke tech-keuzes, digitaliseringsstrategie) — dat laatste is Creates' angle. Daarna één \`search_cases\`-call op de gevonden branche om te checken óf er een écht relevante case bij past. **Forceer nooit een case-koppeling**: als de beste match zijdelings is of geen sterk verband heeft, zeg dat letterlijk ("onze portfolio raakt dit maar indirect — dit is eerder een gat dan een sterkte" / "hier hebben we nog geen directe case voor"). Baseer uitspraken alléén op wat de tools teruggeven — verzin geen cijfers. Beperking: \`search_web\` is voor externe publieke info, niet voor Creates-interne kennis (die komt uit \`search_cases\`/\`get_topic\`/\`list_personas\`).
 
 - **Follow-up op een briefing**: wanneer de vorige turn een briefing was over een specifiek prospect-bedrijf, gaat elke vervolgvraag **standaard ook over dát bedrijf** — tenzij de gebruiker expliciet iets anders aangeeft. Bij vragen als "kan je iets vinden over hun dataplatform?", "wie is hun CDO?", "wat doen ze met AI?" → dit is géén vraag om een Creates-case, maar om méér publieke info over het prospect. Doe onmiddellijk een nieuwe \`search_web({query: "<prospectnaam> <angle>"})\` en presenteer het resultaat met bronnen. Switch alléén naar \`search_cases\` als de gebruiker letterlijk vraagt om "een case", "referentie", "voorbeeld uit jullie portfolio" o.i.d.
 
@@ -365,6 +362,8 @@ export default async function handler(req, res) {
     // responses terug. Zodra er tekst komt, streamen we naar de client.
     let nextInput = latest;
     let safetyLoop = 0;
+    let totalSawText = false;
+    let lastFinishReason = null;
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -377,8 +376,12 @@ export default async function handler(req, res) {
         const text = chunk.text?.();
         if (text) {
           sawText = true;
+          totalSawText = true;
           send({ type: 'text', value: text });
         }
+        // Finish-reason bijhouden voor diagnose als loop zonder tekst eindigt.
+        const fr = chunk.candidates?.[0]?.finishReason;
+        if (fr) lastFinishReason = fr;
       }
 
       if (functionCalls.length === 0) break;
@@ -397,6 +400,19 @@ export default async function handler(req, res) {
       // Als het model zowel tekst als tool-calls gaf: we hebben tekst al gestreamd; loop opnieuw
       // voor de vervolg-tekst na de tool-resultaten.
       if (!sawText && safetyLoop >= 5) break;
+    }
+
+    // Fallback: tool-loop heeft geresulteerd in tools maar géén tekst — model gaf op zonder
+    // synthese. Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Komt o.a. voor
+    // bij finishReason === 'MAX_TOKENS' of 'SAFETY' of wanneer de loop-budget op is.
+    if (!totalSawText) {
+      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop);
+      const hint = lastFinishReason === 'MAX_TOKENS'
+        ? 'Er is veel webmateriaal opgehaald maar de samenvatting paste niet meer in het antwoord-budget. Probeer een kortere vraag of splits hem op.'
+        : lastFinishReason === 'SAFETY'
+          ? 'Het model heeft z\'n antwoord ingetrokken op basis van safety-filters.'
+          : `Ik heb mijn tools wel kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`;
+      send({ type: 'text', value: hint });
     }
 
     // Web-bronnen uit alle search_web-subcalls bundelen en als één grounding-event sturen.
