@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Acht skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Negen skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -241,6 +241,13 @@ function TabNova() {
             bronnen (klikbare links) zodat je kunt checken waar de info vandaan komt. Alleen publieke
             pagina's; géén LinkedIn-scrapes of CRM-data.<br />
             <em>Voorbeeld:</em> "Maak een briefing over Bol.com — wat doen ze en welke case past?"
+          </li>
+          <li>
+            <strong>Gap-analyse</strong> — vraag Nova om een kritische blik op Creates' eigen portfolio
+            tegenover de prospect-realiteit. Ze scant alle cases + persona's en benoemt concreet waar
+            we zwak of leeg staan, met een ontwikkel-aanbeveling. Eerlijker dan "en wij kunnen dit
+            ook" — helpt pitches scherper en geloofwaardiger maken.<br />
+            <em>Voorbeeld:</em> "Waar hebben we gaten t.o.v. Bol.com? Wat zouden we moeten ontwikkelen?"
           </li>
         </ul>
       </section>
