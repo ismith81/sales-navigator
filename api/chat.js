@@ -30,7 +30,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
-- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt dat je niet direct herkent, gebruik dan Google Search (grounding) om publieke info op te halen: sector, grootte, hoofdkantoor, recent nieuws, strategische thema's. Baseer uitspraken alléén op wat de zoekresultaten teruggeven — verzin geen cijfers. Combineer daarna altijd met \`search_cases\` (op de gevonden branche/sector) om een relevante Creates-case aan de briefing te hangen. Beperking: gebruik alléén publiek web; haal géén login-walls, LinkedIn-scrapes of CRM-data op.
+- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt dat je niet direct herkent, gebruik \`search_web({query})\` om publieke info op te halen: sector, grootte, hoofdkantoor, recent nieuws, strategische thema's. De tool geeft een samenvatting + bronnen terug. Baseer je briefing alléén op die tool-output — verzin geen cijfers. Combineer daarna altijd met \`search_cases\` (op de gevonden branche/sector) om een relevante Creates-case aan de briefing te hangen. Beperking: \`search_web\` is voor externe bedrijfsinfo — gebruik 't niet voor Creates-interne kennis (die komt uit de andere tools).
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
@@ -59,7 +59,7 @@ REGELS:
 - Wanneer een case wordt genoemd: zet de bedrijfsnaam **vet** zodat de UI er een klikbare link van maakt. Gebruik alléén bedrijfsnamen die letterlijk in de tool-resultaten terugkomen — verzin of generaliseer nooit.
 - Structureer lange antwoorden met korte kopjes + bullets; korte antwoorden mogen gewoon als lopende tekst.
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
-- Web-grounding: gebruik Google Search alleen voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Gebruik het **niet** om cases, talking points, persona's of Creates-interne info op te halen — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`. Als een web-resultaat tegen de interne case-data in gaat, volgt de interne data.
+- Web-lookups: gebruik \`search_web\` alleen voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Gebruik het **niet** om cases, talking points, persona's of Creates-interne info op te halen — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`. Als een web-resultaat tegen de interne case-data in gaat, volgt de interne data.
 
 TYPISCHE VRAGEN:
 - "Ik heb zo een CFO-gesprek over data-platform migratie — wat vertel ik?"
@@ -187,11 +187,46 @@ function stripHtml(s) {
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// ─── search_web — Google Search grounding als sub-call ───────────────────
+// Gemini 2.5 Flash staat `googleSearch` en functionDeclarations NIET tegelijk toe
+// in één request (400 "Built-in tools and Function Calling cannot be combined").
+// Workaround: we verpakken grounding in een custom function `search_web` die intern
+// een aparte Gemini-call doet met alleen `googleSearch` aan. Van Nova's kant is 't
+// gewoon een tool-call; de extra Gemini-hop is een implementatie-detail.
+// Module-level buffer verzamelt bronnen over alle search_web-calls binnen een request,
+// zodat de handler ze aan 't eind als één `grounding`-SSE kan sturen.
+const webSourcesBuffer = new Map(); // uri → title, per-request (reset in handler)
+const webQueriesBuffer = new Set();
+
+async function toolSearchWeb({ query }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { error: 'GEMINI_API_KEY ontbreekt.' };
+  if (!query || typeof query !== 'string') return { error: 'query is verplicht.' };
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const grounded = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    tools: [{ googleSearch: {} }],
+  });
+  const result = await grounded.generateContent(query);
+  const resp = result.response;
+  const text = resp.text?.() || '';
+  const gm = resp.candidates?.[0]?.groundingMetadata;
+  const sources = [];
+  for (const gc of gm?.groundingChunks || []) {
+    if (gc.web?.uri) {
+      if (!webSourcesBuffer.has(gc.web.uri)) {
+        webSourcesBuffer.set(gc.web.uri, gc.web.title || gc.web.uri);
+      }
+      sources.push({ uri: gc.web.uri, title: gc.web.title || gc.web.uri });
+    }
+  }
+  for (const q of gm?.webSearchQueries || []) webQueriesBuffer.add(q);
+
+  return { text, sources, queries: gm?.webSearchQueries || [] };
+}
+
 // ─── Tool declaraties (Gemini function calling schema) ───────────────────
-// Twee blokken: custom function declarations (Supabase) + Google Search grounding.
-// Gemini 2.5 Flash staat deze combinatie toe — model kiest zelf wanneer 't web-lookup doet
-// vs. een interne tool vs. een gewoon antwoord. SDK v0.24 kent `googleSearch` niet in z'n
-// types maar stuurt 't ongewijzigd door naar de REST API, die 't voor 2.5-models wél accepteert.
 const tools = [
   {
     functionDeclarations: [
@@ -227,11 +262,19 @@ const tools = [
         description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
         parameters: { type: SchemaType.OBJECT, properties: {} },
       },
+      {
+        name: 'search_web',
+        description: 'Zoek op het publieke web (Google) voor externe bedrijfsinfo, recente nieuwsberichten of sector-context over een prospect. Gebruik dit alléén voor info die NIET in onze cases/topics/personas zit — bijvoorbeeld "wat doet Bol.com", "recent nieuws over AkzoNobel". Retourneert een korte samenvatting + bronvermelding. Daarna altijd search_cases aanroepen voor case-koppeling.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['query'],
+          properties: {
+            query: { type: SchemaType.STRING, description: 'Concrete zoekopdracht in natuurlijke taal, bv. "Bol.com bedrijfsinformatie 2024 sector" of "AkzoNobel recent nieuws".' },
+          },
+        },
+      },
     ],
   },
-  // Google Search grounding — voor prospect-briefings (publieke bedrijfsinfo, recent nieuws).
-  // Nova beslist zelf wanneer 't nodig is; zie systeemprompt voor de regels.
-  { googleSearch: {} },
 ];
 
 async function runTool(name, args) {
@@ -239,6 +282,7 @@ async function runTool(name, args) {
     if (name === 'search_cases') return await toolSearchCases(args || {});
     if (name === 'get_topic') return await toolGetTopic(args || {});
     if (name === 'list_personas') return await toolListPersonas();
+    if (name === 'search_web') return await toolSearchWeb(args || {});
     return { error: `Onbekende tool: ${name}` };
   } catch (e) {
     return { error: e.message || 'Tool execution failed' };
@@ -306,14 +350,14 @@ export default async function handler(req, res) {
 
     const chat = model.startChat({ history });
 
+    // Reset per-request web-source buffers (module-level, gevuld door toolSearchWeb).
+    webSourcesBuffer.clear();
+    webQueriesBuffer.clear();
+
     // Multi-turn tool loop: zolang het model functionCalls terugstuurt, voer ze uit en feed de
     // responses terug. Zodra er tekst komt, streamen we naar de client.
-    // Grounding-metadata (Google Search) komt meestal mee in latere chunks van de laatste ronde;
-    // we verzamelen 't gedurende alle rondes en sturen één samengevoegd event vóór 'done'.
     let nextInput = latest;
     let safetyLoop = 0;
-    const groundingUris = new Map(); // uri → title (dedup)
-    const groundingQueries = new Set();
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -327,16 +371,6 @@ export default async function handler(req, res) {
         if (text) {
           sawText = true;
           send({ type: 'text', value: text });
-        }
-        // Grounding-metadata: web-bronnen + zoekqueries die Gemini intern deed.
-        const gm = chunk.candidates?.[0]?.groundingMetadata;
-        if (gm) {
-          for (const gc of gm.groundingChunks || []) {
-            if (gc.web?.uri && !groundingUris.has(gc.web.uri)) {
-              groundingUris.set(gc.web.uri, gc.web.title || gc.web.uri);
-            }
-          }
-          for (const q of gm.webSearchQueries || []) groundingQueries.add(q);
         }
       }
 
@@ -358,13 +392,14 @@ export default async function handler(req, res) {
       if (!sawText && safetyLoop >= 5) break;
     }
 
-    // Grounding-bronnen pas aan 't eind sturen — client hangt ze onder het assistant-bericht.
-    if (groundingUris.size > 0 || groundingQueries.size > 0) {
+    // Web-bronnen uit alle search_web-subcalls bundelen en als één grounding-event sturen.
+    // Client hangt ze als "Bronnen (Google Search)"-blok onder het assistant-bericht.
+    if (webSourcesBuffer.size > 0 || webQueriesBuffer.size > 0) {
       send({
         type: 'grounding',
         value: {
-          sources: [...groundingUris.entries()].map(([uri, title]) => ({ uri, title })),
-          queries: [...groundingQueries],
+          sources: [...webSourcesBuffer.entries()].map(([uri, title]) => ({ uri, title })),
+          queries: [...webQueriesBuffer],
         },
       });
     }

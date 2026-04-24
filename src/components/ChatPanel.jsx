@@ -35,7 +35,7 @@ const TOOL_LABELS = {
   search_cases: 'Cases',
   get_topic: 'Topics',
   list_personas: 'Persona’s',
-  google_search: 'Web',
+  search_web: 'Web',
 };
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
@@ -240,17 +240,18 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
               return copy;
             });
           } else if (parsed.type === 'grounding') {
-            // Google Search grounding — web-bronnen + zoekqueries onder het antwoord.
+            // Web-bronnen uit search_web-tool calls — gerenderd als "Bronnen (Google Search)"
+            // onder het assistant-bericht. De Web-chip in "Gebruikte context" komt al vanzelf
+            // omdat search_web al in toolCalls zit via het normale 'tool'-event.
             setMessages(m => {
               const copy = m.slice();
               const last = copy[copy.length - 1];
               if (last && last.role === 'assistant') {
-                const sources = parsed.value?.sources || [];
-                const queries = parsed.value?.queries || [];
-                const toolCalls = last.toolCalls || [];
-                // Voeg 'google_search' toe aan toolCalls zodat de Web-chip verschijnt.
-                const withWeb = toolCalls.includes('google_search') ? toolCalls : [...toolCalls, 'google_search'];
-                copy[copy.length - 1] = { ...last, groundingSources: sources, groundingQueries: queries, toolCalls: withWeb };
+                copy[copy.length - 1] = {
+                  ...last,
+                  groundingSources: parsed.value?.sources || [],
+                  groundingQueries: parsed.value?.queries || [],
+                };
               }
               return copy;
             });
