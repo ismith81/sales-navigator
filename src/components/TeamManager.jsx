@@ -42,7 +42,7 @@ export default function TeamManager() {
   const startFromCv = async () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/pdf';
+    input.accept = '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -120,9 +120,9 @@ export default function TeamManager() {
         <div className="team-empty">Laden…</div>
       ) : members.length === 0 ? (
         <div className="team-empty">
-          Nog geen teamleden. Klik <strong>+ CV uploaden</strong> om een PDF in te lezen
-          (Nova haalt de velden er voor je uit), of <strong>+ Nieuw teamlid</strong>
-          voor handmatig invoeren.
+          Nog geen teamleden. Klik <strong>+ CV uploaden</strong> om een PDF of
+          Word-document (.docx) in te lezen — Nova haalt de velden er voor je uit.
+          Of <strong>+ Nieuw teamlid</strong> voor handmatig invoeren.
         </div>
       ) : (
         <div className="team-list">

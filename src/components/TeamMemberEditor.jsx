@@ -476,7 +476,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
 
       <div className="team-cv">
         <div className="team-cv-header">
-          <span className="team-field-label">CV-bestand (PDF)</span>
+          <span className="team-field-label">CV-bestand (PDF of Word .docx)</span>
         </div>
         {cvPath ? (
           <>
@@ -534,7 +534,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
             ) : (
               <>
                 <span>Nog geen CV gekoppeld.</span>
-                <button type="button" className="team-cv-replace" onClick={() => triggerFilePick('reparse')}>＋ PDF kiezen + inlezen</button>
+                <button type="button" className="team-cv-replace" onClick={() => triggerFilePick('reparse')}>＋ Bestand kiezen + inlezen</button>
               </>
             )}
           </div>
@@ -542,7 +542,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={onFilePicked}
           style={{ display: 'none' }}
         />

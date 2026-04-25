@@ -162,20 +162,24 @@ export async function deleteTeamMember(id) {
   return true;
 }
 
-// ─── PDF upload + parse ──────────────────────────────────────────────────
-// Lees een File object als base64 en stuur naar /api/cv-parse voor extractie.
-// Server geeft een dict terug met structured fields die we gebruiken om de
-// edit-form te prefillen.
+// ─── CV upload + parse ───────────────────────────────────────────────────
+// Lees een File-object (PDF of DOCX) als base64 en stuur naar /api/cv-parse.
+// Server detecteert via fileName-extensie welke parser nodig is. DOCX is
+// meestal betrouwbaarder dan een image-zware PDF.
 export async function parseCvPdf(file) {
   if (!file) return { error: 'Geen bestand.' };
-  if (file.type && file.type !== 'application/pdf') {
-    return { error: 'Alleen PDF wordt ondersteund.' };
+  const isPdf = file.type === 'application/pdf'
+    || file.name?.toLowerCase().endsWith('.pdf');
+  const isDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    || file.name?.toLowerCase().endsWith('.docx');
+  if (!isPdf && !isDocx) {
+    return { error: 'Alleen PDF (.pdf) of Word (.docx) wordt ondersteund.' };
   }
   if (file.size > 6 * 1024 * 1024) {
-    return { error: 'PDF is groter dan 6MB.' };
+    return { error: 'Bestand is groter dan 6MB.' };
   }
 
-  const pdfBase64 = await new Promise((resolve, reject) => {
+  const fileBase64 = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new Error('Kan bestand niet lezen.'));
@@ -186,7 +190,7 @@ export async function parseCvPdf(file) {
     const res = await authedFetch('/api/cv-parse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdfBase64, fileName: file.name }),
+      body: JSON.stringify({ fileBase64, fileName: file.name }),
     });
     // Probeer JSON; als 't faalt (bv. crash → HTML-response van Vercel), meld
     // dat onderscheidend zodat we module-crash van content-error kunnen scheiden.
@@ -222,11 +226,19 @@ export async function uploadCvPdf(memberId, file) {
   const safeName = (file.name || 'cv.pdf').replace(/[^a-zA-Z0-9._-]+/g, '_');
   const path = `${memberId}/${Date.now()}-${safeName}`;
 
+  // Content-type dynamisch — accepteer PDF of DOCX. Andere types vallen
+  // terug op 'application/octet-stream' wat op zich werkt voor download
+  // maar geen inline-preview geeft (browser zal saven).
+  const contentType = file.type
+    || (file.name?.toLowerCase().endsWith('.docx')
+        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        : 'application/pdf');
+
   const { error: upErr } = await supabase.storage
     .from(STORAGE_BUCKET)
     .upload(path, file, {
       cacheControl: '3600',
-      contentType: 'application/pdf',
+      contentType,
       upsert: false,
     });
   if (upErr) {

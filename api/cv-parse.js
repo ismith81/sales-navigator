@@ -17,6 +17,7 @@
 
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { extractText, getDocumentProxy } from 'unpdf';
+import mammoth from 'mammoth';
 import { createClient } from '@supabase/supabase-js';
 import { requireUser } from './_lib/auth.js';
 
@@ -164,42 +165,55 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { pdfBase64 } = req.body || {};
-  if (!pdfBase64 || typeof pdfBase64 !== 'string') {
-    res.status(400).json({ error: 'pdfBase64 (string) is verplicht.' });
+  // Body accepteert zowel `pdfBase64` (legacy) als `fileBase64` + `fileName`
+  // zodat we PDF én DOCX kunnen handlen. fileName-extensie bepaalt de parser.
+  const { pdfBase64, fileBase64, fileName } = req.body || {};
+  const base64 = fileBase64 || pdfBase64;
+  if (!base64 || typeof base64 !== 'string') {
+    res.status(400).json({ error: 'fileBase64 (string) is verplicht.' });
     return;
   }
+  const isDocx = (fileName || '').toLowerCase().endsWith('.docx');
+  const formatLabel = isDocx ? 'Word-document' : 'PDF';
 
-  // Strip optionele data-URL-prefix ("data:application/pdf;base64,...")
-  const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+  // Strip optionele data-URL-prefix (alle types: data:application/...;base64,XXX)
+  const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
   let buffer;
   try {
     buffer = Buffer.from(cleanBase64, 'base64');
   } catch {
-    res.status(400).json({ error: 'pdfBase64 is geen geldige base64-string.' });
+    res.status(400).json({ error: 'fileBase64 is geen geldige base64-string.' });
     return;
   }
   if (buffer.length === 0 || buffer.length > 6 * 1024 * 1024) {
-    res.status(400).json({ error: 'PDF leeg of groter dan 6MB.' });
+    res.status(400).json({ error: `${formatLabel} leeg of groter dan 6MB.` });
     return;
   }
 
-  // ─── Stap 1: PDF → platte tekst (via unpdf, serverless-friendly) ───────
-  // unpdf is een modern alternatief voor pdf-parse zonder de test-file-bug
-  // bij module-load (pdf-parse v1/v2 probeert ./test/data/05-versions-space.pdf
-  // te lezen tijdens require, wat op Vercel-functies een ENOENT-crash gaf).
+  // ─── Stap 1: bestand → platte tekst ────────────────────────────────────
+  // PDF via unpdf (serverless-friendly), DOCX via mammoth (XML-based, robuust).
+  // DOCX is meestal beter te parsen dan een PDF — sales kan switchen als de
+  // PDF image-zwaar is (slechts 193 chars uit een Canva-export bv).
   let text = '';
   try {
-    const pdf = await getDocumentProxy(new Uint8Array(buffer));
-    const { text: pages } = await extractText(pdf, { mergePages: true });
-    text = (Array.isArray(pages) ? pages.join('\n') : (pages || '')).trim();
+    if (isDocx) {
+      const result = await mammoth.extractRawText({ buffer });
+      text = (result?.value || '').trim();
+    } else {
+      const pdf = await getDocumentProxy(new Uint8Array(buffer));
+      const { text: pages } = await extractText(pdf, { mergePages: true });
+      text = (Array.isArray(pages) ? pages.join('\n') : (pages || '')).trim();
+    }
   } catch (err) {
-    console.error('cv-parse: unpdf extractie fout', err);
-    res.status(500).json({ error: 'Kon PDF niet lezen. Is het bestand een geldige PDF?' });
+    console.error(`cv-parse: ${formatLabel.toLowerCase()} extractie fout`, err);
+    res.status(500).json({ error: `Kon ${formatLabel} niet lezen. Is het een geldig bestand?` });
     return;
   }
   if (!text) {
-    res.status(422).json({ error: 'PDF bevatte geen leesbare tekst (gescand zonder OCR?).' });
+    const hint = isDocx
+      ? 'Bestand bevatte geen leesbare tekst.'
+      : 'PDF bevatte geen leesbare tekst (gescand zonder OCR?). Tip: probeer een Word-document (.docx) — dat parsed betrouwbaarder dan image-zware PDFs.';
+    res.status(422).json({ error: hint });
     return;
   }
 
