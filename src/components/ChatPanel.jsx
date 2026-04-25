@@ -10,6 +10,15 @@ import {
   getActiveSessionId,
   setActiveSessionId,
 } from '../lib/chatHistory';
+import ChatSidebar from './ChatSidebar';
+
+const SIDEBAR_COLLAPSE_KEY = 'sn.chatSidebar';
+const readSidebarCollapsed = () => {
+  try { return localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === 'collapsed'; } catch { return false; }
+};
+const writeSidebarCollapsed = (v) => {
+  try { localStorage.setItem(SIDEBAR_COLLAPSE_KEY, v ? 'collapsed' : 'expanded'); } catch {}
+};
 
 const QUICK_PROMPT_GROUPS = [
   {
@@ -85,11 +94,20 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const [busy, setBusy] = useState(false);
   const [toolActivity, setToolActivity] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
-  // History-state: actieve sessie-id, lijst met laatste 10 sessies, dropdown open?
+  // History-state: actieve sessie-id, lijst met laatste 10 sessies.
   const [sessionId, setSessionId] = useState(() => getActiveSessionId());
   const [sessions, setSessions] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Sidebar (Claude.ai-stijl): inline-mode-only. Collapsed-state leeft in
+  // localStorage; mobile-overlay-state in geheugen (default closed).
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Header title-edit-state: actief? en draft.
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  const titleInputRef = useRef(null);
   const empty = messages.length === 0;
+  const activeSession = sessions.find(s => s.id === sessionId) || null;
+  const activeTitle = activeSession?.title || '';
 
   const formatToolLabels = (toolCalls = []) => {
     const unique = [...new Set((toolCalls || []).map((name) => TOOL_LABELS[name] || name))];
@@ -114,16 +132,19 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const stickToBottomRef = useRef(true);
 
   // ─── History persistence ─────────────────────────────────────────────
-  // Bij mount: probeer actieve sessie terug te laden zodat een refresh
-  // mid-conversatie geen werk-verlies oplevert. Mislukt 't (verwijderd door
-  // pruning of door andere user op zelfde browser): begin gewoon leeg.
+  // Bij mount: laad de sessions-lijst (voor de sidebar) en probeer de actieve
+  // sessie terug te laden zodat een refresh mid-conversatie geen werk-verlies
+  // oplevert. Mislukt 't (verwijderd door pruning of andere user op zelfde
+  // browser): begin gewoon leeg.
   const initialLoadDoneRef = useRef(false);
   useEffect(() => {
     if (initialLoadDoneRef.current) return;
     initialLoadDoneRef.current = true;
-    const id = getActiveSessionId();
-    if (!id) return;
     (async () => {
+      // Sessions-lijst voor de sidebar — fail-open, lege lijst als DB niet bereikbaar.
+      setSessions(await listSessions());
+      const id = getActiveSessionId();
+      if (!id) return;
       const s = await loadSession(id);
       if (s && Array.isArray(s.messages)) {
         setMessages(s.messages);
@@ -134,6 +155,14 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
       }
     })();
   }, []);
+
+  // Wanneer titel-edit-modus actief wordt: focus + selecteer.
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitle]);
 
   // Auto-save (debounced 700ms) — bij eerste user-bericht wordt sessie aangemaakt,
   // daarna worden updates gepusht. Tijdens busy/streaming sla je tussenstanden over
@@ -372,37 +401,19 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     }
   };
 
-  // "Wissen": leegt scherm én verwijdert de actieve sessie uit Supabase. Hard delete
-  // omdat sales 'wissen' bewust kiest — dit is niet hetzelfde als '+ Nieuw gesprek'
-  // (die laat de oude sessie staan en begint een lege).
-  const clearChat = async () => {
-    if (busy) abortRef.current?.abort();
-    const wasId = sessionId;
-    setMessages([]);
-    setSessionId(null);
-    setActiveSessionId(null);
-    setMenuOpen(false);
-    if (wasId) {
-      await deleteSession(wasId);
-      setSessions(await listSessions());
-    }
-  };
-
-  // Nieuw gesprek: leeg scherm, maar laat de oude sessie staan in de history
-  // (handig om later terug te switchen).
+  // Nieuw gesprek: leeg scherm, oude sessie blijft in history.
   const startNewChat = () => {
     if (busy) abortRef.current?.abort();
     setMessages([]);
     setSessionId(null);
     setActiveSessionId(null);
-    setMenuOpen(false);
+    setMobileSidebarOpen(false);
   };
 
-  // Klik op een history-item → wissel van sessie. Eerst current state schoon, dan
-  // berichten van geselecteerde sessie laden.
+  // Klik op een history-item in de sidebar → wissel van sessie.
   const switchToSession = async (id) => {
     if (busy) abortRef.current?.abort();
-    setMenuOpen(false);
+    setMobileSidebarOpen(false);
     if (id === sessionId) return;
     const s = await loadSession(id);
     if (s) {
@@ -412,9 +423,8 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     }
   };
 
-  // Verwijder één sessie uit de history (kruisje in dropdown).
-  const removeSession = async (e, id) => {
-    e.stopPropagation();
+  // Verwijder een sessie via de sidebar — confirmatie zit al in ChatSidebar.jsx.
+  const removeSessionById = async (id) => {
     await deleteSession(id);
     if (id === sessionId) {
       setMessages([]);
@@ -424,126 +434,116 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     setSessions(await listSessions());
   };
 
-  // Bij openen van het menu de history vers laden (fail open: bij DB-fout
-  // toon een lege lijst zonder de UI te breken).
-  const toggleMenu = async () => {
-    if (!menuOpen) {
-      setSessions(await listSessions());
-    }
-    setMenuOpen(o => !o);
+  // Hernoem een sessie (vanuit sidebar ⋮-menu of inline header-edit).
+  const renameSessionTitle = async (id, title) => {
+    if (!id || !title) return;
+    await updateSession(id, { title });
+    setSessions(await listSessions());
   };
 
-  // Outside-click sluit het menu.
-  const menuRef = useRef(null);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [menuOpen]);
+  // Toggle sidebar collapsed-state (desktop) en persisteer in localStorage.
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed(c => {
+      const next = !c;
+      writeSidebarCollapsed(next);
+      return next;
+    });
+  };
+
+  // Header-titel inline edit-flow.
+  const beginEditTitle = () => {
+    if (!sessionId) return; // alleen actieve sessies hebben een titel
+    setTitleDraft(activeTitle || '');
+    setEditingTitle(true);
+  };
+  const commitEditTitle = async () => {
+    const t = titleDraft.trim();
+    setEditingTitle(false);
+    if (!t || !sessionId || t === activeTitle) return;
+    await renameSessionTitle(sessionId, t);
+  };
+  const cancelEditTitle = () => {
+    setEditingTitle(false);
+    setTitleDraft('');
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     send(input);
   };
 
-  return (
-    <>
-      {!inline && (
-        <div className={`chat-overlay ${open ? 'open' : ''}`} onClick={onClose} aria-hidden={!open} />
-      )}
-      <aside
-        className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${empty ? 'chat-panel--empty' : ''} ${open ? 'open' : ''}`}
-        aria-hidden={!open}
-        role={inline ? 'region' : 'dialog'}
-        aria-label="Nova — sales assistent"
-      >
-        <header className="chat-header">
-          <div className="chat-header-inner">
-            <div className="chat-header-meta">
-              <div className="chat-header-title">
-                <span className="chat-header-dot" aria-hidden="true" />
-                <strong>Nova</strong>
-                <span className="chat-header-subtitle">sales-assistent</span>
-              </div>
-              <div className="chat-header-trust">werkt met jullie cases, topics en persona’s</div>
-            </div>
-            <div className="chat-header-actions" ref={menuRef}>
+  // Header-content wordt zowel in inline-mode (binnen chat-layout naast sidebar)
+  // als in drawer-mode (popup) gebruikt — daarom in een variabele.
+  const headerJsx = (
+    <header className="chat-header">
+      <div className="chat-header-inner">
+        <div className="chat-header-meta">
+          <div className="chat-header-title">
+            {/* Mobile-only hamburger om de sidebar als overlay te openen */}
+            {inline && (
               <button
                 type="button"
-                className="chat-header-menu-trigger"
-                onClick={toggleMenu}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label="Gesprek-menu"
-                title="Gesprek-menu"
+                className="chat-header-hamburger"
+                onClick={() => setMobileSidebarOpen(true)}
+                aria-label="Open chat-geschiedenis"
+                title="Geschiedenis"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-                  <circle cx="12" cy="5" r="1.2" />
-                  <circle cx="12" cy="12" r="1.2" />
-                  <circle cx="12" cy="19" r="1.2" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
               </button>
-              {menuOpen && (
-                <div className="chat-header-menu" role="menu">
-                  <button type="button" className="chat-header-menu-item" onClick={startNewChat} role="menuitem">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    <span>Nieuw gesprek</span>
-                  </button>
-                  <div className="chat-header-menu-section">
-                    <span className="chat-header-menu-label">Geschiedenis</span>
-                    {sessions.length === 0 ? (
-                      <div className="chat-header-menu-empty">Nog geen eerdere gesprekken</div>
-                    ) : (
-                      <ul className="chat-header-menu-list">
-                        {sessions.map(s => (
-                          <li key={s.id}>
-                            <button
-                              type="button"
-                              className={`chat-header-menu-history${s.id === sessionId ? ' is-active' : ''}`}
-                              onClick={() => switchToSession(s.id)}
-                              role="menuitem"
-                              title={s.title}
-                            >
-                              <span className="chat-header-menu-history-title">{s.title}</span>
-                              <span
-                                className="chat-header-menu-history-del"
-                                onClick={(e) => removeSession(e, s.id)}
-                                title="Verwijder dit gesprek"
-                                aria-label="Verwijder dit gesprek"
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') removeSession(e, s.id); }}
-                              >×</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <div className="chat-header-menu-divider" />
-                  <button type="button" className="chat-header-menu-item chat-header-menu-danger" onClick={clearChat} role="menuitem" disabled={messages.length === 0}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                      <path d="M10 11v6" />
-                      <path d="M14 11v6" />
-                    </svg>
-                    <span>Wissen huidig gesprek</span>
-                  </button>
-                </div>
-              )}
-              {!inline && (
-                <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
-              )}
-            </div>
+            )}
+            <span className="chat-header-dot" aria-hidden="true" />
+            <strong>Nova</strong>
+            {sessionId && activeTitle ? (
+              editingTitle ? (
+                <input
+                  ref={titleInputRef}
+                  className="chat-header-title-input"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitEditTitle(); }
+                    if (e.key === 'Escape') { e.preventDefault(); cancelEditTitle(); }
+                  }}
+                  onBlur={commitEditTitle}
+                  maxLength={120}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="chat-header-title-text"
+                  onClick={beginEditTitle}
+                  title="Klik om te hernoemen"
+                >
+                  <span className="chat-header-title-sep" aria-hidden="true">·</span>
+                  <span className="chat-header-title-value">{activeTitle}</span>
+                </button>
+              )
+            ) : (
+              <span className="chat-header-subtitle">sales-assistent</span>
+            )}
           </div>
-        </header>
+        </div>
+        <div className="chat-header-actions">
+          {!inline && (
+            <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+
+  const panelJsx = (
+    <aside
+      className={`chat-panel ${inline ? 'chat-panel--inline' : ''} ${empty ? 'chat-panel--empty' : ''} ${open ? 'open' : ''}`}
+      aria-hidden={!open}
+      role={inline ? 'region' : 'dialog'}
+      aria-label="Nova — sales assistent"
+    >
+      {headerJsx}
 
         <div className="chat-messages" ref={listRef} onScroll={handleMessagesScroll}>
          <div className="chat-column">
@@ -691,7 +691,40 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
             )}
           </div>
         </form>
-      </aside>
+    </aside>
+  );
+
+  // Inline-mode: panel + sidebar in een chat-layout flex-row.
+  // Drawer-mode: alleen het panel met overlay.
+  if (inline) {
+    return (
+      <div
+        className={
+          'chat-layout'
+          + (sidebarCollapsed ? ' chat-layout--sidebar-collapsed' : '')
+        }
+      >
+        <ChatSidebar
+          sessions={sessions}
+          activeId={sessionId}
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={toggleSidebarCollapsed}
+          onMobileClose={() => setMobileSidebarOpen(false)}
+          onNewChat={startNewChat}
+          onSelectSession={switchToSession}
+          onDeleteSession={removeSessionById}
+          onRenameSession={renameSessionTitle}
+        />
+        {panelJsx}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className={`chat-overlay ${open ? 'open' : ''}`} onClick={onClose} aria-hidden={!open} />
+      {panelJsx}
     </>
   );
 }

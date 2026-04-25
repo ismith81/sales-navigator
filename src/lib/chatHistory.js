@@ -123,6 +123,30 @@ export async function deleteSession(id) {
   return true;
 }
 
+// Groepeer een lijst van sessies in tijds-buckets (Vandaag / Gisteren /
+// Vorige week / Ouder) op basis van updated_at. Lege buckets worden niet
+// teruggegeven zodat de UI alleen de relevante kopjes toont.
+export function groupSessionsByDate(sessions = []) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const order = ['Vandaag', 'Gisteren', 'Vorige week', 'Ouder'];
+  const buckets = { Vandaag: [], Gisteren: [], 'Vorige week': [], Ouder: [] };
+
+  for (const s of sessions) {
+    const d = new Date(s.updated_at || s.created_at || 0);
+    if (d >= today) buckets['Vandaag'].push(s);
+    else if (d >= yesterday) buckets['Gisteren'].push(s);
+    else if (d >= weekAgo) buckets['Vorige week'].push(s);
+    else buckets['Ouder'].push(s);
+  }
+
+  return order
+    .filter(label => buckets[label].length > 0)
+    .map(label => ({ label, items: buckets[label] }));
+}
+
 // Houdt de history-lijst onder MAX_SESSIONS door de oudste te verwijderen.
 // Wordt vanuit createSession aangeroepen — niet vanuit updateSession (geen
 // nieuwe sessie = geen kans op overschrijding).

@@ -3997,6 +3997,321 @@ body::before {
   .route-toggle-btn { flex: 1; justify-content: center; font-size: 0.85rem; padding: 0.55rem 0.5rem; }
 }
 
+/* ═══ CHAT-LAYOUT (Claude.ai-stijl: sidebar + chat-panel naast elkaar) ═══
+   Wrapped het inline-panel met een ChatSidebar-zuster. Layout-row breakt
+   uit .app-padding zodat de sidebar full-height kan zijn naast de chat. */
+.chat-layout {
+  display: flex;
+  align-items: stretch;
+  margin: 0 -1.5rem -4rem;
+  height: calc(100dvh - 165px);
+  background: #fff;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+/* Wanneer .chat-layout direct het panel wrapt moet 't panel niet zelf
+   nog eens negatieve margins toepassen — anders krijg je dubbele bleed. */
+.chat-layout .chat-panel--inline {
+  margin: 0;
+  border-top: none;
+  height: auto;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Sidebar (history-panel à la Claude.ai). */
+.chat-sidebar {
+  width: 260px;
+  flex: 0 0 260px;
+  background: #FAFBFC;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.18s ease, flex-basis 0.18s ease;
+  overflow: hidden;
+}
+.chat-sidebar--collapsed {
+  width: 52px;
+  flex-basis: 52px;
+}
+.chat-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.55rem 0.6rem 0.3rem;
+  gap: 0.3rem;
+}
+.chat-sidebar-toggle {
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.chat-sidebar-toggle:hover {
+  background: rgba(44,60,82,0.06);
+  color: var(--navy);
+}
+.chat-sidebar-close {
+  display: none; /* alleen mobile */
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* + Nieuw gesprek-button: prominent in expanded, icon-only in collapsed */
+.chat-sidebar-new {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.1rem 0.6rem 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  color: var(--navy);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.chat-sidebar-new:hover {
+  background: var(--bg-soft, #F5F7FA);
+  border-color: rgba(44,60,82,0.18);
+}
+.chat-sidebar--collapsed .chat-sidebar-new {
+  justify-content: center;
+  padding: 0.5rem 0;
+  margin: 0.1rem 0.5rem 0.5rem;
+}
+.chat-sidebar--collapsed .chat-sidebar-new-label {
+  display: none;
+}
+
+/* History-secties */
+.chat-sidebar-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0 0.4rem 0.6rem;
+}
+.chat-sidebar--collapsed .chat-sidebar-scroll {
+  display: none; /* in collapsed-mode tonen we alleen de + icoon */
+}
+.chat-sidebar-empty {
+  padding: 0.6rem 0.6rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.chat-sidebar-group {
+  margin-bottom: 0.5rem;
+}
+.chat-sidebar-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.7rem 0.25rem;
+}
+.chat-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chat-sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  margin: 0.05rem 0;
+  transition: background 0.12s ease;
+}
+.chat-sidebar-item:hover {
+  background: rgba(44,60,82,0.05);
+}
+.chat-sidebar-item.is-active {
+  background: rgba(49,183,185,0.1);
+}
+.chat-sidebar-item-title {
+  flex: 1 1 auto;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.42rem 0.4rem 0.42rem 0.7rem;
+  color: var(--navy);
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.chat-sidebar-item.is-active .chat-sidebar-item-title {
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+}
+.chat-sidebar-item-menu-trigger {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-right: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.chat-sidebar-item:hover .chat-sidebar-item-menu-trigger,
+.chat-sidebar-item-menu-trigger[aria-expanded="true"] {
+  opacity: 1;
+}
+.chat-sidebar-item-menu-trigger:hover {
+  background: rgba(44,60,82,0.08);
+  color: var(--navy);
+}
+.chat-sidebar-item-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(44,60,82,0.14);
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.chat-sidebar-item-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.55rem;
+  border-radius: 5px;
+  color: var(--navy);
+  font-size: 0.83rem;
+  cursor: pointer;
+}
+.chat-sidebar-item-menu button:hover {
+  background: var(--bg-soft, #F5F7FA);
+}
+.chat-sidebar-item-menu-danger { color: var(--accent, #ED174B); }
+.chat-sidebar-item-menu-danger:hover {
+  background: rgba(237,23,75,0.06);
+}
+.chat-sidebar-rename-input {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0.05rem 0.4rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--teal);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--navy);
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+
+/* Mobile-overlay backdrop */
+.chat-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(44,60,82,0.45);
+  z-index: 60;
+  animation: chat-sidebar-fade-in 0.18s ease;
+}
+@keyframes chat-sidebar-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Hamburger in chat-header is desktop-hidden, mobile-shown */
+.chat-header-hamburger {
+  display: none;
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  margin-right: 0.2rem;
+}
+.chat-header-hamburger:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+
+/* Header chat-titel: klikbaar, hover-state, met ronde edit-input. */
+.chat-header-title-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 0.86rem;
+  cursor: pointer;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  max-width: 380px;
+  overflow: hidden;
+}
+.chat-header-title-text:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+.chat-header-title-sep {
+  color: var(--muted);
+  font-weight: 400;
+}
+.chat-header-title-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+.chat-header-title-input {
+  margin-left: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--teal);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.86rem;
+  color: var(--navy);
+  outline: none;
+  background: #fff;
+  min-width: 220px;
+  max-width: 380px;
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+
 /* ═══ CHAT-PANEL INLINE-VARIANT (Assistent-route = hoofdscherm) ════════════
    Rendert als gewone pagina-content, geen drawer-gedrag.
    Lichte huisstijl-look: witte header, zachte border, geen donker navy-vlak. */
@@ -4321,6 +4636,54 @@ body::before {
     /* Topbar ~88px met subnav + route-toggle ~50px + buffer. */
     height: calc(100dvh - 150px);
   }
+  /* Chat-layout op mobiel: alleen het panel zichtbaar; sidebar wordt overlay. */
+  .chat-layout {
+    margin: 0 -1rem -3rem;
+    height: calc(100dvh - 150px);
+  }
+  .chat-layout .chat-panel--inline {
+    height: 100%;
+  }
+  .chat-sidebar {
+    /* Off-canvas links — slidet in via .chat-sidebar--mobile-open. */
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 280px;
+    flex-basis: 280px;
+    z-index: 70;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    box-shadow: 0 16px 40px rgba(44,60,82,0.18);
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .chat-sidebar--mobile-open {
+    transform: translateX(0);
+  }
+  /* In collapsed-state heeft sidebar geen rail-mode op mobiel — altijd óf
+     verborgen óf full-width drawer. Reset breedte. */
+  .chat-sidebar--collapsed {
+    width: 280px;
+    flex-basis: 280px;
+  }
+  .chat-sidebar-toggle { display: none; }
+  .chat-sidebar-close { display: inline-flex; }
+  .chat-sidebar--collapsed .chat-sidebar-scroll { display: block; }
+  .chat-sidebar--collapsed .chat-sidebar-new { justify-content: flex-start; padding: 0.5rem 0.7rem; margin: 0.1rem 0.6rem 0.6rem; }
+  .chat-sidebar--collapsed .chat-sidebar-new-label { display: inline; }
+  .chat-sidebar-backdrop { display: block; }
+  /* Hamburger zichtbaar in chat-header op mobiel. */
+  .chat-panel--inline .chat-header-hamburger {
+    display: inline-flex;
+  }
+  /* Op mobiel maakt de menu-trigger altijd zichtbaar (hover bestaat niet). */
+  .chat-sidebar-item-menu-trigger { opacity: 1; }
+  /* Header-titel op mobiel iets kleiner. */
+  .chat-header-title-text { max-width: 200px; font-size: 0.82rem; }
+  .chat-header-title-input { min-width: 140px; max-width: 200px; }
   .chat-panel--inline .chat-messages {
     padding: 0.85rem 0.85rem 7.9rem;
     overscroll-behavior: contain;
