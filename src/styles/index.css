@@ -2868,7 +2868,6 @@ body::before {
 }
 .team-cv-link:hover { background: rgba(49,183,185,0.06); }
 .team-cv-replace {
-  margin-left: auto;
   border: 1px solid var(--border);
   background: transparent;
   font-family: inherit;
@@ -2881,6 +2880,20 @@ body::before {
 .team-cv-replace:hover {
   background: var(--bg-soft, #F5F7FA);
   border-color: rgba(44,60,82,0.18);
+}
+/* Twee-knop-rij voor "vervangen + extracten" / "alleen PDF vervangen". */
+.team-cv-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--border);
+}
+.team-cv-replace-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 0.2rem;
 }
 
 /* Mobile: tweede kolom in editor-grid + project-row aanpassen */

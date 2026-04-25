@@ -44,7 +44,16 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
   const [cvSignedUrl, setCvSignedUrl] = useState('');
   const [pendingPdf, setPendingPdf] = useState(null);
   const [reparseStatus, setReparseStatus] = useState(null);
+  // Replace-mode: 'reparse' (parse PDF + overschrijf velden) of 'pdf-only'
+  // (alleen PDF vervangen, velden ongemoeid). Gezet door de keuze-knoppen.
+  const [replaceMode, setReplaceMode] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Originele bestandsnaam afleiden uit de path (`<memberId>/<timestamp>-<name>`)
+  // voor de download-attribuut zodat de gebruiker het herkent in z'n downloads-map.
+  const cvFileName = cvPath
+    ? cvPath.split('/').slice(-1)[0].replace(/^\d+-/, '')
+    : '';
 
   // ─── load existing OR apply prefill ────────────────────────────────────
   useEffect(() => {
@@ -85,7 +94,9 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       setProjectExperience(Array.isArray(m.project_experience) ? m.project_experience : []);
       setCvPath(m.cv_pdf_path || '');
       if (m.cv_pdf_path) {
-        const url = await getCvPdfUrl(m.cv_pdf_path, 300);
+        // 600s TTL — geeft tijd om te downloaden, evt. extern bewerken,
+        // en weer te uploaden zonder dat de URL ondertussen verloopt.
+        const url = await getCvPdfUrl(m.cv_pdf_path, 600);
         if (!cancelled) setCvSignedUrl(url || '');
       }
       setLoading(false);
@@ -93,10 +104,11 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
     return () => { cancelled = true; };
   }, [memberId, isNew, prefill]);
 
-  // ─── re-parse PDF binnen de editor ─────────────────────────────────────
-  // Handig wanneer iemand z'n CV heeft bijgewerkt — upload + parse opnieuw,
-  // velden worden voorgesteld (overschrijft alleen wat de user accepteert).
-  const handleReparse = async () => {
+  // ─── PDF kiezen + uploaden (twee modes) ────────────────────────────────
+  // 'reparse'  = nieuwe PDF parsen en velden overschrijven (CV is geüpdatet)
+  // 'pdf-only' = alleen PDF vervangen, velden behouden (snelle correctie)
+  const triggerFilePick = (mode) => {
+    setReplaceMode(mode);
     fileInputRef.current?.click();
   };
 
@@ -104,28 +116,37 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
-    setReparseStatus('CV inlezen + structuur ophalen…');
-    const result = await parseCvPdf(file);
-    setReparseStatus(null);
-    if (result.error) {
-      setError(result.error);
-      return;
+
+    const mode = replaceMode || 'reparse';
+
+    if (mode === 'reparse') {
+      setReparseStatus('CV inlezen + structuur ophalen…');
+      const result = await parseCvPdf(file);
+      setReparseStatus(null);
+      if (result.error) {
+        setError(result.error);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      // Velden updaten met geëxtraheerde waarden — gebruiker kan na de save
+      // alsnog wijzigen voor 't echt opslaat.
+      const f = result.fields || {};
+      if (f.name) setName(f.name);
+      if (f.role) setRole(f.role);
+      if (f.seniority) setSeniority(f.seniority);
+      if (Array.isArray(f.kernskills)) setKernskills(arrToText(f.kernskills));
+      if (Array.isArray(f.technologies)) setTechnologies(arrToText(f.technologies));
+      if (Array.isArray(f.sectors)) setSectors(arrToText(f.sectors));
+      if (Array.isArray(f.certifications)) setCertifications(arrToText(f.certifications));
+      if (f.summary) setSummary(f.summary);
+      if (Array.isArray(f.project_experience)) setProjectExperience(f.project_experience);
     }
-    // Velden updaten met geëxtraheerde waarden — gebruiker kan na de save
-    // alsnog wijzigen voor 't echt opslaat.
-    const f = result.fields || {};
-    if (f.name) setName(f.name);
-    if (f.role) setRole(f.role);
-    if (f.seniority) setSeniority(f.seniority);
-    if (Array.isArray(f.kernskills)) setKernskills(arrToText(f.kernskills));
-    if (Array.isArray(f.technologies)) setTechnologies(arrToText(f.technologies));
-    if (Array.isArray(f.sectors)) setSectors(arrToText(f.sectors));
-    if (Array.isArray(f.certifications)) setCertifications(arrToText(f.certifications));
-    if (f.summary) setSummary(f.summary);
-    if (Array.isArray(f.project_experience)) setProjectExperience(f.project_experience);
+    // mode === 'pdf-only' → niets met de fields doen, alleen pendingPdf zetten
+
     // Reset de input zodat 't change-event opnieuw kan vuren bij dezelfde file.
     if (fileInputRef.current) fileInputRef.current.value = '';
     setPendingPdf(file);
+    setReplaceMode(null);
   };
 
   // ─── save ──────────────────────────────────────────────────────────────
@@ -367,26 +388,62 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
           <span className="team-field-label">CV-bestand (PDF)</span>
         </div>
         {cvPath ? (
-          <div className="team-cv-current">
-            <span className="team-cv-name">📄 {cvPath.split('/').slice(-1)[0]}</span>
-            {cvSignedUrl && (
-              <a href={cvSignedUrl} target="_blank" rel="noopener noreferrer" className="team-cv-link">Open</a>
-            )}
-            <button type="button" className="team-cv-replace" onClick={handleReparse}>
-              Vervangen + opnieuw inlezen
-            </button>
-          </div>
+          <>
+            <div className="team-cv-current">
+              <span className="team-cv-name">📄 {cvFileName}</span>
+              {cvSignedUrl && (
+                <>
+                  <a
+                    href={cvSignedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="team-cv-link"
+                    title="In nieuw tabblad openen"
+                  >
+                    Bekijken
+                  </a>
+                  <a
+                    href={cvSignedUrl}
+                    download={cvFileName || 'cv.pdf'}
+                    className="team-cv-link"
+                    title="Bestand downloaden"
+                  >
+                    Downloaden
+                  </a>
+                </>
+              )}
+            </div>
+            <div className="team-cv-replace-row">
+              <span className="team-cv-replace-hint">CV bijgewerkt? Vervang de PDF:</span>
+              <button
+                type="button"
+                className="team-cv-replace"
+                onClick={() => triggerFilePick('reparse')}
+                title="Nieuwe PDF uploaden en velden opnieuw uit het CV laten halen"
+              >
+                Vervangen + velden opnieuw extracten
+              </button>
+              <button
+                type="button"
+                className="team-cv-replace"
+                onClick={() => triggerFilePick('pdf-only')}
+                title="Alleen de PDF vervangen, mijn velden ongemoeid laten"
+              >
+                Alleen PDF vervangen
+              </button>
+            </div>
+          </>
         ) : (
           <div className="team-cv-empty">
             {pendingPdf ? (
               <>
                 <span>📄 {pendingPdf.name} <em>(wordt geüpload bij opslaan)</em></span>
-                <button type="button" className="team-cv-replace" onClick={handleReparse}>Andere kiezen</button>
+                <button type="button" className="team-cv-replace" onClick={() => triggerFilePick('reparse')}>Andere kiezen</button>
               </>
             ) : (
               <>
                 <span>Nog geen CV gekoppeld.</span>
-                <button type="button" className="team-cv-replace" onClick={handleReparse}>＋ PDF kiezen + inlezen</button>
+                <button type="button" className="team-cv-replace" onClick={() => triggerFilePick('reparse')}>＋ PDF kiezen + inlezen</button>
               </>
             )}
           </div>
