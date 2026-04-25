@@ -1060,7 +1060,9 @@ body::before {
   flex-basis: 100%;
   order: 20;
   margin: 0.32rem calc(-1 * var(--topbar-gutter)) 0;
-  padding: 0.52rem var(--topbar-gutter) 0.75rem;
+  /* Top en bottom padding gelijk gemaakt zodat de navy-balk rond de subnav
+     buttons visueel symmetrisch is. */
+  padding: 0.55rem var(--topbar-gutter);
   border-top: 1px solid rgba(255,255,255,0.12);
   min-height: 2.5rem; /* reserveert hoogte ook als er geen subnav is — voorkomt layout-jump */
   max-height: 4rem;
