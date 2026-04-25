@@ -33,6 +33,10 @@ create table if not exists public.team_members (
   summary text,
   -- Beschikbaarheid voor sales-gesprekken (eenvoudige toggle in Fase A)
   available_for_sales boolean not null default true,
+  -- Huidige klant/opdracht — vrij tekst-veld (bv. "Bol.com (tot Q3 2026)").
+  -- Manueel ingevuld; niet uit CV-parse — CV's bevatten meestal geen
+  -- live-assignment-info en die rouleert sneller dan de rest van het profiel.
+  current_client text,
   -- Verwijzing naar de PDF in Storage (path binnen team-cvs-bucket)
   cv_pdf_path text,
   -- Volledige extracted plain-text van het CV — voor toekomstige semantische
@@ -41,6 +45,10 @@ create table if not exists public.team_members (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Voor bestaande tabellen: kolom additief toevoegen (idempotent).
+alter table public.team_members
+  add column if not exists current_client text;
 
 create index if not exists team_members_name_idx on public.team_members (name);
 -- GIN-indexen op de array-velden voor snelle filter (skill-match etc.)

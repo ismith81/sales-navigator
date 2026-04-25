@@ -2542,6 +2542,17 @@ body::before {
   font-size: 0.82rem;
   color: var(--muted);
 }
+/* Huidige-klant-regel: subtiel gebouw-icon + naam, alleen zichtbaar als gevuld. */
+.team-row-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+  margin-top: 0.05rem;
+}
+.team-row-client svg { flex-shrink: 0; }
 .team-row-tags {
   display: flex;
   flex-wrap: wrap;

@@ -47,6 +47,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
   const [certifications, setCertifications] = useState('');
   const [summary, setSummary] = useState('');
   const [available, setAvailable] = useState(true);
+  const [currentClient, setCurrentClient] = useState('');
   const [projectExperience, setProjectExperience] = useState([]); // [{name, role, description}]
 
   // CV-PDF: bestaand path uit DB + signed URL voor preview, of pending File
@@ -129,6 +130,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
       setCertifications(arrToText(m.certifications));
       setSummary(m.summary || '');
       setAvailable(!!m.available_for_sales);
+      setCurrentClient(m.current_client || '');
       setProjectExperience(Array.isArray(m.project_experience) ? m.project_experience : []);
       setCvPath(m.cv_pdf_path || '');
       if (m.cv_pdf_path) {
@@ -226,6 +228,7 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
       certifications: textToArr(certifications),
       summary: summary.trim() || null,
       available_for_sales: available,
+      current_client: currentClient.trim() || null,
       project_experience: projectExperience,
     };
 
@@ -330,6 +333,19 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
             <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
             <span>{available ? 'Ja' : 'Nee'}</span>
           </label>
+        </label>
+
+        <label className="team-field team-field--wide">
+          <span className="team-field-label">
+            Huidige klant / opdracht
+            <span className="team-field-hint">Vrij tekst — bv. <em>"Bol.com (tot Q3 2026)"</em> of <em>"Beschikbaar"</em></span>
+          </span>
+          <input
+            type="text"
+            value={currentClient}
+            onChange={(e) => setCurrentClient(e.target.value)}
+            placeholder="bv. Bol.com — Solution Architect"
+          />
         </label>
 
         <label className="team-field team-field--wide">

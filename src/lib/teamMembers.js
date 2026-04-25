@@ -30,7 +30,7 @@ export async function listBranches() {
 export async function listTeamMembers() {
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, available_for_sales, cv_pdf_path, updated_at')
+    .select('id, name, role, seniority, kernskills, technologies, sectors, current_client, available_for_sales, cv_pdf_path, updated_at')
     .order('name', { ascending: true });
   if (error) {
     console.warn('listTeamMembers fout:', error.message);
