@@ -1,5 +1,5 @@
 // Vercel Serverless Function — streaming chat endpoint voor de Sales Navigator assistent.
-// Gebruikt Google Gemini 2.0 Flash + function calling tegen Supabase.
+// Gebruikt Google Gemini 2.5 Flash + function calling tegen Supabase + Google Search grounding.
 //
 // Env vars (Vercel + .env.local):
 //   GEMINI_API_KEY       — aistudio.google.com
@@ -30,6 +30,64 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
+- **Prospect-briefing (vast 7-bucket raamwerk)**: telkens als de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt, werk je in deze vaste volgorde:
+  1. Roep \`prospect_brief({company})\` aan — dat doet intern 3 parallelle web-zoekopdrachten en levert al het materiaal.
+  2. Roep daarna \`search_cases({branche})\` op de branche die je in cluster 1 oppikte — om case-fit te checken (niet om er per se eentje aan te plakken).
+  3. Synthetiseer naar exact dit format (markdown, met **vetgedrukte** kopjes voor de 7 categorieën zodat de UI ze duidelijk zet):
+
+  \`\`\`
+  ## Briefing — <Bedrijfsnaam>
+
+  **1. Bedrijfssnapshot**
+  - Sector / branche: <waarde>
+  - Omvang: <FTE / omzet>
+  - HQ + structuur: <locatie, moeder/dochters>
+  - Kerntaken: <2–3 zinnen>
+
+  **2. Strategische prioriteiten**
+  Wat zegt het bedrijf publiekelijk te willen (1–3 jaar) — uit jaarverslag, keynotes, persberichten.
+
+  **3. Data-volwassenheid**
+  Huidige stack + grove Gartner DMM-stage (1=Basic, 2=Opportunistic, 3=Systematic, 4=Differentiating, 5=Transformational). Onderbouw de stage in 1 zin.
+
+  **4. AI-initiatieven**
+  Concrete projecten / aankondigingen 2024–2025 met kort bron-haakje.
+
+  **5. Team & sourcing-houding**
+  CDO/Head of Data (naam indien gevonden), teamomvang, vacature-signalen, historiek met externe partners — concluderend: open of gesloten cultuur t.o.v. consultancy?
+
+  **6. Concurrentiepositie**
+  Top 2–3 concurrenten, marktaandeel-signaal, druk-indicatoren (waarom moeten ze nú bewegen?).
+
+  **7. Buying signals & budget-indicatoren**
+  Recente investeringen / M&A / tenders / financiële kerngetallen → ruwe budget-band (bv. "100k–500k", "1M+", "onbekend").
+
+  ---
+  **BANT-samenvatting** (sales-qualification)
+  - **B**: <budget-band uit cat 1+7>
+  - **A**: <wie beslist, uit cat 5>
+  - **N**: <kern-need uit cat 2+3+4>
+  - **T**: <timing uit cat 2+4>
+
+  **Sales-fit (regel)** — Nova's voorgestelde openingshoek voor dit gesprek.
+
+  **Gap-flag** — wat Creates' portfolio écht niet kan dekken (zwakke of ontbrekende bewijsstukken t.o.v. wat dit bedrijf nodig heeft). Benoem concreet, zo nuttig als een sterkte.
+  \`\`\`
+
+  **Regels voor de inhoud:**
+  - Baseer alle feiten alléén op tool-output (\`prospect_brief\`-clusters + \`search_cases\`); verzin geen cijfers, namen of strategieën.
+  - Mis je voor een categorie data, schrijf "geen publieke info gevonden" — niet bluffen.
+  - **Sales-fit** mag pitch-toon hebben; **Gap-flag** moet eerlijk en concreet zijn (geen verkooppraatje verpakt als gat).
+  - Wanneer je een Creates-case noemt: bedrijfsnaam **vet** zodat de UI er een link van maakt.
+
+- **Follow-up op een briefing**: na een briefing zijn vervolgvragen standaard over hetzelfde prospect — gebruik \`search_web\` (niet \`prospect_brief\`, dat is voor de eerste pass) met een gerichte query, bv. "<bedrijf> CDO 2025" of "<bedrijf> data-strategie persbericht". Switch alléén naar \`search_cases\` als de gebruiker letterlijk om "een case", "referentie" of "voorbeeld uit jullie portfolio" vraagt.
+
+- **Gap-analyse (kritisch op eigen portfolio)**: als de gebruiker apart vraagt om een kritische blik op Creates zelf ("waar hebben we gaten?", "wat zouden we moeten ontwikkelen?", "waar zijn we zwak tegenover deze prospect?"), werk je zo:
+  1. \`search_cases({})\` zonder filters — zodat je het volledige huidige portfolio ziet.
+  2. \`list_personas()\` — om te checken welke rollen wel/niet expliciet bediend worden.
+  3. Vergelijk expliciet met de prospect-context uit de briefing. 3–5 punten, per punt: prospect-behoefte → Creates wel/niet → concrete ontwikkelkans. Eindig met één aanbeveling welk gat 't eerst verdient. Dit is breder dan de Gap-flag in de briefing — meer diepgang en scope.
+
+- **Follow-up op een briefing**: wanneer de vorige turn een briefing was over een specifiek prospect-bedrijf, gaat elke vervolgvraag **standaard ook over dát bedrijf** — tenzij de gebruiker expliciet iets anders aangeeft. Bij vragen als "kan je iets vinden over hun dataplatform?", "wie is hun CDO?", "wat doen ze met AI?" → dit is géén vraag om een Creates-case, maar om méér publieke info over het prospect. Doe onmiddellijk een nieuwe \`search_web({query: "<prospectnaam> <angle>"})\` en presenteer het resultaat met bronnen. Switch alléén naar \`search_cases\` als de gebruiker letterlijk vraagt om "een case", "referentie", "voorbeeld uit jullie portfolio" o.i.d.
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
@@ -56,8 +114,15 @@ REGELS:
 - Voor follow-up mails is "goede generieke mail" niet genoeg als de notes herkenbare haakjes bevatten. Dan verwacht ik dat je eerst tool-context ophaalt en die zichtbaar benut.
 - Als je een mail of actielijst verrijkt met Creates-context, laat dat subtiel landen in de formulering of in een aparte korte sectie "Relevant haakje", maar maak geen lange generieke salespitch van een follow-up.
 - Wanneer een case wordt genoemd: zet de bedrijfsnaam **vet** zodat de UI er een klikbare link van maakt. Gebruik alléén bedrijfsnamen die letterlijk in de tool-resultaten terugkomen — verzin of generaliseer nooit.
+- **Inline citations**: elk feit dat uit \`search_web\` of \`prospect_brief\` komt krijgt een **kale** \`[n]\`-citatie direct achter dat feit, waar \`n\` het sources-nummer is uit de tool-output. Voorbeeld: "Bol.com heeft hun data-platform gemigreerd naar Google BigQuery [3] en investeert sinds 2024 in AI-gestuurde personalisatie [7]." Plaats meerdere markers naast elkaar als meerdere bronnen één claim ondersteunen: \`[3][5]\`.
+  - **NOOIT \`[n](url)\`-syntax gebruiken** met een URL erachter — geen markdown-links rond citaties. De UI maakt ze automatisch klikbaar via de bronnenlijst onderaan. Schrijf dus \`[3]\`, niet \`[3](https://...)\`.
+  - Gebruik alleen nummers die je letterlijk in de tool-output hebt gezien — verzin geen citatie-nummers en kopieer geen nummers uit de body-tekst (zoals KvK-nummers, marktwaardes, registratie-nummers) als citatie.
+  - Plaats GEEN citaties achter feiten die uit \`search_cases\`/\`get_topic\`/\`list_personas\` komen — die zijn intern, geen web-bron.
 - Structureer lange antwoorden met korte kopjes + bullets; korte antwoorden mogen gewoon als lopende tekst.
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
+- **Doen, niet aankondigen**: als je een tool-call wilt doen, doe 'm in dezelfde turn en presenteer het resultaat. Antwoord nooit met alleen "Jazeker, ik kan…" / "Goed, ik ga zoeken naar…" / "Ja, hier zoek ik naar op…" zonder dat je in die turn ook daadwerkelijk de tool gebruikt en 't resultaat deelt. Dergelijke zinnen voelen als gestotter — de gebruiker ziet liever meteen het antwoord dan een intentie-verklaring.
+- **Eerlijk over fit**: je hoeft niet altijd een Creates-haakje te vinden. Als de prospect iets doet waar Creates géén sterke case of dienst voor heeft, zeg dat. Benoem het als gat of ontwikkelkans ("hier hebben we nog geen referentie voor — interessant om op te bouwen" / "onze portfolio is sterker op X dan op Y, dus voor dit specifieke onderwerp hebben we minder bewijs"). Een sales-assistent die overal een verband forceert is bij ervaren sales én bij senior klantcontacten juist minder geloofwaardig. Liever één échte match benoemen en één gat eerlijk markeren dan drie gezochte haakjes.
+- Web-lookups: gebruik \`search_web\` alleen voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Gebruik het **niet** om cases, talking points, persona's of Creates-interne info op te halen — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`. Als een web-resultaat tegen de interne case-data in gaat, volgt de interne data.
 
 TYPISCHE VRAGEN:
 - "Ik heb zo een CFO-gesprek over data-platform migratie — wat vertel ik?"
@@ -66,7 +131,8 @@ TYPISCHE VRAGEN:
 - "Zet twee cases uit de retail naast elkaar qua aanpak."
 - "Welke cases passen bij AI ready?"
 - "Maak van deze gespreksnotities een follow-up mail."
-- "Haal uit deze notes een actielijst met eigenaar en volgende stap."`;
+- "Haal uit deze notes een actielijst met eigenaar en volgende stap."
+- "Maak een briefing over [bedrijfsnaam] — wat doen ze, welke sector, recent nieuws?"`;
 
 // ─── Supabase (read-only) ────────────────────────────────────────────────
 function getSupabase() {
@@ -184,49 +250,171 @@ function stripHtml(s) {
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// ─── search_web — Google Search grounding als sub-call ───────────────────
+// Gemini 2.5 Flash staat `googleSearch` en functionDeclarations NIET tegelijk toe
+// in één request (400 "Built-in tools and Function Calling cannot be combined").
+// Workaround: we verpakken grounding in een custom function `search_web` die intern
+// een aparte Gemini-call doet met alleen `googleSearch` aan. Van Nova's kant is 't
+// gewoon een tool-call; de extra Gemini-hop is een implementatie-detail.
+// Module-level buffer verzamelt bronnen over alle search_web-calls binnen een request,
+// zodat de handler ze aan 't eind als één `grounding`-SSE kan sturen.
+const webSourcesBuffer = new Map(); // uri → title, per-request (reset in handler)
+const webQueriesBuffer = new Set();
+
+// ─── prospect_brief — gestructureerd onderzoek over een prospect ─────────
+// Wrapper rond search_web die deterministisch 3 onderzoeks-clusters parallel
+// uitvoert. Dat geeft Nova consistent materiaal voor de 7 vaste briefing-buckets,
+// onafhankelijk van model-creatie. Bronnen komen automatisch in webSourcesBuffer
+// terecht (search_web doet dat zelf), dus de grounding-event aan 't eind bevat
+// alle 3 cluster-bronnen samen.
+async function toolProspectBrief({ company }) {
+  const trimmed = (company || '').trim();
+  if (!trimmed) return { error: 'company is verplicht.' };
+
+  const clusters = [
+    {
+      focus: 'snapshot + strategie',
+      query: `${trimmed} sector branche kerntaken omvang FTE omzet hoofdkantoor strategische prioriteiten jaarverslag 2024 2025`,
+    },
+    {
+      focus: 'data + AI',
+      query: `${trimmed} data platform stack governance AI machine learning initiatieven CDO "Head of Data" digitalisering 2024 2025`,
+    },
+    {
+      focus: 'team + budget + concurrentie',
+      query: `${trimmed} data team vacatures externe partners consultancy concurrenten marktaandeel acquisities investeringen tenders financiele kerncijfers`,
+    },
+  ];
+
+  const results = await Promise.all(clusters.map(c => toolSearchWeb({ query: c.query })));
+
+  return {
+    company: trimmed,
+    clusters: clusters.map((c, i) => ({
+      focus: c.focus,
+      query: c.query,
+      summary: (results[i] && typeof results[i].text === 'string') ? results[i].text : '',
+      sources: results[i]?.sources || [],
+      error: results[i]?.error || null,
+    })),
+    note: 'Synthetiseer dit naar de 7 vaste briefing-categorieën met bronnen + BANT-blokje. Plaats achter elk feit dat uit een web-bron komt een [n]-citatie waar n het sources-nummer is dat je in deze tool-output ziet. Zie systeemprompt voor format.',
+  };
+}
+
+async function toolSearchWeb({ query }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { error: 'GEMINI_API_KEY ontbreekt.' };
+  if (!query || typeof query !== 'string') return { error: 'query is verplicht.' };
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const grounded = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    tools: [{ googleSearch: {} }],
+  });
+  const result = await grounded.generateContent(query);
+  const resp = result.response;
+  const rawText = resp.text?.() || '';
+  // Gemini's grounding embed standaard markdown-link-style citaties in de
+  // response-tekst, bv. "Bol.com migreerde naar BigQuery [58666970](redirect-url)..."
+  // Die redirect-URLs werken niet stabiel (404 vaak), de getallen zijn Gemini's
+  // eigen chunk-id's (geen 1-based nummering die wij bijhouden), en als we deze
+  // tekst onbewerkt aan Nova doorgeven kopieert ze de broken-links 1-op-1 in
+  // haar antwoord. Strip ze: vervang [label](url) door enkel label, en verwijder
+  // kale [3] / [3, 5] refs ook omdat die Gemini's nummering gebruiken.
+  // Nova krijgt schone tekst + een aparte sources-array met onze [n]-nummering
+  // en kan dan zélf [n]-markers plaatsen volgens de regels in de systeemprompt.
+  const text = rawText
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')      // [label](url) → label
+    .replace(/\s*\[\d+(?:,\s*\d+)*\]/g, '');         // bare [3] / [3, 5] eruit
+  const gm = resp.candidates?.[0]?.groundingMetadata;
+  const sources = [];
+  for (const gc of gm?.groundingChunks || []) {
+    if (gc.web?.uri) {
+      if (!webSourcesBuffer.has(gc.web.uri)) {
+        webSourcesBuffer.set(gc.web.uri, gc.web.title || gc.web.uri);
+      }
+      // 1-based index op basis van insertion-order in de globale buffer.
+      // Map preserves insertion order, dus dit is stabiel binnen één request.
+      // Nova kan dit nummer terug-citeren als [n] in haar antwoord — de
+      // bronnenlijst die de UI uiteindelijk toont gebruikt dezelfde nummering.
+      const n = [...webSourcesBuffer.keys()].indexOf(gc.web.uri) + 1;
+      sources.push({ n, uri: gc.web.uri, title: gc.web.title || gc.web.uri });
+    }
+  }
+  for (const q of gm?.webSearchQueries || []) webQueriesBuffer.add(q);
+
+  return { text, sources, queries: gm?.webSearchQueries || [] };
+}
+
 // ─── Tool declaraties (Gemini function calling schema) ───────────────────
-const tools = [{
-  functionDeclarations: [
-    {
-      name: 'search_cases',
-      description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona, branche en/of een vrij trefwoord (klantnaam, technologie). Cases zijn gekoppeld aan persona\'s én een of meer branches — gebruik die filters als de gebruiker aangeeft met wie hij praat of in welke sector.',
-      parameters: {
-        type: SchemaType.OBJECT,
-        properties: {
-          doel: { type: SchemaType.STRING, description: 'Exacte waarde: "Meer waarde halen uit data" of "Data als business model"' },
-          behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
-          dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
-          persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
-          branche: { type: SchemaType.STRING, description: 'Branche/sector van de klant (bv. "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services"). Case-insensitive match.' },
-          keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
+const tools = [
+  {
+    functionDeclarations: [
+      {
+        name: 'search_cases',
+        description: 'Zoek relevante klantcases uit de Creates case-database. Filter op doel, behoefte, dienst, persona, branche en/of een vrij trefwoord (klantnaam, technologie). Cases zijn gekoppeld aan persona\'s én een of meer branches — gebruik die filters als de gebruiker aangeeft met wie hij praat of in welke sector.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            doel: { type: SchemaType.STRING, description: 'Exacte waarde: "Meer waarde halen uit data" of "Data als business model"' },
+            behoefte: { type: SchemaType.STRING, description: 'Een van: "Veilig en betrouwbaar", "Wendbaar", "AI ready", "Realtime data"' },
+            dienst: { type: SchemaType.STRING, description: 'Een van: "Data modernisatie", "Governance", "Data kwaliteit", "Training"' },
+            persona: { type: SchemaType.STRING, description: 'Persona-id of label (bv. "CFO", "Operationele IT-manager"). Gebruik list_personas om beschikbare persona\'s te zien.' },
+            branche: { type: SchemaType.STRING, description: 'Branche/sector van de klant (bv. "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services"). Case-insensitive match.' },
+            keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt in klantnaam, situatie, oplossing, keywords.' },
+          },
         },
       },
-    },
-    {
-      name: 'get_topic',
-      description: 'Haal de talking points, vervolgvragen, omschrijving en klantsignalen op voor een specifiek doel, behoefte of dienst.',
-      parameters: {
-        type: SchemaType.OBJECT,
-        required: ['tab', 'name'],
-        properties: {
-          tab: { type: SchemaType.STRING, description: 'Een van: "doelen", "behoeften", "diensten"' },
-          name: { type: SchemaType.STRING, description: 'De exacte naam van het topic, bijv. "AI ready".' },
+      {
+        name: 'get_topic',
+        description: 'Haal de talking points, vervolgvragen, omschrijving en klantsignalen op voor een specifiek doel, behoefte of dienst.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['tab', 'name'],
+          properties: {
+            tab: { type: SchemaType.STRING, description: 'Een van: "doelen", "behoeften", "diensten"' },
+            name: { type: SchemaType.STRING, description: 'De exacte naam van het topic, bijv. "AI ready".' },
+          },
         },
       },
-    },
-    {
-      name: 'list_personas',
-      description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
-      parameters: { type: SchemaType.OBJECT, properties: {} },
-    },
-  ],
-}];
+      {
+        name: 'list_personas',
+        description: 'Haal alle personas op met hun coaching-instructies en typische uitspraken (klantsignalen). Gebruik dit als de gebruiker met iemand praat en je de juiste gesprekstoon wilt aanreiken.',
+        parameters: { type: SchemaType.OBJECT, properties: {} },
+      },
+      {
+        name: 'search_web',
+        description: 'Zoek op het publieke web (Google) voor externe bedrijfsinfo, recente nieuwsberichten of sector-context over een prospect. Gebruik dit voor losse follow-up-vragen over een prospect (bv. "wie is hun CDO?", "wat zegt hun jaarverslag over AI?"). Voor een complete prospect-briefing gebruik liever prospect_brief — die structureert het onderzoek deterministisch.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['query'],
+          properties: {
+            query: { type: SchemaType.STRING, description: 'Concrete zoekopdracht in natuurlijke taal, bv. "Bol.com Head of Data 2025" of "AkzoNobel recent persbericht AI".' },
+          },
+        },
+      },
+      {
+        name: 'prospect_brief',
+        description: 'Doe een complete, gestructureerde briefing-research over een prospect-bedrijf. Voert intern 3 parallelle web-zoekopdrachten uit (snapshot+strategie / data+AI / team+budget+concurrentie) en levert al het materiaal voor de 7 vaste briefing-categorieën in één call. Gebruik dit telkens wanneer de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt. Geef daarna nog één search_cases-call op de gevonden branche om case-fit te checken. Het exacte output-format staat in de systeemprompt.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['company'],
+          properties: {
+            company: { type: SchemaType.STRING, description: 'Naam van de prospect, bv. "Bol.com", "AkzoNobel", "Tulp Hypotheken".' },
+          },
+        },
+      },
+    ],
+  },
+];
 
 async function runTool(name, args) {
   try {
     if (name === 'search_cases') return await toolSearchCases(args || {});
     if (name === 'get_topic') return await toolGetTopic(args || {});
     if (name === 'list_personas') return await toolListPersonas();
+    if (name === 'search_web') return await toolSearchWeb(args || {});
+    if (name === 'prospect_brief') return await toolProspectBrief(args || {});
     return { error: `Onbekende tool: ${name}` };
   } catch (e) {
     return { error: e.message || 'Tool execution failed' };
@@ -294,10 +482,16 @@ export default async function handler(req, res) {
 
     const chat = model.startChat({ history });
 
+    // Reset per-request web-source buffers (module-level, gevuld door toolSearchWeb).
+    webSourcesBuffer.clear();
+    webQueriesBuffer.clear();
+
     // Multi-turn tool loop: zolang het model functionCalls terugstuurt, voer ze uit en feed de
     // responses terug. Zodra er tekst komt, streamen we naar de client.
     let nextInput = latest;
     let safetyLoop = 0;
+    let totalSawText = false;
+    let lastFinishReason = null;
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -310,8 +504,12 @@ export default async function handler(req, res) {
         const text = chunk.text?.();
         if (text) {
           sawText = true;
+          totalSawText = true;
           send({ type: 'text', value: text });
         }
+        // Finish-reason bijhouden voor diagnose als loop zonder tekst eindigt.
+        const fr = chunk.candidates?.[0]?.finishReason;
+        if (fr) lastFinishReason = fr;
       }
 
       if (functionCalls.length === 0) break;
@@ -330,6 +528,33 @@ export default async function handler(req, res) {
       // Als het model zowel tekst als tool-calls gaf: we hebben tekst al gestreamd; loop opnieuw
       // voor de vervolg-tekst na de tool-resultaten.
       if (!sawText && safetyLoop >= 5) break;
+    }
+
+    // Fallback: tool-loop heeft geresulteerd in tools maar géén tekst — model gaf op zonder
+    // synthese. Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Komt o.a. voor
+    // bij finishReason === 'MAX_TOKENS' of 'SAFETY' of wanneer de loop-budget op is.
+    if (!totalSawText) {
+      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop);
+      const hint = lastFinishReason === 'MAX_TOKENS'
+        ? 'Er is veel webmateriaal opgehaald maar de samenvatting paste niet meer in het antwoord-budget. Probeer een kortere vraag of splits hem op.'
+        : lastFinishReason === 'SAFETY'
+          ? 'Het model heeft z\'n antwoord ingetrokken op basis van safety-filters.'
+          : `Ik heb mijn tools wel kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`;
+      send({ type: 'text', value: hint });
+    }
+
+    // Web-bronnen uit alle search_web-subcalls bundelen en als één grounding-event sturen.
+    // Client hangt ze als "Bronnen (Google Search)"-blok onder het assistant-bericht.
+    // Nummering 1-based op insertion-order van de buffer — zelfde n die Nova in
+    // search_web's tool-output zag, zodat haar [n]-citaties matchen met de bronnenlijst.
+    if (webSourcesBuffer.size > 0 || webQueriesBuffer.size > 0) {
+      send({
+        type: 'grounding',
+        value: {
+          sources: [...webSourcesBuffer.entries()].map(([uri, title], i) => ({ n: i + 1, uri, title })),
+          queries: [...webQueriesBuffer],
+        },
+      });
     }
 
     send({ type: 'done' });

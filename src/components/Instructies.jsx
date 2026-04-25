@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Zeven skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Negen skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -233,6 +233,26 @@ function TabNova() {
             <strong>Actielijst uit notities</strong> — haalt uit notes een concrete markdown-checklist
             met eigenaar, actie en open punten.<br />
             <em>Voorbeeld:</em> "Zet deze gespreksnotities om naar een actielijst."
+          </li>
+          <li>
+            <strong>Prospect-briefing (7-bucket raamwerk)</strong> — vraag een briefing over een bedrijf
+            en Nova levert een gestructureerd rapport in vaste categorieën:
+            <em>Bedrijfssnapshot · Strategische prioriteiten · Data-volwassenheid (Gartner DMM-stage)
+            · AI-initiatieven · Team & sourcing-houding · Concurrentiepositie · Buying signals & budget</em>.
+            Afsluitend een <strong>BANT-samenvatting</strong> (Budget, Authority, Need, Timeline) +
+            <strong>Sales-fit</strong> (openingshoek) + <strong>Gap-flag</strong> (eerlijk waar Creates
+            zwak staat). Achter elk web-feit staat een klein <strong>[n]</strong>-citatie-nummer
+            (klik = scroll naar bron + flash); onderaan het antwoord verschijnt een ingeklapte
+            chip <strong>"N bronnen ▾"</strong> die je open kunt klikken voor de volledige genummerde
+            bronnenlijst. Alleen publiek web; géén LinkedIn-scrapes of CRM-data.<br />
+            <em>Voorbeeld:</em> "Maak een briefing over Bol.com." (de structuur volgt automatisch)
+          </li>
+          <li>
+            <strong>Gap-analyse</strong> — vraag Nova om een kritische blik op Creates' eigen portfolio
+            tegenover de prospect-realiteit. Ze scant alle cases + persona's en benoemt concreet waar
+            we zwak of leeg staan, met een ontwikkel-aanbeveling. Eerlijker dan "en wij kunnen dit
+            ook" — helpt pitches scherper en geloofwaardiger maken.<br />
+            <em>Voorbeeld:</em> "Waar hebben we gaten t.o.v. Bol.com? Wat zouden we moeten ontwikkelen?"
           </li>
         </ul>
       </section>
@@ -286,6 +306,31 @@ function TabNova() {
       </section>
 
       <section className="ins-section">
+        <h3>Web-bronnen &amp; citaties</h3>
+        <p>
+          Als Nova externe info ophaalt (typisch bij prospect-briefings) plaatst ze achter elk feit
+          een klein <strong>[n]</strong>-nummer als citatie. Onderaan het antwoord verschijnt een
+          ingeklapte chip met <em>"N bronnen ▾"</em>; klik 'm open voor de volledige genummerde
+          lijst.
+        </p>
+        <ul>
+          <li>
+            <strong>Klik op een [n]-nummer</strong> in de tekst — bronnen-blok klapt automatisch
+            open en scrollt naar bron #n met een korte flash-highlight.
+          </li>
+          <li>
+            <strong>Klik op een bron-titel</strong> in het uitgeklapte blok — opent de originele
+            webpagina in een nieuw tabblad.
+          </li>
+          <li>
+            <strong>Bronnen alleen voor publiek web</strong> (Google Search). Bij interne content
+            uit Creates' eigen cases/topics/personas verschijnen géén [n]-citaties — die zijn
+            immers geen externe bron.
+          </li>
+        </ul>
+      </section>
+
+      <section className="ins-section">
         <h3>Feedback &amp; geschiedenis</h3>
         <ul>
           <li>
@@ -294,9 +339,15 @@ function TabNova() {
             op te sporen. Gebruik 'm ook gewoon voor "dit antwoord was perfect" — dat helpt ook.
           </li>
           <li>
-            <strong>Chatgeschiedenis</strong> — blijft bewaard binnen deze browser-tab. Na een
-            refresh of op een ander device is 'ie leeg. Cross-device geschiedenis staat op de
-            roadmap.
+            <strong>Chatgeschiedenis</strong> — je gesprekken worden bewaard in de cloud, gekoppeld
+            aan jouw account. Op desktop zit de geschiedenis in een sidebar links; op mobiel open
+            je 'm via de hamburger ☰ in de chat-header. Klik op een eerder gesprek om verder te
+            gaan, of open het ⋮-menu naast de titel voor <em>Vastpinnen</em>, <em>Hernoemen</em>
+            of <em>Verwijderen</em>. Cross-device: laptop én telefoon zien dezelfde historie.<br />
+            <strong>Limiet:</strong> 20 gewone gesprekken. Bij een 21e wordt de oudste automatisch
+            opgeruimd. <strong>Vastgepinde gesprekken</strong> tellen daar niet voor mee — die
+            blijven altijd staan, ook als je veel chat. Pin dus een gesprek dat je belangrijk
+            vindt (bv. een nog lopende prospect-briefing).
           </li>
         </ul>
       </section>
@@ -305,7 +356,7 @@ function TabNova() {
         <h3>Wat Nova (nog) niet doet</h3>
         <ul>
           <li>Nova verzint geen cases, cijfers of klantnamen — als iets niet in de database staat, zegt ze dat.</li>
-          <li>Nova heeft geen kennis van de buitenwereld: geen nieuws, geen LinkedIn, geen bedrijfssites. Dat staat op de roadmap (prospect-briefing).</li>
+          <li>Nova raadpleegt via Google Search alléén publieke webpagina's voor prospect-briefings. Ze logt niet in op LinkedIn of CRM-systemen en leest geen commerciële of gevoelige data.</li>
           <li>Nova onthoudt niets tussen sessies of apparaten. Memory-laag staat op de roadmap.</li>
           <li>Nova kan wel mailtekst opstellen, maar nog geen slide-decks of mails als bestand opleveren — alleen tekst in de chat.</li>
         </ul>

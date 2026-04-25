@@ -61,6 +61,7 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
 - `src/components/Instructies.jsx` — handleiding met sub-tabs (Algemeen / Nova / Beheer). Nova-tab documenteert de 5 skills + "wat Nova (nog) niet doet" — hoort gelijk op te lopen met elke roadmap-fase.
 - `src/components/Login.jsx` — login-scherm (wachtwoord, magic-link, reset + recovery-flow) dat voor de rest van de app rendert als er geen session is.
+- `src/lib/chatHistory.js` — chat-geschiedenis-laag bovenop Supabase (`chat_sessions`-tabel). Functies: `listSessions` (laatste sessies, sortering pinned-first dan recency, max 30 — pinned + max 20 unpinned), `loadSession(id)`, `createSession(messages)`, `updateSession(id, {messages, title})`, `setSessionPinned(id, pinned)`, `deleteSession(id)`, plus `getActiveSessionId/setActiveSessionId` (sessionStorage-cache van de actieve sessie-id voor refresh-survival). Auto-prune in `createSession` verwijdert oudste **ongepinde** sessies wanneer er meer dan 20 zijn — gepinde sessies tellen niet mee en blijven onbeperkt staan. Title wordt afgeleid van eerste user-bericht (60 chars + ellipsis). RLS in DB scoped op `auth.uid() = user_id`.
 - `src/lib/supabase.js` — Supabase client
 - `src/lib/auth.js` — auth-wrapper rond `supabase.auth`: `useAuthSession()` hook, `signInWithPassword/MagicLink`, `sendPasswordReset`, `updatePassword`, `signOut`, plus `authedFetch` die het access-token als `Authorization: Bearer …` meestuurt naar `/api/*`.
 - `src/lib/store.js` — data-laag bovenop Supabase
@@ -71,11 +72,25 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - `public/case-template.docx` — downloadbaar Word-template voor nieuwe cases
 
 ### Backend (Vercel serverless)
-- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + 3 tools:
-  - `search_cases({doel, behoefte, dienst, keyword})` — filtert cases-tabel
+- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + function calling. Vijf tools:
+  - `search_cases({doel, behoefte, dienst, persona, branche, keyword})` — filtert cases-tabel
   - `get_topic({tab, name})` — haalt talking points/follow-ups uit `app_config.topics`
   - `list_personas()` — haalt persona-coaching uit `app_config.personas`
-  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'done'|'error'}`.
+  - `search_web({query})` — Google Search grounding als custom function-wrapper. Doet intern een aparte Gemini-call met alleen `{ googleSearch: {} }` aan, retourneert `{text, sources, queries}`. **Workaround voor een Gemini-beperking:** `googleSearch` en function declarations mogen NIET in één request (API geeft 400 "Built-in tools and Function Calling cannot be combined"). Door grounding in een tool-wrapper te steken ziet Nova 't als een gewone tool en kan ze 't combineren met de andere tools. Kost wel een extra Gemini-roundtrip per web-lookup. Geen aparte API-key; inclusief met `GEMINI_API_KEY`.
+  - `prospect_brief({company})` — gestructureerde briefing-research. Doet intern 3 parallelle `search_web`-calls (snapshot+strategie / data+AI / team+budget+concurrentie) en levert al het materiaal voor de 7 vaste briefing-buckets. Sources worden automatisch via `search_web` in `webSourcesBuffer` gebufferd, dus 't grounding-event aan 't eind bevat alle 3 cluster-bronnen samen. Bedoeld voor de eerste pass van een briefing; follow-up-vragen op een briefing gebruiken `search_web` direct.
+  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'grounding'|'done'|'error'}`. Module-level buffers (`webSourcesBuffer`, `webQueriesBuffer`) verzamelen bronnen over alle `search_web`-subcalls; worden per-request gereset aan 't begin van de handler en aan 't eind als één `grounding`-event gestuurd met `{sources: [{uri, title}], queries: []}`. ChatPanel rendert 'm als "Bronnen (Google Search)"-blok onder het antwoord; chips in "Gebruikte context" komen vanzelf via `TOOL_LABELS` (`prospect_brief` → Briefing, `search_web` → Web, `search_cases` → Cases). Fallback: als de tool-loop eindigt zonder ooit tekst te streamen wordt een diagnose-melding gestuurd (incl. `finishReason`).
+
+### Briefing-raamwerk (vast 7-bucket format)
+Elke briefing levert deze categorieën in deze volgorde, gestuurd door de systeemprompt:
+1. **Bedrijfssnapshot** — sector/branche, omvang (FTE/omzet), HQ + structuur, kerntaken
+2. **Strategische prioriteiten** — publiek uitgesproken doelen 1–3 jaar
+3. **Data-volwassenheid** — stack + grove Gartner DMM-stage (1=Basic … 5=Transformational)
+4. **AI-initiatieven** — concrete projecten 2024–2025
+5. **Team & sourcing-houding** — CDO/Head of Data, vacatures als proxy, partners-historiek (open/gesloten cultuur)
+6. **Concurrentiepositie** — top concurrenten, druk-indicatoren
+7. **Buying signals & budget-indicatoren** — investeringen/M&A/tenders → ruwe budget-band
+
+Afsluitend (los van de 7): **BANT-samenvatting** (Budget/Authority/Need/Timeline-rijtje), **Sales-fit** (openingshoek), **Gap-flag** (waar Creates-portfolio leeg of zwak is — eerlijk benoemd, geen oversell).
 - `api/chat-feedback.js` — slaat 👍/👎 + context + tool-calls op in `chat_feedback`. Context wordt verrijkt met `user_email` uit de JWT.
 - `api/_lib/auth.js` — `requireUser(req, res)` valideert de `Authorization: Bearer <jwt>`-header via `supabase.auth.getUser(token)`. Zowel `/api/chat` als `/api/chat-feedback` retourneren 401 zonder geldige sessie.
 
@@ -83,7 +98,7 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - **Supabase Auth** (e-mail + wachtwoord + magic-link + password reset). Users worden invite-only aangemaakt via het Supabase dashboard — géén self-service signup.
 - **Client-gate:** `Navigator.jsx` controleert via `useAuthSession()`; zonder session wordt `<Login/>` gerendered. Data-load (`loadAll`) wacht op session om RLS-leegstand te voorkomen.
 - **Server-gate:** alle serverless endpoints valideren de JWT via `requireUser()`.
-- **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan en policies voor `authenticated` role. SQL-script staat in `supabase/auth-rls.sql`. Anon key mag client-side blijven; RLS doet het werk.
+- **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan met `authenticated`-role-policies (SQL: `supabase/auth-rls.sql`). `chat_sessions` heeft user-scoped RLS via `auth.uid() = user_id` voor select/insert/update/delete — een user ziet/schrijft alleen z'n eigen sessies (SQL: `supabase/chat-sessions.sql`). Anon key mag client-side blijven; RLS doet het werk.
 - **Uitlogknop:** rechtsboven in de topbar (logout-icon), toont e-mail in tooltip.
 - **Supabase Auth-config (live):** `Allow new users to sign up` = OFF (invite-only), `Confirm email` = ON, Email provider enabled. Magic Link werkt automatisch via `signInWithOtp` zodra Email provider aan staat — er is géén aparte toggle meer in recente Supabase-versies.
 - **Site URL / Redirect URLs:** staat op de productie Vercel-URL. Voor lokale dev moet `http://localhost:5173/**` in de Redirect URL-lijst; anders falen magic-links en resets stil.
@@ -169,7 +184,7 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 - **Persona-mapping op cases onvolledig** — niet alle cases hebben `mapping.personas` ingevuld. Zodra een gebruiker in de Gids-route een persona in het kompas kiest, filtert de case-grid op die persona; ontbrekende mappings = lege lijst. Content-taak: per case nalopen en persona's koppelen via Beheer → Cases.
 - Geen export-functie (bijv. case als PDF of slide genereren)
 - Training-dienst heeft nog geen referentie-case
-- Chat-geschiedenis is sessionStorage-only — geen cross-device geschiedenis
+- ~~Chat-geschiedenis is sessionStorage-only~~ — vervangen door persistente Supabase-laag (zie Fase 5)
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
 - Optioneel: route-toggle sticky maken (blijft zichtbaar bij scrollen). Vereist zorgvuldige top-offset tegen de sticky topbar — niet urgent.
 - `HeroAssistant.jsx` niet meer gebruikt — kan verwijderd worden, of laten staan als reserve/reference. Mockup in `Downloads/sales-navigator-mockup.html` is nog de oude versie en kan weg (of bijgewerkt worden naar de geïmplementeerde versie als referentie).
@@ -205,20 +220,41 @@ Concrete content-generatie. Haalbaar in 2-3 dagen werk.
 - UI: knop in ChatPanel bij een gegenereerd antwoord of aparte /decks-route.
 - 5-10 slides: titel, klantsituatie, Creates-aanpak, bewijs-case, ROI, next step.
 
-### Fase 4 — Prospect-briefing (web-fetch tool)
-Vierde tool voor Nova: `fetch_url({url})` — haalt HTML op, strips tags, geeft platte tekst.
-- Gebruik: sales plakt LinkedIn-URL of bedrijfssite → Nova maakt 1-pagina briefing.
-- Let op privacy + rate-limits; waarschijnlijk alleen publieke pagina's (geen login-walls).
-- LinkedIn blokkeert scraping; overwegen: LinkedIn API of handmatig-profiel-plakken i.p.v.
-  URL-fetch. Start met generieke URL-fetch voor bedrijfssites.
+### Fase 4 — Prospect-briefing (Google Search via search_web — live)
+Nova heeft een `search_web({query})`-tool die intern Gemini's `googleSearch`-grounding
+aanroept. Gebruik: gebruiker noemt een prospect ("maak een briefing over Bol.com"),
+Nova besluit `search_web` te callen, combineert de uitkomst met `search_cases` op de
+gevonden sector, en levert een briefing met klikbare bronnen.
+- Geen aparte API-key; inclusief met `GEMINI_API_KEY`.
+- **Waarom search_web als wrapper, niet directe googleSearch?** Gemini's REST API
+  weigert `googleSearch` + function declarations in één request (400 "Built-in tools
+  and Function Calling cannot be combined"). Door de grounding in een custom function
+  te verpakken kan Nova 't combineren met haar andere tools. Kost wel een extra
+  Gemini-roundtrip per web-lookup.
+- Bronnen + zoekqueries komen via een `grounding`-SSE-event (één keer aan 't eind),
+  verzameld uit alle `search_web`-subcalls. ChatPanel rendert ze als `.chat-sources`
+  blok; **Web**-chip komt automatisch via `TOOL_LABELS.search_web`.
+- **Privacy-regel die erin is geschoven:** alleen publiek web. Geen login-walls, geen
+  LinkedIn-scrapes, geen CRM-data. Systeemprompt bevat deze expliciet.
+- Niet verder uitgewerkt (backlog): een aparte `fetch_url({url})`-tool voor wanneer sales
+  een specifieke URL wil laten samenvatten. KvK-lookup ligt geparkeerd op branch
+  `nova-kvk-lookup` (wacht op API-key beslissing; usage-based betaald).
 
-### Fase 5 — Memory-laag + cross-device chat
-Huidige chat-geschiedenis is sessionStorage-only. Voor echte "Nova onthoudt" hebben we
-een persistence-laag nodig:
-- Nieuwe Supabase-tabel `chat_sessions` (user_id, title, messages[], created_at).
-- Client-side: lijst-view van eerdere sessies, resume-knop.
-- Optioneel later: `client_interactions`-tabel voor klant-specifieke memory
-  (wat besproken in vorige meeting met contact X).
+### Fase 5 — Memory-laag + cross-device chat (deels live)
+**Live (basis chat-geschiedenis):** Supabase-tabel `chat_sessions` (zie `supabase/chat-sessions.sql`)
+met user-scoped RLS. Client-laag in `src/lib/chatHistory.js`. ChatPanel header heeft een
+kebab-menu (⋮) met "Nieuw gesprek" + laatste 10 sessies + "Wissen huidig". Auto-save
+debounced 700ms na elke message-mutation; eerste user-bericht maakt de sessie aan,
+daarna updates. Title afgeleid uit eerste user-bericht (60 chars). Bij overschrijden van
+10 sessies: oudste auto-delete in `pruneOldSessions`. Active session-id in
+sessionStorage zodat refresh mid-conversatie de plek niet kwijtraakt. RLS scope:
+`auth.uid() = user_id` voor alle CRUD-acties.
+
+**Backlog (memory-uitbreiding):**
+- Pinnen/archiveren van sessies (nu: harde 10-limit met FIFO-delete)
+- Title editen (nu: alleen auto-derived)
+- `client_interactions`-tabel voor klant-specifieke memory (wat besproken in vorige meeting)
+- Realtime sync tussen tabs van dezelfde user
 
 ### Mapping: roadmap-fases ↔ sales-journey-fases
 Handig om in de gaten te houden welke fase van het klantgesprek we wanneer bedienen.
@@ -286,3 +322,4 @@ De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-
   - `html, body { max-width: 100%; overflow-x: clip; }` (hidden fallback) — horizontaal uit de viewport pannen kan niet meer. `clip` i.p.v. `hidden` zodat `position: sticky` (topbar-subnav, case-editor-bar) blijft werken.
 - **Instructies bijgewerkt:** persona-kompas start ingeklapt, zoek is altijd collapsed icon (typen switcht naar Navigator), case-overview default-state zonder heading, backup zit in inklapbaar blok, nieuwe sectie introduceert de Beheer sub-tabs, Lucide icon-picker uitgelegd bij Persona's.
 - **Volgende werk:** Fase 2 — follow-up mail + gespreksnotes→actielijst als Nova-skills. Geen tool-wijzigingen nodig, wel quick-prompt + Nova-tab update. Content-kant: persona-mapping op cases aanvullen (zie backlog) — anders filtert persona-selectie naar een lege lijst voor niet-gemapte cases.
+- **Nova Fase 4 — Google Search via search_web (branch `nova-google-search`):** `api/chat.js` heeft een 4e function-declaration `search_web({query})`. Die tool doet intern een aparte Gemini-call (`gemini-2.5-flash`, `tools: [{ googleSearch: {} }]`) en retourneert `{text, sources, queries}`. Dit is een workaround: Gemini's REST API geeft 400 "Built-in tools and Function Calling cannot be combined" als je `googleSearch` en functionDeclarations in dezelfde request zet. Door 't als wrapper te doen kan Nova 't gewoon naast haar andere tools gebruiken. Module-level buffers (`webSourcesBuffer`, `webQueriesBuffer`) verzamelen bronnen over alle `search_web`-subcalls, worden per-request gereset en als één `grounding`-SSE-event gestuurd vóór `done`. ChatPanel's handler zet `groundingSources`/`groundingQueries` op het message-object; Web-chip komt automatisch via `TOOL_LABELS.search_web` omdat `search_web` in het reguliere `tool`-event zit. `.chat-sources` CSS-blok rendert "Bronnen (Google Search)" met genummerde klikbare links. Systeemprompt heeft Prospect-briefing als 8e skill (verwijst nu naar `search_web`). Quick-prompt "Briefing over bedrijf" in "Voor het gesprek"-groep. Instructies Nova-tab bijgewerkt. Geen aparte env var. **Eerste versie had directe `{ googleSearch: {} }` naast tools — werkte niet door bovenstaande API-beperking; workaround gecommit op 24-04-2026.** KvK-alternatief geparkeerd op `nova-kvk-lookup`.
