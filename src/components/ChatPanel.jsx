@@ -64,18 +64,20 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     .replace(/[^a-z0-9]/g, '');
 
   // Pre-process markdown content: alle [n]-citaties (kaal of met URL erachter)
-  // omzetten naar interne markdown-link [n](§n) zodat de a-component override ze
-  // als citation-marker rendert. Dit dekt ook het geval dat Nova/Gemini een
-  // markdown-link mét random URL produceert (`[5](https://broken-redirect)`):
-  // we strippen de URL en houden het nummer, gekoppeld aan onze §-handler.
+  // omzetten naar interne markdown-link [n](#cite-n) zodat de a-component
+  // override ze als citation-marker rendert. Dekt ook het geval dat Nova/Gemini
+  // een markdown-link mét random URL produceert (`[5](https://broken-redirect)`):
+  // we strippen de URL en houden het nummer, gekoppeld aan onze cite-handler.
+  // Anchor-href (#) is veilig — ReactMarkdown's URL-sanitizer laat 'm intact
+  // (eerdere poging met §-teken werd URL-encoded naar %C2%A7).
   const processCitations = (text) => {
     if (!text || typeof text !== 'string') return text;
     return text
-      // Eerst: [n](anything) → [n](§n). Vangt zowel onze eigen §n-vorm
+      // Eerst: [n](anything) → [n](#cite-n). Vangt zowel onze eigen vorm
       // (idempotent) als foute Gemini-redirect-URLs af.
-      .replace(/\[(\d+)\]\([^)]*\)/g, '[$1](§$1)')
-      // Daarna: kale [n] zonder parens → [n](§n).
-      .replace(/\[(\d+)\](?!\()/g, '[$1](§$1)');
+      .replace(/\[(\d+)\]\([^)]*\)/g, '[$1](#cite-$1)')
+      // Daarna: kale [n] zonder parens → [n](#cite-n).
+      .replace(/\[(\d+)\](?!\()/g, '[$1](#cite-$1)');
   };
 
   // Maak markdownComponents voor één specifiek bericht (per message-idx),
@@ -114,10 +116,10 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
       }
       return <strong>{children}</strong>;
     },
-    // <a> override: §N-href = citatie-marker (superscript), normaal href = gewone link.
+    // <a> override: #cite-N-href = citatie-marker (superscript), andere href = gewone link.
     a: ({ href, children }) => {
-      if (typeof href === 'string' && href.startsWith('§')) {
-        const n = parseInt(href.slice(1), 10);
+      if (typeof href === 'string' && href.startsWith('#cite-')) {
+        const n = parseInt(href.slice(6), 10);
         // Alleen renderen als n binnen het aantal beschikbare bronnen valt —
         // anders plain text zodat een onjuist nummer geen dood knopje wordt.
         if (Number.isFinite(n) && n >= 1 && n <= sourceCount) {
