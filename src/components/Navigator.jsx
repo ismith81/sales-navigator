@@ -4,6 +4,7 @@ import { loadAll, saveCases, saveConfig } from '../lib/store';
 import { useAuthSession, signOut, signInWithPassword } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import FilterBar from './FilterBar';
+import TeamGrid from './TeamGrid';
 import TopicView from './TopicView';
 import CaseManager from './CaseManager';
 import Instructies from './Instructies';
@@ -662,6 +663,11 @@ export default function Navigator() {
                   activePersona={activePersona ? personas[activePersona] : null}
                 />
               )}
+
+              {/* Beschikbare collega's-strip — Gids als startpagina:
+                  laat in één oogopslag zien welk team klaarstaat. Verbergt
+                  zichzelf als geen team-leden gemarkeerd zijn als beschikbaar. */}
+              <TeamGrid />
 
               <CasesOverview
                 cases={cases}
