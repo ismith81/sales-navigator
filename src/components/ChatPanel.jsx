@@ -63,12 +63,19 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '');
 
-  // Pre-process markdown content: zet kale [n]-citaties om naar markdown-links
-  // [n](§n) zodat ReactMarkdown ze rendert als <a>-elementen die we onderscheppen.
-  // Match ALLEEN [n] die niet door een ( wordt gevolgd (geen bestaande markdown-link).
+  // Pre-process markdown content: alle [n]-citaties (kaal of met URL erachter)
+  // omzetten naar interne markdown-link [n](§n) zodat de a-component override ze
+  // als citation-marker rendert. Dit dekt ook het geval dat Nova/Gemini een
+  // markdown-link mét random URL produceert (`[5](https://broken-redirect)`):
+  // we strippen de URL en houden het nummer, gekoppeld aan onze §-handler.
   const processCitations = (text) => {
     if (!text || typeof text !== 'string') return text;
-    return text.replace(/\[(\d+)\](?!\()/g, '[$1](§$1)');
+    return text
+      // Eerst: [n](anything) → [n](§n). Vangt zowel onze eigen §n-vorm
+      // (idempotent) als foute Gemini-redirect-URLs af.
+      .replace(/\[(\d+)\]\([^)]*\)/g, '[$1](§$1)')
+      // Daarna: kale [n] zonder parens → [n](§n).
+      .replace(/\[(\d+)\](?!\()/g, '[$1](§$1)');
   };
 
   // Maak markdownComponents voor één specifiek bericht (per message-idx),
