@@ -310,7 +310,19 @@ async function toolSearchWeb({ query }) {
   });
   const result = await grounded.generateContent(query);
   const resp = result.response;
-  const text = resp.text?.() || '';
+  const rawText = resp.text?.() || '';
+  // Gemini's grounding embed standaard markdown-link-style citaties in de
+  // response-tekst, bv. "Bol.com migreerde naar BigQuery [58666970](redirect-url)..."
+  // Die redirect-URLs werken niet stabiel (404 vaak), de getallen zijn Gemini's
+  // eigen chunk-id's (geen 1-based nummering die wij bijhouden), en als we deze
+  // tekst onbewerkt aan Nova doorgeven kopieert ze de broken-links 1-op-1 in
+  // haar antwoord. Strip ze: vervang [label](url) door enkel label, en verwijder
+  // kale [3] / [3, 5] refs ook omdat die Gemini's nummering gebruiken.
+  // Nova krijgt schone tekst + een aparte sources-array met onze [n]-nummering
+  // en kan dan zélf [n]-markers plaatsen volgens de regels in de systeemprompt.
+  const text = rawText
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')      // [label](url) → label
+    .replace(/\s*\[\d+(?:,\s*\d+)*\]/g, '');         // bare [3] / [3, 5] eruit
   const gm = resp.candidates?.[0]?.groundingMetadata;
   const sources = [];
   for (const gc of gm?.groundingChunks || []) {

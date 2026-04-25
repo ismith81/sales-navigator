@@ -72,8 +72,10 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   };
 
   // Maak markdownComponents voor één specifiek bericht (per message-idx),
-  // zodat citation-clicks weten bij welk bericht ze horen.
-  const makeMarkdownComponents = (messageIdx) => ({
+  // zodat citation-clicks weten bij welk bericht ze horen. sourceCount =
+  // hoogste geldige bron-nummer voor dit bericht; nummers buiten range
+  // worden als plain-text gerenderd ipv broken citation-knopje.
+  const makeMarkdownComponents = (messageIdx, sourceCount = 0) => ({
     // <strong> → klikbare case-link als naam matched (bestaand gedrag).
     strong: ({ children }) => {
       const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
@@ -101,7 +103,9 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     a: ({ href, children }) => {
       if (typeof href === 'string' && href.startsWith('§')) {
         const n = parseInt(href.slice(1), 10);
-        if (Number.isFinite(n)) {
+        // Alleen renderen als n binnen het aantal beschikbare bronnen valt —
+        // anders plain text zodat een onjuist nummer geen dood knopje wordt.
+        if (Number.isFinite(n) && n >= 1 && n <= sourceCount) {
           return (
             <sup className="chat-citation">
               <button
@@ -114,6 +118,8 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
             </sup>
           );
         }
+        // Out-of-range: plain text zonder superscript (gewoon "[5]" terug-renderen).
+        return <span>[{n}]</span>;
       }
       return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
     },
@@ -654,7 +660,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                 <div className="chat-msg-bubble">
                   {hasContent ? (
                     isAssistant
-                      ? <ReactMarkdown components={makeMarkdownComponents(i)}>{processCitations(m.content)}</ReactMarkdown>
+                      ? <ReactMarkdown components={makeMarkdownComponents(i, (m.groundingSources || []).length)}>{processCitations(m.content)}</ReactMarkdown>
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>
