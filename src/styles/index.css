@@ -1115,7 +1115,16 @@ body::before {
 @media (max-width: 640px) {
   .view-toggle { gap: 1.25rem; }
   .view-toggle-btn { font-size: 1.05rem; }
-  .view-subnav { gap: 0.6rem; overflow-x: auto; }
+  /* Subnav overflow-x scrolt nog steeds (swipe blijft werken) maar de
+     scrollbar zelf wordt verborgen — 4+ items op een smal scherm gaven
+     anders een lichte grijze balk dwars door de navy-strook. */
+  .view-subnav {
+    gap: 0.6rem;
+    overflow-x: auto;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/oude Edge */
+  }
+  .view-subnav::-webkit-scrollbar { display: none; } /* Chrome/Safari */
   .view-subnav-btn {
     font-size: 0.9rem;
     padding: 0.35rem 0.8rem;
