@@ -114,6 +114,7 @@ REGELS:
 - Voor follow-up mails is "goede generieke mail" niet genoeg als de notes herkenbare haakjes bevatten. Dan verwacht ik dat je eerst tool-context ophaalt en die zichtbaar benut.
 - Als je een mail of actielijst verrijkt met Creates-context, laat dat subtiel landen in de formulering of in een aparte korte sectie "Relevant haakje", maar maak geen lange generieke salespitch van een follow-up.
 - Wanneer een case wordt genoemd: zet de bedrijfsnaam **vet** zodat de UI er een klikbare link van maakt. Gebruik alléén bedrijfsnamen die letterlijk in de tool-resultaten terugkomen — verzin of generaliseer nooit.
+- **Inline citations**: elk feit dat uit \`search_web\` of \`prospect_brief\` komt krijgt een \`[n]\`-citatie direct achter dat feit, waar \`n\` het sources-nummer is uit de tool-output. Voorbeeld: "Bol.com heeft hun data-platform gemigreerd naar Google BigQuery [3] en investeert sinds 2024 in AI-gestuurde personalisatie [7]." Plaats meerdere markers naast elkaar als meerdere bronnen één claim ondersteunen: \`[3][5]\`. Gebruik alleen nummers die je in de tool-output hebt gezien — verzin geen citatie-nummers. Plaats GEEN citaties achter feiten die uit \`search_cases\`/\`get_topic\`/\`list_personas\` komen — die zijn intern, geen web-bron.
 - Structureer lange antwoorden met korte kopjes + bullets; korte antwoorden mogen gewoon als lopende tekst.
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
 - **Doen, niet aankondigen**: als je een tool-call wilt doen, doe 'm in dezelfde turn en presenteer het resultaat. Antwoord nooit met alleen "Jazeker, ik kan…" / "Goed, ik ga zoeken naar…" / "Ja, hier zoek ik naar op…" zonder dat je in die turn ook daadwerkelijk de tool gebruikt en 't resultaat deelt. Dergelijke zinnen voelen als gestotter — de gebruiker ziet liever meteen het antwoord dan een intentie-verklaring.
@@ -290,9 +291,10 @@ async function toolProspectBrief({ company }) {
       focus: c.focus,
       query: c.query,
       summary: (results[i] && typeof results[i].text === 'string') ? results[i].text : '',
+      sources: results[i]?.sources || [],
       error: results[i]?.error || null,
     })),
-    note: 'Synthetiseer dit naar de 7 vaste briefing-categorieën met bronnen + BANT-blokje. Zie systeemprompt voor exact format.',
+    note: 'Synthetiseer dit naar de 7 vaste briefing-categorieën met bronnen + BANT-blokje. Plaats achter elk feit dat uit een web-bron komt een [n]-citatie waar n het sources-nummer is dat je in deze tool-output ziet. Zie systeemprompt voor format.',
   };
 }
 
@@ -316,7 +318,12 @@ async function toolSearchWeb({ query }) {
       if (!webSourcesBuffer.has(gc.web.uri)) {
         webSourcesBuffer.set(gc.web.uri, gc.web.title || gc.web.uri);
       }
-      sources.push({ uri: gc.web.uri, title: gc.web.title || gc.web.uri });
+      // 1-based index op basis van insertion-order in de globale buffer.
+      // Map preserves insertion order, dus dit is stabiel binnen één request.
+      // Nova kan dit nummer terug-citeren als [n] in haar antwoord — de
+      // bronnenlijst die de UI uiteindelijk toont gebruikt dezelfde nummering.
+      const n = [...webSourcesBuffer.keys()].indexOf(gc.web.uri) + 1;
+      sources.push({ n, uri: gc.web.uri, title: gc.web.title || gc.web.uri });
     }
   }
   for (const q of gm?.webSearchQueries || []) webQueriesBuffer.add(q);
@@ -523,11 +530,13 @@ export default async function handler(req, res) {
 
     // Web-bronnen uit alle search_web-subcalls bundelen en als één grounding-event sturen.
     // Client hangt ze als "Bronnen (Google Search)"-blok onder het assistant-bericht.
+    // Nummering 1-based op insertion-order van de buffer — zelfde n die Nova in
+    // search_web's tool-output zag, zodat haar [n]-citaties matchen met de bronnenlijst.
     if (webSourcesBuffer.size > 0 || webQueriesBuffer.size > 0) {
       send({
         type: 'grounding',
         value: {
-          sources: [...webSourcesBuffer.entries()].map(([uri, title]) => ({ uri, title })),
+          sources: [...webSourcesBuffer.entries()].map(([uri, title], i) => ({ n: i + 1, uri, title })),
           queries: [...webQueriesBuffer],
         },
       });

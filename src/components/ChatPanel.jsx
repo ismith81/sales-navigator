@@ -63,9 +63,18 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '');
 
-  // Markdown-component override: vervangt <strong> inhoud door een klikbare link
-  // als de tekst (fuzzy) overeenkomt met een case-naam. Niet-case-bold blijft gewoon bold.
-  const markdownComponents = React.useMemo(() => ({
+  // Pre-process markdown content: zet kale [n]-citaties om naar markdown-links
+  // [n](§n) zodat ReactMarkdown ze rendert als <a>-elementen die we onderscheppen.
+  // Match ALLEEN [n] die niet door een ( wordt gevolgd (geen bestaande markdown-link).
+  const processCitations = (text) => {
+    if (!text || typeof text !== 'string') return text;
+    return text.replace(/\[(\d+)\](?!\()/g, '[$1](§$1)');
+  };
+
+  // Maak markdownComponents voor één specifiek bericht (per message-idx),
+  // zodat citation-clicks weten bij welk bericht ze horen.
+  const makeMarkdownComponents = (messageIdx) => ({
+    // <strong> → klikbare case-link als naam matched (bestaand gedrag).
     strong: ({ children }) => {
       const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
       const textNorm = normalize(text);
@@ -88,7 +97,27 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
       }
       return <strong>{children}</strong>;
     },
-  }), [caseNames, onNavigateToCase]);
+    // <a> override: §N-href = citatie-marker (superscript), normaal href = gewone link.
+    a: ({ href, children }) => {
+      if (typeof href === 'string' && href.startsWith('§')) {
+        const n = parseInt(href.slice(1), 10);
+        if (Number.isFinite(n)) {
+          return (
+            <sup className="chat-citation">
+              <button
+                type="button"
+                className="chat-citation-btn"
+                onClick={() => handleCitationClick(messageIdx, n)}
+                title={`Bron ${n}`}
+                aria-label={`Bron ${n}`}
+              >{n}</button>
+            </sup>
+          );
+        }
+      }
+      return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+    },
+  });
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -106,6 +135,38 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const titleInputRef = useRef(null);
+  // Per-bericht: bronnen-blok ingeklapt of uitgeklapt (default ingeklapt als chip).
+  const [expandedSources, setExpandedSources] = useState(() => new Set());
+  // Tijdelijke highlight op een bron na klik op een [n]-citatie.
+  const [highlightedSource, setHighlightedSource] = useState(null); // {messageIdx, n}
+
+  // Toggle voor het bronnen-blok: ingeklapt-chip ↔ uitgeklapte lijst.
+  const toggleSourcesExpanded = (idx) => {
+    setExpandedSources(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
+
+  // Klik op een [n]-citatie: bronnen-blok uitklappen + scrollen naar bron + flash.
+  const handleCitationClick = (messageIdx, n) => {
+    setExpandedSources(prev => {
+      const next = new Set(prev);
+      next.add(messageIdx);
+      return next;
+    });
+    setHighlightedSource({ messageIdx, n });
+    // Scroll na render-tick zodat 't blok eerst uitklapt.
+    setTimeout(() => {
+      const el = document.getElementById(`chat-source-${messageIdx}-${n}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 0);
+    // Highlight wegfaden na ~2s.
+    setTimeout(() => {
+      setHighlightedSource(prev => (prev && prev.messageIdx === messageIdx && prev.n === n) ? null : prev);
+    }, 2000);
+  };
   const empty = messages.length === 0;
   const activeSession = sessions.find(s => s.id === sessionId) || null;
   const activeTitle = activeSession?.title || '';
@@ -593,7 +654,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                 <div className="chat-msg-bubble">
                   {hasContent ? (
                     isAssistant
-                      ? <ReactMarkdown components={markdownComponents}>{m.content}</ReactMarkdown>
+                      ? <ReactMarkdown components={makeMarkdownComponents(i)}>{processCitations(m.content)}</ReactMarkdown>
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>
@@ -606,18 +667,52 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                   </div>
                 )}
                 {isAssistant && m.groundingSources && m.groundingSources.length > 0 && (
-                  <div className="chat-sources">
-                    <span className="chat-sources-label">Bronnen (Google Search)</span>
-                    <ol className="chat-sources-list">
-                      {m.groundingSources.map((s, idx) => (
-                        <li key={`${s.uri}-${idx}`}>
-                          <a href={s.uri} target="_blank" rel="noopener noreferrer" title={s.uri}>
-                            {s.title || s.uri}
-                          </a>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  expandedSources.has(i) ? (
+                    <div className="chat-sources chat-sources--expanded">
+                      <button
+                        type="button"
+                        className="chat-sources-toggle"
+                        onClick={() => toggleSourcesExpanded(i)}
+                        aria-expanded="true"
+                      >
+                        <span className="chat-sources-label">Bronnen (Google Search) — {m.groundingSources.length}</span>
+                        <span className="chat-sources-chevron" aria-hidden="true">▴</span>
+                      </button>
+                      <ol className="chat-sources-list">
+                        {m.groundingSources.map((s, idx) => {
+                          const n = s.n || (idx + 1);
+                          const isHighlighted = highlightedSource && highlightedSource.messageIdx === i && highlightedSource.n === n;
+                          return (
+                            <li
+                              key={`${s.uri}-${idx}`}
+                              id={`chat-source-${i}-${n}`}
+                              className={isHighlighted ? 'is-highlighted' : ''}
+                            >
+                              <span className="chat-sources-num">{n}</span>
+                              <a href={s.uri} target="_blank" rel="noopener noreferrer" title={s.uri}>
+                                {s.title || s.uri}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="chat-sources-chip"
+                      onClick={() => toggleSourcesExpanded(i)}
+                      aria-expanded="false"
+                      title="Toon bronnen"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                      <span>{m.groundingSources.length} bronnen</span>
+                      <span className="chat-sources-chevron" aria-hidden="true">▾</span>
+                    </button>
+                  )
                 )}
                 {showFeedback && (
                   <div className="chat-feedback">

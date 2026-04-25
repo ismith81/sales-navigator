@@ -3736,13 +3736,58 @@ body::before {
   font-size: 0.72rem;
   font-weight: 700;
 }
-/* Google Search bronnen onder een assistant-bericht. */
+/* Google Search bronnen onder een assistant-bericht. Default: ingeklapte chip
+   "🔗 N bronnen ▾"; klik klapt 'm uit naar een genummerde lijst die met de
+   [n]-citaties in het antwoord matcht. */
+.chat-sources-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid rgba(49,183,185,0.28);
+  background: rgba(49,183,185,0.06);
+  border-radius: 999px;
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.chat-sources-chip:hover {
+  background: rgba(49,183,185,0.12);
+  border-color: rgba(49,183,185,0.4);
+}
+.chat-sources-chevron {
+  font-size: 0.7em;
+  margin-left: 0.05rem;
+}
 .chat-sources {
   margin-top: 0.45rem;
   padding: 0.55rem 0.75rem;
   border-left: 2px solid rgba(49,183,185,0.28);
   background: rgba(49,183,185,0.04);
   border-radius: 0 6px 6px 0;
+}
+.chat-sources--expanded { animation: chat-sources-fade-in 0.15s ease; }
+@keyframes chat-sources-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.chat-sources-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
 }
 .chat-sources-label {
   display: block;
@@ -3751,21 +3796,70 @@ body::before {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
 }
+.chat-sources-toggle .chat-sources-chevron { color: var(--muted); }
+.chat-sources-toggle:hover .chat-sources-label { color: var(--navy); }
+.chat-sources-toggle:hover .chat-sources-chevron { color: var(--navy); }
 .chat-sources-list {
   margin: 0;
-  padding-left: 1.3rem;
+  padding: 0;
+  list-style: none;
   font-size: 0.82rem;
   line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
-.chat-sources-list li { margin: 0.12rem 0; }
+.chat-sources-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.18rem 0.35rem;
+  border-radius: 4px;
+  transition: background 0.5s ease;
+}
+.chat-sources-list li.is-highlighted {
+  background: rgba(49,183,185,0.18);
+  transition: background 0.1s ease;
+}
+.chat-sources-num {
+  flex: 0 0 auto;
+  min-width: 1.4rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
 .chat-sources-list a {
   color: var(--teal);
   text-decoration: none;
   word-break: break-word;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .chat-sources-list a:hover { text-decoration: underline; }
+
+/* Inline [n]-citatie als superscript-knopje. Klik = bronnen-blok openen +
+   scrollen naar bron + flash-highlight. */
+.chat-citation {
+  font-size: 0.72em;
+  line-height: 0;
+  margin-left: 1px;
+}
+.chat-citation-btn {
+  border: none;
+  background: rgba(49,183,185,0.12);
+  color: var(--teal-dim, var(--teal));
+  padding: 0 4px;
+  border-radius: 3px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.chat-citation-btn:hover {
+  background: rgba(49,183,185,0.24);
+}
 /* Case-naam als klikbare link — hergebruikt <strong> styling maar als knop. */
 .chat-case-link {
   background: transparent;
