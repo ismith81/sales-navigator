@@ -557,7 +557,6 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
           {messages.length === 0 && (
             <div className="chat-welcome">
               <div className="chat-welcome-intro">
-                <span className="chat-welcome-dot" aria-hidden="true" />
                 <p>
                   <span className="chat-welcome-copy-desktop">Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</span>
                   <span className="chat-welcome-copy-mobile">Hoi, ik ben <strong>Nova</strong>. Ik help je vóór én na klantgesprekken met jullie cases, topics en persona’s.</span>

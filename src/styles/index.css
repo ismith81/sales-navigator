@@ -3568,6 +3568,12 @@ body::before {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--teal);
   box-shadow: 0 0 0 3px rgba(49,183,185,0.25);
+  animation: chat-dot-pulse 2.2s ease-out infinite;
+}
+@keyframes chat-dot-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(49,183,185,0.32); }
+  65% { box-shadow: 0 0 0 8px rgba(49,183,185,0); }
+  100% { box-shadow: 0 0 0 0 rgba(49,183,185,0); }
 }
 .chat-header-actions { display: inline-flex; gap: 0.4rem; }
 .chat-header-btn {
@@ -3607,16 +3613,6 @@ body::before {
   gap: 0.65rem;
   margin: 0 0 0.45rem;
 }
-.chat-welcome-dot {
-  width: 9px;
-  height: 9px;
-  margin-top: 0.38rem;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 0 3px rgba(49,183,185,0.22);
-  flex-shrink: 0;
-  animation: chat-welcome-pulse 2.2s ease-out infinite;
-}
 .chat-welcome p {
   margin: 0;
   font-size: 0.94rem;
@@ -3628,11 +3624,6 @@ body::before {
   margin: 0 0 0.85rem;
   font-size: 0.8rem;
   color: var(--text-light);
-}
-@keyframes chat-welcome-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(49,183,185,0.3); }
-  65% { box-shadow: 0 0 0 8px rgba(49,183,185,0); }
-  100% { box-shadow: 0 0 0 0 rgba(49,183,185,0); }
 }
 .chat-quickgroups {
   display: grid;
