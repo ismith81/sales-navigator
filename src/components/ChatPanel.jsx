@@ -77,13 +77,21 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   // worden als plain-text gerenderd ipv broken citation-knopje.
   const makeMarkdownComponents = (messageIdx, sourceCount = 0) => ({
     // <strong> → klikbare case-link als naam matched (bestaand gedrag).
+    // Skip korte bold-strings (<3 chars) — die kunnen single-letter
+    // BANT-rubrieken zijn (**B**, **A**, **N**, **T**) of andere afkortingen.
+    // Met fuzzy-matching slaat een 1-letter bold te snel aan op een case-naam
+    // die toevallig die letter bevat (substring-match).
     strong: ({ children }) => {
       const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
       const textNorm = normalize(text);
-      const matched = textNorm && caseNames.find(n => {
+      const matched = textNorm.length >= 3 && caseNames.find(n => {
         const nNorm = normalize(n);
-        if (!nNorm) return false;
-        return nNorm === textNorm || textNorm.startsWith(nNorm) || nNorm.startsWith(textNorm) || nNorm.includes(textNorm) || textNorm.includes(nNorm);
+        if (!nNorm || nNorm.length < 3) return false;
+        return nNorm === textNorm
+          || nNorm.startsWith(textNorm)   // "Tulp" ↔ "Tulp Group"
+          || textNorm.startsWith(nNorm)   // "AkzoNobel-Latam" ↔ "AkzoNobel"
+          || (textNorm.length >= 5 && nNorm.includes(textNorm))
+          || (nNorm.length >= 5 && textNorm.includes(nNorm));
       });
       if (matched && onNavigateToCase) {
         return (
