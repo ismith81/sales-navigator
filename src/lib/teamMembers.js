@@ -30,13 +30,72 @@ export async function listBranches() {
 export async function listTeamMembers() {
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, current_client, available_for_sales, cv_pdf_path, updated_at')
+    .select('id, name, role, seniority, kernskills, technologies, sectors, current_client, available_from, available_for_sales, cv_pdf_path, updated_at')
     .order('name', { ascending: true });
   if (error) {
     console.warn('listTeamMembers fout:', error.message);
     return [];
   }
   return data || [];
+}
+
+// ─── beschikbaarheids-bucket-logica ─────────────────────────────────────
+// Bepaalt in welke bucket een team-lid valt voor de Gids-strip én Beheer-
+// badges. Gedeelde logica zodat overal hetzelfde label/groepering komt.
+//
+// Buckets:
+//   { bucket: 'now',     label: 'Nu beschikbaar',                  sortKey: 0 }
+//   { bucket: 'month-…', label: 'Vrij in [maand jaar]',            sortKey: 1..6 }
+//   { bucket: 'later',   label: 'Later (> 6 maanden)',             sortKey: 9000 }
+//   { bucket: 'unknown', label: 'Bezet — einddatum onbekend',      sortKey: 9999 }
+const MONTH_NL = ['januari', 'februari', 'maart', 'april', 'mei', 'juni',
+  'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+export function getAvailabilityBucket(member = {}) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const hasClient = !!(member.current_client && member.current_client.trim());
+  const fromStr = member.available_from;
+  const from = fromStr ? new Date(fromStr) : null;
+  if (from && !isNaN(from)) from.setHours(0, 0, 0, 0);
+
+  // Geen klant → automatisch "Nu beschikbaar" (ongeacht datum).
+  if (!hasClient) {
+    return { bucket: 'now', label: 'Nu beschikbaar', sortKey: 0 };
+  }
+  // Klant + datum verleden/vandaag → ook "Nu beschikbaar" (rolloff voorbij).
+  if (from && from <= today) {
+    return { bucket: 'now', label: 'Nu beschikbaar', sortKey: 0 };
+  }
+  // Klant + geen datum → "Bezet onbekend".
+  if (!from) {
+    return { bucket: 'unknown', label: 'Bezet — einddatum onbekend', sortKey: 9999 };
+  }
+  // Klant + future → bucket op kalendermaand.
+  const monthsAhead = (from.getFullYear() - today.getFullYear()) * 12
+    + (from.getMonth() - today.getMonth());
+  if (monthsAhead > 6) {
+    return { bucket: 'later', label: 'Later (> 6 maanden)', sortKey: 9000 };
+  }
+  return {
+    bucket: `month-${from.getFullYear()}-${from.getMonth()}`,
+    label: `Vrij in ${MONTH_NL[from.getMonth()]} ${from.getFullYear()}`,
+    sortKey: monthsAhead,
+  };
+}
+
+// Groepeer een lijst van team-leden in beschikbaarheids-buckets,
+// gesorteerd op tijds-volgorde. Lege buckets worden niet teruggegeven.
+export function groupTeamByAvailability(members = []) {
+  const buckets = new Map(); // bucket-key → { label, sortKey, items: [] }
+  for (const m of members) {
+    const b = getAvailabilityBucket(m);
+    if (!buckets.has(b.bucket)) {
+      buckets.set(b.bucket, { label: b.label, sortKey: b.sortKey, items: [] });
+    }
+    buckets.get(b.bucket).items.push(m);
+  }
+  return [...buckets.values()].sort((a, b) => a.sortKey - b.sortKey);
 }
 
 export async function getTeamMember(id) {

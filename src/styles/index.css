@@ -2581,12 +2581,27 @@ body::before {
 .team-badge {
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0;
 }
-.team-badge--off {
+.team-badge--now {
+  background: rgba(43,179,108,0.1);
+  color: #1f8c52;
+  border: 1px solid rgba(43,179,108,0.25);
+}
+.team-badge--soon {
+  background: rgba(240,163,58,0.12);
+  color: #b6750e;
+  border: 1px solid rgba(240,163,58,0.3);
+}
+.team-badge--far {
+  background: rgba(176,183,192,0.18);
+  color: var(--muted);
+  border: 1px solid rgba(176,183,192,0.4);
+}
+.team-badge--off { /* legacy — kan weg in latere refactor */
   background: rgba(237,23,75,0.08);
   color: var(--accent, #ED174B);
 }
@@ -2810,7 +2825,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.5rem;
 }
 .team-grid-title {
   margin: 0;
@@ -2830,6 +2845,48 @@ body::before {
   color: var(--teal-dim, var(--teal));
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+/* ─── Bucket-secties (Nu / Vrij in mei / … / Later / Bezet onbekend) ── */
+.team-grid-bucket {
+  margin-top: 0.85rem;
+}
+.team-grid-bucket-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  padding: 0.1rem 0.1rem 0.35rem;
+  border-bottom: 1px dashed var(--border);
+}
+.team-grid-bucket-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+}
+.team-grid-bucket--now .team-grid-bucket-dot {
+  background: #2BB36C; /* groen — direct */
+  box-shadow: 0 0 0 3px rgba(43,179,108,0.18);
+}
+.team-grid-bucket--soon .team-grid-bucket-dot {
+  background: #F0A33A; /* oranje — komende maanden */
+}
+.team-grid-bucket--far .team-grid-bucket-dot {
+  background: #B0B7C0; /* grijs — later / onbekend */
+}
+.team-grid-bucket-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.team-grid-bucket-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 .team-grid-row {
   display: flex;

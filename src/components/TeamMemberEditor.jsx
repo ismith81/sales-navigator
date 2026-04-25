@@ -46,8 +46,11 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
   const [sectors, setSectors] = useState([]);
   const [certifications, setCertifications] = useState('');
   const [summary, setSummary] = useState('');
-  const [available, setAvailable] = useState(true);
+  // available_for_sales (boolean) is uit de UI verdwenen — beschikbaarheid wordt
+  // afgeleid uit (current_client, available_from). De boolean blijft in de DB
+  // staan voor backwards compat maar we touchen 'm niet meer.
   const [currentClient, setCurrentClient] = useState('');
+  const [availableFrom, setAvailableFrom] = useState(''); // YYYY-MM-DD of leeg
   const [projectExperience, setProjectExperience] = useState([]); // [{name, role, description}]
 
   // CV-PDF: bestaand path uit DB + signed URL voor preview, of pending File
@@ -129,8 +132,8 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
       setSectors(Array.isArray(m.sectors) ? m.sectors : []);
       setCertifications(arrToText(m.certifications));
       setSummary(m.summary || '');
-      setAvailable(!!m.available_for_sales);
       setCurrentClient(m.current_client || '');
+      setAvailableFrom(m.available_from || '');
       setProjectExperience(Array.isArray(m.project_experience) ? m.project_experience : []);
       setCvPath(m.cv_pdf_path || '');
       if (m.cv_pdf_path) {
@@ -227,8 +230,8 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
       sectors: sectors,
       certifications: textToArr(certifications),
       summary: summary.trim() || null,
-      available_for_sales: available,
       current_client: currentClient.trim() || null,
+      available_from: availableFrom || null,
       project_experience: projectExperience,
     };
 
@@ -327,18 +330,22 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
             {SENIORITY_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        <label className="team-field team-field--toggle">
-          <span className="team-field-label">Beschikbaar voor sales</span>
-          <label className="team-toggle">
-            <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
-            <span>{available ? 'Ja' : 'Nee'}</span>
-          </label>
+        <label className="team-field">
+          <span className="team-field-label">
+            Beschikbaar vanaf
+            <span className="team-field-hint">Leeg = direct beschikbaar</span>
+          </span>
+          <input
+            type="date"
+            value={availableFrom}
+            onChange={(e) => setAvailableFrom(e.target.value)}
+          />
         </label>
 
         <label className="team-field team-field--wide">
           <span className="team-field-label">
             Huidige klant / opdracht
-            <span className="team-field-hint">Vrij tekst — bv. <em>"Bol.com (tot Q3 2026)"</em> of <em>"Beschikbaar"</em></span>
+            <span className="team-field-hint">Vrij tekst — leeg laten als deze persoon nu vrij is</span>
           </span>
           <input
             type="text"

@@ -37,6 +37,13 @@ create table if not exists public.team_members (
   -- Manueel ingevuld; niet uit CV-parse — CV's bevatten meestal geen
   -- live-assignment-info en die rouleert sneller dan de rest van het profiel.
   current_client text,
+  -- Beschikbaarheids-datum (gestructureerd, gebruikt voor maand-buckets in
+  -- de Gids-strip en voor Nova's `find_team_members({available_before: …})`):
+  --   - null + geen current_client → "Nu beschikbaar"
+  --   - null + current_client gevuld → "Bezet — einddatum onbekend"
+  --   - past/today → "Nu beschikbaar" (rolloff is gepasseerd)
+  --   - future → bucket op kalendermaand (Vrij in [maand jaar])
+  available_from date,
   -- Verwijzing naar de PDF in Storage (path binnen team-cvs-bucket)
   cv_pdf_path text,
   -- Volledige extracted plain-text van het CV — voor toekomstige semantische
@@ -46,9 +53,11 @@ create table if not exists public.team_members (
   updated_at timestamptz not null default now()
 );
 
--- Voor bestaande tabellen: kolom additief toevoegen (idempotent).
+-- Voor bestaande tabellen: kolommen additief toevoegen (idempotent).
 alter table public.team_members
   add column if not exists current_client text;
+alter table public.team_members
+  add column if not exists available_from date;
 
 create index if not exists team_members_name_idx on public.team_members (name);
 -- GIN-indexen op de array-velden voor snelle filter (skill-match etc.)

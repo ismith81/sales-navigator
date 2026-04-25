@@ -277,15 +277,35 @@ function stripHtml(s) {
 // exacte match op sector (uit canonical lijst); free-text keyword zoekt
 // breder. cv_text wordt NIET teruggestuurd — privacy + token-budget. Vector-
 // search op cv_text staat op de roadmap (Fase C).
-async function toolFindTeamMembers({ skill, technology, sector, seniority, available_only, keyword } = {}) {
+async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, available_for_sales, current_client');
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
 
   const lc = (s) => (s || '').toLowerCase();
   const arrIncludesIC = (arr, q) => (arr || []).some(x => lc(x).includes(lc(q)));
+
+  // Bereken availability-status zoals in lib/teamMembers.js — gedeelde logica
+  // omdat we inline geen module-import willen op de server.
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isAvailableNow = (m) => {
+    const hasClient = !!(m.current_client && m.current_client.trim());
+    if (!hasClient) return true;
+    if (m.available_from) {
+      const d = new Date(m.available_from); d.setHours(0, 0, 0, 0);
+      if (d <= today) return true;
+    }
+    return false;
+  };
+  const isAvailableBefore = (m, isoDate) => {
+    if (isAvailableNow(m)) return true;
+    if (!m.available_from) return false; // bezet onbekend → niet bevestigd vrij
+    const d = new Date(m.available_from); d.setHours(0, 0, 0, 0);
+    const cutoff = new Date(isoDate); cutoff.setHours(23, 59, 59, 999);
+    return !isNaN(cutoff) && d <= cutoff;
+  };
 
   const filtered = (data || []).filter(m => {
     if (skill && !arrIncludesIC(m.kernskills, skill)) return false;
@@ -295,7 +315,8 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
       if (!list.includes(lc(sector))) return false;
     }
     if (seniority && lc(m.seniority) !== lc(seniority)) return false;
-    if (available_only === true && !m.available_for_sales) return false;
+    if (available_now === true && !isAvailableNow(m)) return false;
+    if (available_before && !isAvailableBefore(m, available_before)) return false;
     if (keyword) {
       const projects = (m.project_experience || []).flatMap(p => [p.name, p.role, p.description]);
       const hay = [
@@ -311,24 +332,32 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
   });
 
   // Beperkte payload — top 8, projectervaring afgeknipt op 5 stuks van 200 chars.
-  return filtered.slice(0, 8).map(m => ({
-    id: m.id,
-    name: m.name,
-    role: m.role,
-    seniority: m.seniority,
-    kernskills: m.kernskills,
-    technologies: m.technologies,
-    sectors: m.sectors,
-    certifications: m.certifications,
-    available_for_sales: m.available_for_sales,
-    current_client: m.current_client,
-    summary: m.summary,
-    project_experience: (m.project_experience || []).slice(0, 5).map(p => ({
-      name: p.name,
-      role: p.role,
-      description: (p.description || '').slice(0, 220),
-    })),
-  }));
+  // Inclusief afgeleide availability_status zodat Nova in haar antwoord direct
+  // de bucket kan benoemen ("Niels is nu beschikbaar", "Sara komt vrij in juni").
+  return filtered.slice(0, 8).map(m => {
+    const status = isAvailableNow(m)
+      ? 'beschikbaar_nu'
+      : (m.available_from ? `vrij_vanaf_${m.available_from}` : 'bezet_einddatum_onbekend');
+    return {
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      seniority: m.seniority,
+      kernskills: m.kernskills,
+      technologies: m.technologies,
+      sectors: m.sectors,
+      certifications: m.certifications,
+      current_client: m.current_client,
+      available_from: m.available_from,
+      availability_status: status,
+      summary: m.summary,
+      project_experience: (m.project_experience || []).slice(0, 5).map(p => ({
+        name: p.name,
+        role: p.role,
+        description: (p.description || '').slice(0, 220),
+      })),
+    };
+  });
 }
 
 // Volledige profiel-fetch op naam (fuzzy). Geen cv_text/cv_pdf-info terug
@@ -338,7 +367,7 @@ async function toolGetTeamMember({ name } = {}) {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, available_for_sales, current_client');
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
   const target = (data || []).find(m => {
     const a = (m.name || '').toLowerCase();
@@ -510,7 +539,7 @@ const tools = [
       },
       {
         name: 'find_team_members',
-        description: 'Zoek consultants in het Creates-team voor een klantvraag of skill-match. Filter op skill, technology, sector, senioriteit en/of beschikbaarheid. Gebruik dit als de gebruiker vraagt "wie heeft X-ervaring?" of "welke collega past bij deze klantvraag?" of bij een tender/RFP-match. Retourneert top 8 matches met gestructureerde profielen (geen raw CV-tekst).',
+        description: 'Zoek consultants in het Creates-team voor een klantvraag of skill-match. Filter op skill, technology, sector, senioriteit en/of beschikbaarheid (nu of vóór een datum). Gebruik dit als de gebruiker vraagt "wie heeft X-ervaring?" of "welke collega past bij deze klantvraag?" of bij een tender/RFP-match. Retourneert top 8 matches inclusief availability_status (beschikbaar_nu / vrij_vanaf_YYYY-MM-DD / bezet_einddatum_onbekend) zodat je de bucket per consultant in je antwoord kunt benoemen.',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
@@ -518,7 +547,8 @@ const tools = [
             technology: { type: SchemaType.STRING, description: 'Tool/platform/framework — bv. "Power BI", "Microsoft Fabric", "Databricks", "Snowflake", "Python". Substring-match, case-insensitive.' },
             sector: { type: SchemaType.STRING, description: 'Sector waar de consultant werkervaring in heeft (uit canonical lijst: "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services", "Telecom & media", "Bouw & vastgoed", "Agri & food", "Cultuur & recreatie"). Case-insensitive exact match.' },
             seniority: { type: SchemaType.STRING, description: 'Een van: "Starter", "Young Professional", "Professional", "Senior", "Expert".' },
-            available_only: { type: SchemaType.BOOLEAN, description: 'true = alleen consultants met available_for_sales=true. Default false (toont alle matches; sales kan zelf prioriteren).' },
+            available_now: { type: SchemaType.BOOLEAN, description: 'true = alleen direct-beschikbare consultants (geen current_client, of available_from is verleden). Default false (toont alle matches; sales kan zelf prioriteren op de availability_status in het antwoord).' },
+            available_before: { type: SchemaType.STRING, description: 'ISO-datum YYYY-MM-DD. Filter op consultants die uiterlijk op deze datum vrijkomen (incl. nu-beschikbaren). Bv. "2026-07-01" voor "tegen Q3". Bezet-einddatum-onbekend valt automatisch buiten deze filter.' },
             keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt door naam, rol, samenvatting, projectervaring, certificaten. Handig voor specifieke termen die niet als skill/tech zijn ge-tagd (bv. "klantportaal", "embedded BI").' },
           },
         },

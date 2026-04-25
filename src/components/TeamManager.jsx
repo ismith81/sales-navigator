@@ -6,6 +6,7 @@ import {
   parseCvPdf,
   uploadCvPdf,
   listBranches,
+  getAvailabilityBucket,
 } from '../lib/teamMembers';
 import TeamMemberEditor from './TeamMemberEditor';
 
@@ -134,7 +135,13 @@ export default function TeamManager() {
               <div className="team-row-main">
                 <div className="team-row-name">
                   {m.name}
-                  {!m.available_for_sales && <span className="team-badge team-badge--off">niet beschikbaar</span>}
+                  {(() => {
+                    const b = getAvailabilityBucket(m);
+                    const tone = b.sortKey === 0 ? 'now' : b.sortKey >= 9000 ? 'far' : 'soon';
+                    return (
+                      <span className={`team-badge team-badge--${tone}`}>{b.label}</span>
+                    );
+                  })()}
                 </div>
                 <div className="team-row-role">
                   {[m.seniority, m.role].filter(Boolean).join(' · ')}
