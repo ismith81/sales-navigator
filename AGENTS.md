@@ -61,6 +61,7 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - `src/components/RichTextEditor.jsx` — WYSIWYG voor topics/personas
 - `src/components/Instructies.jsx` — handleiding met sub-tabs (Algemeen / Nova / Beheer). Nova-tab documenteert de 5 skills + "wat Nova (nog) niet doet" — hoort gelijk op te lopen met elke roadmap-fase.
 - `src/components/Login.jsx` — login-scherm (wachtwoord, magic-link, reset + recovery-flow) dat voor de rest van de app rendert als er geen session is.
+- `src/lib/chatHistory.js` — chat-geschiedenis-laag bovenop Supabase (`chat_sessions`-tabel). Functies: `listSessions` (laatste 10 zonder messages-payload), `loadSession(id)`, `createSession(messages)`, `updateSession(id, {messages, title})`, `deleteSession(id)`, plus `getActiveSessionId/setActiveSessionId` (sessionStorage-cache van de actieve sessie-id voor refresh-survival). Auto-prune naar max 10 per user gebeurt in `createSession`. Title wordt afgeleid van eerste user-bericht (60 chars + ellipsis). RLS in DB scoped op `auth.uid() = user_id`.
 - `src/lib/supabase.js` — Supabase client
 - `src/lib/auth.js` — auth-wrapper rond `supabase.auth`: `useAuthSession()` hook, `signInWithPassword/MagicLink`, `sendPasswordReset`, `updatePassword`, `signOut`, plus `authedFetch` die het access-token als `Authorization: Bearer …` meestuurt naar `/api/*`.
 - `src/lib/store.js` — data-laag bovenop Supabase
@@ -97,7 +98,7 @@ Afsluitend (los van de 7): **BANT-samenvatting** (Budget/Authority/Need/Timeline
 - **Supabase Auth** (e-mail + wachtwoord + magic-link + password reset). Users worden invite-only aangemaakt via het Supabase dashboard — géén self-service signup.
 - **Client-gate:** `Navigator.jsx` controleert via `useAuthSession()`; zonder session wordt `<Login/>` gerendered. Data-load (`loadAll`) wacht op session om RLS-leegstand te voorkomen.
 - **Server-gate:** alle serverless endpoints valideren de JWT via `requireUser()`.
-- **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan en policies voor `authenticated` role. SQL-script staat in `supabase/auth-rls.sql`. Anon key mag client-side blijven; RLS doet het werk.
+- **RLS:** `cases`, `app_config`, `chat_feedback` hebben RLS aan met `authenticated`-role-policies (SQL: `supabase/auth-rls.sql`). `chat_sessions` heeft user-scoped RLS via `auth.uid() = user_id` voor select/insert/update/delete — een user ziet/schrijft alleen z'n eigen sessies (SQL: `supabase/chat-sessions.sql`). Anon key mag client-side blijven; RLS doet het werk.
 - **Uitlogknop:** rechtsboven in de topbar (logout-icon), toont e-mail in tooltip.
 - **Supabase Auth-config (live):** `Allow new users to sign up` = OFF (invite-only), `Confirm email` = ON, Email provider enabled. Magic Link werkt automatisch via `signInWithOtp` zodra Email provider aan staat — er is géén aparte toggle meer in recente Supabase-versies.
 - **Site URL / Redirect URLs:** staat op de productie Vercel-URL. Voor lokale dev moet `http://localhost:5173/**` in de Redirect URL-lijst; anders falen magic-links en resets stil.
@@ -183,7 +184,7 @@ Naam "Gids" gekozen boven "Op onderwerp" / "Belscript" / "Verkennen": pairt natu
 - **Persona-mapping op cases onvolledig** — niet alle cases hebben `mapping.personas` ingevuld. Zodra een gebruiker in de Gids-route een persona in het kompas kiest, filtert de case-grid op die persona; ontbrekende mappings = lege lijst. Content-taak: per case nalopen en persona's koppelen via Beheer → Cases.
 - Geen export-functie (bijv. case als PDF of slide genereren)
 - Training-dienst heeft nog geen referentie-case
-- Chat-geschiedenis is sessionStorage-only — geen cross-device geschiedenis
+- ~~Chat-geschiedenis is sessionStorage-only~~ — vervangen door persistente Supabase-laag (zie Fase 5)
 - Bundle-size waarschuwing (>500kB) — overwegen: route-based code splitting
 - Optioneel: route-toggle sticky maken (blijft zichtbaar bij scrollen). Vereist zorgvuldige top-offset tegen de sticky topbar — niet urgent.
 - `HeroAssistant.jsx` niet meer gebruikt — kan verwijderd worden, of laten staan als reserve/reference. Mockup in `Downloads/sales-navigator-mockup.html` is nog de oude versie en kan weg (of bijgewerkt worden naar de geïmplementeerde versie als referentie).
@@ -239,13 +240,21 @@ gevonden sector, en levert een briefing met klikbare bronnen.
   een specifieke URL wil laten samenvatten. KvK-lookup ligt geparkeerd op branch
   `nova-kvk-lookup` (wacht op API-key beslissing; usage-based betaald).
 
-### Fase 5 — Memory-laag + cross-device chat
-Huidige chat-geschiedenis is sessionStorage-only. Voor echte "Nova onthoudt" hebben we
-een persistence-laag nodig:
-- Nieuwe Supabase-tabel `chat_sessions` (user_id, title, messages[], created_at).
-- Client-side: lijst-view van eerdere sessies, resume-knop.
-- Optioneel later: `client_interactions`-tabel voor klant-specifieke memory
-  (wat besproken in vorige meeting met contact X).
+### Fase 5 — Memory-laag + cross-device chat (deels live)
+**Live (basis chat-geschiedenis):** Supabase-tabel `chat_sessions` (zie `supabase/chat-sessions.sql`)
+met user-scoped RLS. Client-laag in `src/lib/chatHistory.js`. ChatPanel header heeft een
+kebab-menu (⋮) met "Nieuw gesprek" + laatste 10 sessies + "Wissen huidig". Auto-save
+debounced 700ms na elke message-mutation; eerste user-bericht maakt de sessie aan,
+daarna updates. Title afgeleid uit eerste user-bericht (60 chars). Bij overschrijden van
+10 sessies: oudste auto-delete in `pruneOldSessions`. Active session-id in
+sessionStorage zodat refresh mid-conversatie de plek niet kwijtraakt. RLS scope:
+`auth.uid() = user_id` voor alle CRUD-acties.
+
+**Backlog (memory-uitbreiding):**
+- Pinnen/archiveren van sessies (nu: harde 10-limit met FIFO-delete)
+- Title editen (nu: alleen auto-derived)
+- `client_interactions`-tabel voor klant-specifieke memory (wat besproken in vorige meeting)
+- Realtime sync tussen tabs van dezelfde user
 
 ### Mapping: roadmap-fases ↔ sales-journey-fases
 Handig om in de gaten te houden welke fase van het klantgesprek we wanneer bedienen.

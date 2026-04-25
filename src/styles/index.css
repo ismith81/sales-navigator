@@ -4043,9 +4043,9 @@ body::before {
   margin: 0 auto;
   padding: 0.7rem 1rem;
 }
-.chat-panel--inline.chat-panel--empty .chat-header {
-  display: none;
-}
+/* Header blijft zichtbaar in empty-state zodat het kebab-menu (history +
+   wissen) bereikbaar is voordat je iets gestuurd hebt. Welkomstcard blijft
+   de focus, header is rustig. */
 .chat-panel--inline.chat-panel--empty {
   border-top: none;
 }
@@ -4064,6 +4064,160 @@ body::before {
 .chat-panel--inline .chat-header-btn:hover {
   background: var(--bg-soft, #F5F7FA);
   color: var(--navy);
+}
+
+/* Kebab-menu trigger + dropdown — vervangt de losse Wissen-knop. Bevat
+   "Nieuw gesprek", de history-lijst (laatste 10) en de Wissen-actie. */
+.chat-panel--inline .chat-header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chat-header-menu-trigger {
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.chat-header-menu-trigger:hover,
+.chat-header-menu-trigger[aria-expanded="true"] {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+.chat-header-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 280px;
+  max-width: 360px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(44,60,82,0.14), 0 2px 6px rgba(44,60,82,0.06);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.85rem;
+  color: var(--navy);
+}
+.chat-header-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.chat-header-menu-item:hover:not(:disabled) {
+  background: var(--bg-soft, #F5F7FA);
+}
+.chat-header-menu-item:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.chat-header-menu-danger { color: var(--accent, #ED174B); }
+.chat-header-menu-danger:hover:not(:disabled) {
+  background: rgba(237,23,75,0.06);
+}
+.chat-header-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.3rem 0;
+}
+.chat-header-menu-section {
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem 0.1rem 0.1rem;
+}
+.chat-header-menu-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.6rem 0.25rem;
+}
+.chat-header-menu-empty {
+  padding: 0.4rem 0.6rem 0.55rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.chat-header-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.chat-header-menu-history {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.5rem 0.4rem 0.6rem;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.chat-header-menu-history:hover {
+  background: var(--bg-soft, #F5F7FA);
+}
+.chat-header-menu-history.is-active {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+}
+.chat-header-menu-history-title {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-header-menu-history-del {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.chat-header-menu-history:hover .chat-header-menu-history-del,
+.chat-header-menu-history-del:focus-visible {
+  opacity: 1;
+}
+.chat-header-menu-history-del:hover {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
 }
 /* Messages-vlak = wit (zelfde oppervlak als composer). Horizontale padding via
    .chat-column-wrapper, niet hier — anders breekt de gecentreerde kolom. */

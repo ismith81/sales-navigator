@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { authedFetch } from '../lib/auth';
-
-const STORAGE_KEY = 'sn.chatMessages';
-
-function readStored() {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch { return []; }
-}
+import {
+  listSessions,
+  loadSession,
+  createSession,
+  updateSession,
+  deleteSession,
+  getActiveSessionId,
+  setActiveSessionId,
+} from '../lib/chatHistory';
 
 const QUICK_PROMPT_GROUPS = [
   {
@@ -82,11 +80,15 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     },
   }), [caseNames, onNavigateToCase]);
 
-  const [messages, setMessages] = useState(readStored);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [toolActivity, setToolActivity] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
+  // History-state: actieve sessie-id, lijst met laatste 10 sessies, dropdown open?
+  const [sessionId, setSessionId] = useState(() => getActiveSessionId());
+  const [sessions, setSessions] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
   const empty = messages.length === 0;
 
   const formatToolLabels = (toolCalls = []) => {
@@ -111,9 +113,57 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
   // terugscrollen om iets te lezen zonder dat streaming-updates je terugduwen.
   const stickToBottomRef = useRef(true);
 
+  // ─── History persistence ─────────────────────────────────────────────
+  // Bij mount: probeer actieve sessie terug te laden zodat een refresh
+  // mid-conversatie geen werk-verlies oplevert. Mislukt 't (verwijderd door
+  // pruning of door andere user op zelfde browser): begin gewoon leeg.
+  const initialLoadDoneRef = useRef(false);
   useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch {}
-  }, [messages]);
+    if (initialLoadDoneRef.current) return;
+    initialLoadDoneRef.current = true;
+    const id = getActiveSessionId();
+    if (!id) return;
+    (async () => {
+      const s = await loadSession(id);
+      if (s && Array.isArray(s.messages)) {
+        setMessages(s.messages);
+        setSessionId(s.id);
+      } else {
+        setActiveSessionId(null);
+        setSessionId(null);
+      }
+    })();
+  }, []);
+
+  // Auto-save (debounced 700ms) — bij eerste user-bericht wordt sessie aangemaakt,
+  // daarna worden updates gepusht. Tijdens busy/streaming sla je tussenstanden over
+  // om te voorkomen dat we elk text-chunk een DB-write triggeren.
+  const saveTimerRef = useRef(null);
+  useEffect(() => {
+    if (busy) return; // wacht tot streaming klaar is
+    if (messages.length === 0) return;
+    // Sla alleen op als er minimaal één user-bericht is (geen lege placeholder).
+    const hasUser = messages.some(m => m.role === 'user' && (m.content || '').trim());
+    if (!hasUser) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      if (sessionId) {
+        await updateSession(sessionId, { messages });
+      } else {
+        const created = await createSession(messages);
+        if (created?.id) {
+          setSessionId(created.id);
+          setActiveSessionId(created.id);
+          // Refresh sessions-lijst zodat de nieuwe titel direct in 't menu staat.
+          setSessions(await listSessions());
+        }
+      }
+    }, 700);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [messages, busy, sessionId]);
 
   useEffect(() => {
     const el = listRef.current;
@@ -322,11 +372,77 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     }
   };
 
-  const clearChat = () => {
+  // "Wissen": leegt scherm én verwijdert de actieve sessie uit Supabase. Hard delete
+  // omdat sales 'wissen' bewust kiest — dit is niet hetzelfde als '+ Nieuw gesprek'
+  // (die laat de oude sessie staan en begint een lege).
+  const clearChat = async () => {
+    if (busy) abortRef.current?.abort();
+    const wasId = sessionId;
+    setMessages([]);
+    setSessionId(null);
+    setActiveSessionId(null);
+    setMenuOpen(false);
+    if (wasId) {
+      await deleteSession(wasId);
+      setSessions(await listSessions());
+    }
+  };
+
+  // Nieuw gesprek: leeg scherm, maar laat de oude sessie staan in de history
+  // (handig om later terug te switchen).
+  const startNewChat = () => {
     if (busy) abortRef.current?.abort();
     setMessages([]);
-    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+    setSessionId(null);
+    setActiveSessionId(null);
+    setMenuOpen(false);
   };
+
+  // Klik op een history-item → wissel van sessie. Eerst current state schoon, dan
+  // berichten van geselecteerde sessie laden.
+  const switchToSession = async (id) => {
+    if (busy) abortRef.current?.abort();
+    setMenuOpen(false);
+    if (id === sessionId) return;
+    const s = await loadSession(id);
+    if (s) {
+      setMessages(Array.isArray(s.messages) ? s.messages : []);
+      setSessionId(s.id);
+      setActiveSessionId(s.id);
+    }
+  };
+
+  // Verwijder één sessie uit de history (kruisje in dropdown).
+  const removeSession = async (e, id) => {
+    e.stopPropagation();
+    await deleteSession(id);
+    if (id === sessionId) {
+      setMessages([]);
+      setSessionId(null);
+      setActiveSessionId(null);
+    }
+    setSessions(await listSessions());
+  };
+
+  // Bij openen van het menu de history vers laden (fail open: bij DB-fout
+  // toon een lege lijst zonder de UI te breken).
+  const toggleMenu = async () => {
+    if (!menuOpen) {
+      setSessions(await listSessions());
+    }
+    setMenuOpen(o => !o);
+  };
+
+  // Outside-click sluit het menu.
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -354,11 +470,73 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
               </div>
               <div className="chat-header-trust">werkt met jullie cases, topics en persona’s</div>
             </div>
-            <div className="chat-header-actions">
-              {messages.length > 0 && (
-                <button type="button" className="chat-header-btn" onClick={clearChat} title="Gesprek wissen">
-                  Wissen
-                </button>
+            <div className="chat-header-actions" ref={menuRef}>
+              <button
+                type="button"
+                className="chat-header-menu-trigger"
+                onClick={toggleMenu}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Gesprek-menu"
+                title="Gesprek-menu"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="12" cy="5" r="1.2" />
+                  <circle cx="12" cy="12" r="1.2" />
+                  <circle cx="12" cy="19" r="1.2" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div className="chat-header-menu" role="menu">
+                  <button type="button" className="chat-header-menu-item" onClick={startNewChat} role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Nieuw gesprek</span>
+                  </button>
+                  <div className="chat-header-menu-section">
+                    <span className="chat-header-menu-label">Geschiedenis</span>
+                    {sessions.length === 0 ? (
+                      <div className="chat-header-menu-empty">Nog geen eerdere gesprekken</div>
+                    ) : (
+                      <ul className="chat-header-menu-list">
+                        {sessions.map(s => (
+                          <li key={s.id}>
+                            <button
+                              type="button"
+                              className={`chat-header-menu-history${s.id === sessionId ? ' is-active' : ''}`}
+                              onClick={() => switchToSession(s.id)}
+                              role="menuitem"
+                              title={s.title}
+                            >
+                              <span className="chat-header-menu-history-title">{s.title}</span>
+                              <span
+                                className="chat-header-menu-history-del"
+                                onClick={(e) => removeSession(e, s.id)}
+                                title="Verwijder dit gesprek"
+                                aria-label="Verwijder dit gesprek"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') removeSession(e, s.id); }}
+                              >×</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="chat-header-menu-divider" />
+                  <button type="button" className="chat-header-menu-item chat-header-menu-danger" onClick={clearChat} role="menuitem" disabled={messages.length === 0}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
+                    <span>Wissen huidig gesprek</span>
+                  </button>
+                </div>
               )}
               {!inline && (
                 <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>

@@ -312,9 +312,11 @@ function TabNova() {
             op te sporen. Gebruik 'm ook gewoon voor "dit antwoord was perfect" — dat helpt ook.
           </li>
           <li>
-            <strong>Chatgeschiedenis</strong> — blijft bewaard binnen deze browser-tab. Na een
-            refresh of op een ander device is 'ie leeg. Cross-device geschiedenis staat op de
-            roadmap.
+            <strong>Chatgeschiedenis</strong> — je laatste 10 gesprekken worden bewaard in de
+            cloud, gekoppeld aan jouw account. Open het ⋮-menu rechtsboven in de chat: daar zie je
+            "Nieuw gesprek" + de geschiedenis. Klik op een eerder gesprek om verder te gaan, of op
+            het ✕ erachter om 'm te verwijderen. Werkt cross-device (laptop + telefoon zelfde
+            historie). Limiet 10: bij een 11e wordt de oudste automatisch opgeruimd.
           </li>
         </ul>
       </section>
