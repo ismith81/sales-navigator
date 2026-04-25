@@ -4147,6 +4147,9 @@ body::before {
 }
 .chat-sidebar-item-title {
   flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   border: none;
   background: transparent;
   text-align: left;
@@ -4154,10 +4157,18 @@ body::before {
   color: var(--navy);
   font-size: 0.85rem;
   cursor: pointer;
+  min-width: 0;
+}
+.chat-sidebar-item-title-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+.chat-sidebar-item-pin-indicator {
+  flex: 0 0 auto;
+  color: var(--teal-dim, var(--teal));
+  opacity: 0.85;
 }
 .chat-sidebar-item.is-active .chat-sidebar-item-title {
   color: var(--teal-dim, var(--teal));

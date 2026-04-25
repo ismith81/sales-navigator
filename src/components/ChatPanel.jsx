@@ -7,6 +7,7 @@ import {
   createSession,
   updateSession,
   deleteSession,
+  setSessionPinned,
   getActiveSessionId,
   setActiveSessionId,
 } from '../lib/chatHistory';
@@ -441,6 +442,12 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     setSessions(await listSessions());
   };
 
+  // Pin/unpin toggle vanuit sidebar ⋮-menu.
+  const togglePinSession = async (id, pinned) => {
+    await setSessionPinned(id, pinned);
+    setSessions(await listSessions());
+  };
+
   // Toggle sidebar collapsed-state (desktop) en persisteer in localStorage.
   const toggleSidebarCollapsed = () => {
     setSidebarCollapsed(c => {
@@ -715,6 +722,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
           onSelectSession={switchToSession}
           onDeleteSession={removeSessionById}
           onRenameSession={renameSessionTitle}
+          onTogglePin={togglePinSession}
         />
         {panelJsx}
       </div>

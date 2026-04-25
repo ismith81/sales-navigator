@@ -23,6 +23,7 @@ export default function ChatSidebar({
   onSelectSession,
   onDeleteSession,
   onRenameSession,
+  onTogglePin,
 }) {
   // Per-sessie ⋮-menu state: welke sessie heeft 'm open?
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -31,7 +32,15 @@ export default function ChatSidebar({
   const [renameDraft, setRenameDraft] = useState('');
   const renameRef = useRef(null);
 
-  const groups = groupSessionsByDate(sessions);
+  // Pinned items vormen een eigen bucket bovenaan; de rest gaat door de
+  // dag-groepering. Sessies komen al gesorteerd binnen (pinned first dan
+  // recency) — we splitsen ze hier alleen visueel uit elkaar.
+  const pinnedItems = sessions.filter(s => s.pinned);
+  const unpinnedItems = sessions.filter(s => !s.pinned);
+  const dateGroups = groupSessionsByDate(unpinnedItems);
+  const groups = pinnedItems.length > 0
+    ? [{ label: 'Vastgepind', pinned: true, items: pinnedItems }, ...dateGroups]
+    : dateGroups;
 
   // Klik buiten een open ⋮-menu: sluiten.
   useEffect(() => {
@@ -174,7 +183,12 @@ export default function ChatSidebar({
                           onClick={() => onSelectSession?.(s.id)}
                           title={s.title}
                         >
-                          {s.title}
+                          {s.pinned && (
+                            <svg className="chat-sidebar-item-pin-indicator" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M16 3l5 5-3 1-2 5-3-3-5 5v3l-3-3 3-3v0L4 8l5-2 1-3z" />
+                            </svg>
+                          )}
+                          <span className="chat-sidebar-item-title-text">{s.title}</span>
                         </button>
                         <button
                           type="button"
@@ -193,6 +207,14 @@ export default function ChatSidebar({
                         </button>
                         {openMenuId === s.id && (
                           <div className="chat-sidebar-item-menu" role="menu">
+                            <button type="button" onClick={() => { setOpenMenuId(null); onTogglePin?.(s.id, !s.pinned); }} role="menuitem">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 17v5" />
+                                <path d="M9 17h6" />
+                                <path d="M7 17h10l-1.5-3 1.5-7H7.5L9 7l-2 7z" />
+                              </svg>
+                              <span>{s.pinned ? 'Vastgepind verwijderen' : 'Vastpinnen'}</span>
+                            </button>
                             <button type="button" onClick={() => startRename(s)} role="menuitem">
                               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M12 20h9" />

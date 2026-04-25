@@ -312,11 +312,15 @@ function TabNova() {
             op te sporen. Gebruik 'm ook gewoon voor "dit antwoord was perfect" — dat helpt ook.
           </li>
           <li>
-            <strong>Chatgeschiedenis</strong> — je laatste 10 gesprekken worden bewaard in de
-            cloud, gekoppeld aan jouw account. Open het ⋮-menu rechtsboven in de chat: daar zie je
-            "Nieuw gesprek" + de geschiedenis. Klik op een eerder gesprek om verder te gaan, of op
-            het ✕ erachter om 'm te verwijderen. Werkt cross-device (laptop + telefoon zelfde
-            historie). Limiet 10: bij een 11e wordt de oudste automatisch opgeruimd.
+            <strong>Chatgeschiedenis</strong> — je gesprekken worden bewaard in de cloud, gekoppeld
+            aan jouw account. Op desktop zit de geschiedenis in een sidebar links; op mobiel open
+            je 'm via de hamburger ☰ in de chat-header. Klik op een eerder gesprek om verder te
+            gaan, of open het ⋮-menu naast de titel voor <em>Vastpinnen</em>, <em>Hernoemen</em>
+            of <em>Verwijderen</em>. Cross-device: laptop én telefoon zien dezelfde historie.<br />
+            <strong>Limiet:</strong> 20 gewone gesprekken. Bij een 21e wordt de oudste automatisch
+            opgeruimd. <strong>Vastgepinde gesprekken</strong> tellen daar niet voor mee — die
+            blijven altijd staan, ook als je veel chat. Pin dus een gesprek dat je belangrijk
+            vindt (bv. een nog lopende prospect-briefing).
           </li>
         </ul>
       </section>

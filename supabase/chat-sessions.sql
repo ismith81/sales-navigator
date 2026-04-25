@@ -15,13 +15,23 @@ create table if not exists public.chat_sessions (
   title text not null default 'Nieuw gesprek',
   -- messages: array van {role, content, toolCalls?, groundingSources?, groundingQueries?, feedback?}
   messages jsonb not null default '[]'::jsonb,
+  -- Vastpinnen: pinned sessies tellen NIET mee voor de auto-prune-limiet
+  -- (zie chatHistory.js MAX_SESSIONS). Standaard niet gepind.
+  pinned boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+-- Voor bestaande tabellen: kolom additief toevoegen.
+alter table public.chat_sessions
+  add column if not exists pinned boolean not null default false;
+
 -- Sorting voor de history-dropdown: laatste-actieve eerst per user.
 create index if not exists chat_sessions_user_updated_idx
   on public.chat_sessions (user_id, updated_at desc);
+-- Pinned bovenaan dan op recency.
+create index if not exists chat_sessions_user_pinned_updated_idx
+  on public.chat_sessions (user_id, pinned desc, updated_at desc);
 
 -- updated_at automatisch laten meebewegen bij elke update.
 create or replace function public.set_chat_sessions_updated_at()

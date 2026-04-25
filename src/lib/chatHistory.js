@@ -3,14 +3,19 @@
 //
 // Conventies:
 // - 'session' = één conversatie van een gebruiker met Nova
-// - max 10 sessies per user; bij overschrijden wordt de oudste verwijderd
+// - max 20 ONGEPINDE sessies per user; gepinde sessies tellen niet mee voor
+//   de auto-prune en kunnen onbeperkt blijven staan
 // - title wordt afgeleid van het eerste user-bericht (ellipsisd op 60 chars)
 // - sessionStorage cachet alleen de "actieve session-id" zodat een refresh
 //   z'n plek niet kwijtraakt; berichten zelf komen altijd uit Supabase.
 
 import { supabase } from './supabase';
 
-const MAX_SESSIONS = 10;
+const MAX_UNPINNED_SESSIONS = 20;
+// Hoeveel sessies we max in de sidebar laten zien — pinned + meest recente
+// unpinned tot deze cap. 30 is genoeg ruimte voor de 20-cap + een batch
+// pinned items zonder de UI te overweldigen.
+const LIST_LIMIT = 30;
 const TITLE_MAX_LEN = 60;
 const ACTIVE_KEY = 'sn.chatActiveSessionId';
 
@@ -34,14 +39,17 @@ export function setActiveSessionId(id) {
 }
 
 // ─── reads ───────────────────────────────────────────────────────────────
-// Lijst van laatste 10 sessies (titel + timestamps), zonder de zware messages
+// Lijst van sessies (titel + pinned + timestamps), zonder de zware messages
 // payload — die laden we pas bij het openen van één specifieke sessie.
+// Sortering: pinned eerst (true>false), daarna recency. Zo komt 't natuurlijk
+// in de UI terecht zonder client-side hersortering.
 export async function listSessions() {
   const { data, error } = await supabase
     .from('chat_sessions')
-    .select('id, title, created_at, updated_at')
+    .select('id, title, pinned, created_at, updated_at')
+    .order('pinned', { ascending: false })
     .order('updated_at', { ascending: false })
-    .limit(MAX_SESSIONS);
+    .limit(LIST_LIMIT);
   if (error) {
     console.warn('listSessions fout:', error.message);
     return [];
@@ -53,7 +61,7 @@ export async function loadSession(id) {
   if (!id) return null;
   const { data, error } = await supabase
     .from('chat_sessions')
-    .select('id, title, messages, created_at, updated_at')
+    .select('id, title, pinned, messages, created_at, updated_at')
     .eq('id', id)
     .maybeSingle();
   if (error) {
@@ -75,14 +83,15 @@ export async function createSession(messages) {
   const { data, error } = await supabase
     .from('chat_sessions')
     .insert({ user_id: userId, title, messages })
-    .select('id, title, updated_at')
+    .select('id, title, pinned, updated_at')
     .single();
   if (error) {
     console.warn('createSession fout:', error.message);
     return null;
   }
 
-  // Direct na inserten: oudste sessies snoeien als we boven het limiet zitten.
+  // Direct na inserten: oudste UNPINNED sessies snoeien als we boven het
+  // limiet zitten. Pinned sessies worden nooit gesnoeid.
   await pruneOldSessions(userId).catch(() => {});
 
   return data;
@@ -101,10 +110,26 @@ export async function updateSession(id, { messages, title } = {}) {
     .from('chat_sessions')
     .update(patch)
     .eq('id', id)
-    .select('id, title, updated_at')
+    .select('id, title, pinned, updated_at')
     .maybeSingle();
   if (error) {
     console.warn('updateSession fout:', error.message);
+    return null;
+  }
+  return data;
+}
+
+// Pin of unpin een sessie. Gepinde sessies tellen niet mee voor de auto-prune.
+export async function setSessionPinned(id, pinned) {
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from('chat_sessions')
+    .update({ pinned: !!pinned })
+    .eq('id', id)
+    .select('id, title, pinned, updated_at')
+    .maybeSingle();
+  if (error) {
+    console.warn('setSessionPinned fout:', error.message);
     return null;
   }
   return data;
@@ -147,17 +172,18 @@ export function groupSessionsByDate(sessions = []) {
     .map(label => ({ label, items: buckets[label] }));
 }
 
-// Houdt de history-lijst onder MAX_SESSIONS door de oudste te verwijderen.
-// Wordt vanuit createSession aangeroepen — niet vanuit updateSession (geen
-// nieuwe sessie = geen kans op overschrijding).
+// Houdt het aantal UNPINNED sessies onder MAX_UNPINNED_SESSIONS door de
+// oudste ongepinde te verwijderen. Pinned sessies blijven onaangetast,
+// ongeacht hoeveel het er zijn — dat is de hele waarde van pinning.
 async function pruneOldSessions(userId) {
   const { data, error } = await supabase
     .from('chat_sessions')
-    .select('id, updated_at')
+    .select('id, pinned, updated_at')
     .eq('user_id', userId)
+    .eq('pinned', false)
     .order('updated_at', { ascending: false });
   if (error) return;
-  const overflow = (data || []).slice(MAX_SESSIONS);
+  const overflow = (data || []).slice(MAX_UNPINNED_SESSIONS);
   if (overflow.length === 0) return;
   const ids = overflow.map(r => r.id);
   await supabase.from('chat_sessions').delete().in('id', ids);
