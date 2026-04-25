@@ -41,6 +41,10 @@ export default function TeamGrid() {
           <span className="team-grid-count">{members.length}</span>
         </div>
 
+        {/* Kanban-layout: buckets als kolommen naast elkaar (auto-fit grid).
+            Op mobiel collapseren ze automatisch onder elkaar. Cards stack
+            verticaal binnen elke kolom — geen horizontale scroll meer. */}
+        <div className="team-grid-buckets">
         {buckets.map(b => (
           <div key={b.label} className={`team-grid-bucket team-grid-bucket--${b.sortKey === 0 ? 'now' : b.sortKey >= 9000 ? 'far' : 'soon'}`}>
             <div className="team-grid-bucket-header">
@@ -80,6 +84,7 @@ export default function TeamGrid() {
             </div>
           </div>
         ))}
+        </div>
       </section>
 
       {openId && (

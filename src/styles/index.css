@@ -2847,9 +2847,24 @@ body::before {
   font-weight: 700;
 }
 
+/* ─── Kanban-layout: buckets als kolommen naast elkaar ─────────────────
+   auto-fill (niet auto-fit) zodat een eenzame bucket niet over de volle
+   row stretched op tablet-breedte; hij blijft op z'n min-width van 220px,
+   eventuele lege tracks blijven gereserveerd. */
+.team-grid-buckets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: start;
+  margin-top: 0.4rem;
+}
 /* ─── Bucket-secties (Nu / Vrij in mei / … / Later / Bezet onbekend) ── */
 .team-grid-bucket {
-  margin-top: 0.85rem;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
 }
 .team-grid-bucket-header {
   display: flex;
@@ -2888,21 +2903,17 @@ body::before {
   color: var(--muted);
   font-weight: 600;
 }
+/* Cards stacken nu verticaal binnen elke bucket-kolom (was horizontale
+   scroll-rij voor een gestackte layout). */
 .team-grid-row {
   display: flex;
-  gap: 0.7rem;
-  overflow-x: auto;
-  padding: 0.15rem 0.1rem 0.7rem;
-  scrollbar-width: thin;
-}
-.team-grid-row::-webkit-scrollbar { height: 6px; }
-.team-grid-row::-webkit-scrollbar-thumb {
-  background: rgba(44,60,82,0.18);
-  border-radius: 3px;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0;
 }
 
 .team-grid-card {
-  flex: 0 0 230px;
+  width: 100%;
   display: flex;
   gap: 0.6rem;
   padding: 0.7rem 0.8rem;
@@ -2912,6 +2923,7 @@ body::before {
   cursor: pointer;
   text-align: left;
   font-family: inherit;
+  min-width: 0;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
 }
 .team-grid-card:hover {
@@ -2977,7 +2989,11 @@ body::before {
 }
 
 @media (max-width: 640px) {
-  .team-grid-card { flex-basis: 200px; padding: 0.6rem 0.7rem; }
+  /* Echt-mobile: één kolom (buckets onder elkaar) zodat de cards
+     volledige scherm-breedte pakken. Tablet (640-768px) kan de auto-fill
+     met minmax(220px) doen — geeft 1-2 kolommen afhankelijk van breedte. */
+  .team-grid-buckets { grid-template-columns: 1fr; gap: 0.7rem; }
+  .team-grid-card { padding: 0.6rem 0.7rem; }
   .team-grid-avatar { width: 32px; height: 32px; font-size: 0.72rem; }
 }
 
