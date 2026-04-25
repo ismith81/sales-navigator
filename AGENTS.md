@@ -71,12 +71,25 @@ Anker-cases die vaker terugkomen in redeneringen/defaults:
 - `public/case-template.docx` — downloadbaar Word-template voor nieuwe cases
 
 ### Backend (Vercel serverless)
-- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + function calling:
+- `api/chat.js` — streaming chat-endpoint. Gemini 2.5 Flash + function calling. Vijf tools:
   - `search_cases({doel, behoefte, dienst, persona, branche, keyword})` — filtert cases-tabel
   - `get_topic({tab, name})` — haalt talking points/follow-ups uit `app_config.topics`
   - `list_personas()` — haalt persona-coaching uit `app_config.personas`
   - `search_web({query})` — Google Search grounding als custom function-wrapper. Doet intern een aparte Gemini-call met alleen `{ googleSearch: {} }` aan, retourneert `{text, sources, queries}`. **Workaround voor een Gemini-beperking:** `googleSearch` en function declarations mogen NIET in één request (API geeft 400 "Built-in tools and Function Calling cannot be combined"). Door grounding in een tool-wrapper te steken ziet Nova 't als een gewone tool en kan ze 't combineren met de andere tools. Kost wel een extra Gemini-roundtrip per web-lookup. Geen aparte API-key; inclusief met `GEMINI_API_KEY`.
-  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'grounding'|'done'|'error'}`. Module-level buffers (`webSourcesBuffer`, `webQueriesBuffer`) verzamelen bronnen over alle `search_web`-subcalls; worden per-request gereset aan 't begin van de handler en aan 't eind als één `grounding`-event gestuurd met `{sources: [{uri, title}], queries: []}`. ChatPanel rendert 'm als "Bronnen (Google Search)"-blok onder het antwoord; de **Web**-chip in "Gebruikte context" komt vanzelf omdat `search_web` al in het gewone `tool`-event zit.
+  - `prospect_brief({company})` — gestructureerde briefing-research. Doet intern 3 parallelle `search_web`-calls (snapshot+strategie / data+AI / team+budget+concurrentie) en levert al het materiaal voor de 7 vaste briefing-buckets. Sources worden automatisch via `search_web` in `webSourcesBuffer` gebufferd, dus 't grounding-event aan 't eind bevat alle 3 cluster-bronnen samen. Bedoeld voor de eerste pass van een briefing; follow-up-vragen op een briefing gebruiken `search_web` direct.
+  Multi-turn tool-loop (max 5 rondes), SSE-stream `{type: 'text'|'tool'|'grounding'|'done'|'error'}`. Module-level buffers (`webSourcesBuffer`, `webQueriesBuffer`) verzamelen bronnen over alle `search_web`-subcalls; worden per-request gereset aan 't begin van de handler en aan 't eind als één `grounding`-event gestuurd met `{sources: [{uri, title}], queries: []}`. ChatPanel rendert 'm als "Bronnen (Google Search)"-blok onder het antwoord; chips in "Gebruikte context" komen vanzelf via `TOOL_LABELS` (`prospect_brief` → Briefing, `search_web` → Web, `search_cases` → Cases). Fallback: als de tool-loop eindigt zonder ooit tekst te streamen wordt een diagnose-melding gestuurd (incl. `finishReason`).
+
+### Briefing-raamwerk (vast 7-bucket format)
+Elke briefing levert deze categorieën in deze volgorde, gestuurd door de systeemprompt:
+1. **Bedrijfssnapshot** — sector/branche, omvang (FTE/omzet), HQ + structuur, kerntaken
+2. **Strategische prioriteiten** — publiek uitgesproken doelen 1–3 jaar
+3. **Data-volwassenheid** — stack + grove Gartner DMM-stage (1=Basic … 5=Transformational)
+4. **AI-initiatieven** — concrete projecten 2024–2025
+5. **Team & sourcing-houding** — CDO/Head of Data, vacatures als proxy, partners-historiek (open/gesloten cultuur)
+6. **Concurrentiepositie** — top concurrenten, druk-indicatoren
+7. **Buying signals & budget-indicatoren** — investeringen/M&A/tenders → ruwe budget-band
+
+Afsluitend (los van de 7): **BANT-samenvatting** (Budget/Authority/Need/Timeline-rijtje), **Sales-fit** (openingshoek), **Gap-flag** (waar Creates-portfolio leeg of zwak is — eerlijk benoemd, geen oversell).
 - `api/chat-feedback.js` — slaat 👍/👎 + context + tool-calls op in `chat_feedback`. Context wordt verrijkt met `user_email` uit de JWT.
 - `api/_lib/auth.js` — `requireUser(req, res)` valideert de `Authorization: Bearer <jwt>`-header via `supabase.auth.getUser(token)`. Zowel `/api/chat` als `/api/chat-feedback` retourneren 401 zonder geldige sessie.
 

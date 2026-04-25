@@ -17,7 +17,7 @@ const QUICK_PROMPT_GROUPS = [
   {
     label: 'Voor het gesprek',
     items: [
-      { kind: 'Briefing', text: 'Maak een briefing over [bedrijfsnaam]: sector, grootte, recent nieuws en welke Creates-case past', shortText: 'Briefing over bedrijf' },
+      { kind: 'Briefing', text: 'Maak een briefing over [bedrijfsnaam] — gebruik het 7-bucket raamwerk', shortText: 'Briefing over bedrijf' },
       { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie', shortText: 'CFO-gesprek over dataplatform' },
       { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance', shortText: 'IT-manager over governance' },
     ],
@@ -36,6 +36,7 @@ const TOOL_LABELS = {
   get_topic: 'Topics',
   list_personas: 'Persona’s',
   search_web: 'Web',
+  prospect_brief: 'Briefing',
 };
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {

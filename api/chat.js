@@ -30,13 +30,62 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
-- **Prospect-briefing via web**: als de gebruiker een prospect of bedrijf noemt, doe één gerichte \`search_web\`-call die beide angles in één query combineert: \`search_web({query: "<bedrijf> sector kerntaken grootte data platform AI initiatieven 2024 2025"})\`. Kijk in de output naar sector, grootte, hoofdkantoor, kernactiviteit én specifiek naar data/AI-signalen (data-platform, AI-projecten, CDO/Head of Data, publieke tech-keuzes, digitaliseringsstrategie) — dat laatste is Creates' angle. Daarna één \`search_cases\`-call op de gevonden branche om te checken óf er een écht relevante case bij past. **Forceer nooit een case-koppeling**: als de beste match zijdelings is of geen sterk verband heeft, zeg dat letterlijk ("onze portfolio raakt dit maar indirect — dit is eerder een gat dan een sterkte" / "hier hebben we nog geen directe case voor"). Baseer uitspraken alléén op wat de tools teruggeven — verzin geen cijfers. Beperking: \`search_web\` is voor externe publieke info, niet voor Creates-interne kennis (die komt uit \`search_cases\`/\`get_topic\`/\`list_personas\`).
+- **Prospect-briefing (vast 7-bucket raamwerk)**: telkens als de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt, werk je in deze vaste volgorde:
+  1. Roep \`prospect_brief({company})\` aan — dat doet intern 3 parallelle web-zoekopdrachten en levert al het materiaal.
+  2. Roep daarna \`search_cases({branche})\` op de branche die je in cluster 1 oppikte — om case-fit te checken (niet om er per se eentje aan te plakken).
+  3. Synthetiseer naar exact dit format (markdown, met **vetgedrukte** kopjes voor de 7 categorieën zodat de UI ze duidelijk zet):
 
-- **Gap-analyse (kritisch op eigen portfolio)**: als de gebruiker vraagt om een kritische blik op Creates zelf ("waar hebben we gaten?", "wat zouden we moeten ontwikkelen?", "waar zijn we zwak tegenover deze prospect?"), werk je zo:
+  \`\`\`
+  ## Briefing — <Bedrijfsnaam>
+
+  **1. Bedrijfssnapshot**
+  - Sector / branche: <waarde>
+  - Omvang: <FTE / omzet>
+  - HQ + structuur: <locatie, moeder/dochters>
+  - Kerntaken: <2–3 zinnen>
+
+  **2. Strategische prioriteiten**
+  Wat zegt het bedrijf publiekelijk te willen (1–3 jaar) — uit jaarverslag, keynotes, persberichten.
+
+  **3. Data-volwassenheid**
+  Huidige stack + grove Gartner DMM-stage (1=Basic, 2=Opportunistic, 3=Systematic, 4=Differentiating, 5=Transformational). Onderbouw de stage in 1 zin.
+
+  **4. AI-initiatieven**
+  Concrete projecten / aankondigingen 2024–2025 met kort bron-haakje.
+
+  **5. Team & sourcing-houding**
+  CDO/Head of Data (naam indien gevonden), teamomvang, vacature-signalen, historiek met externe partners — concluderend: open of gesloten cultuur t.o.v. consultancy?
+
+  **6. Concurrentiepositie**
+  Top 2–3 concurrenten, marktaandeel-signaal, druk-indicatoren (waarom moeten ze nú bewegen?).
+
+  **7. Buying signals & budget-indicatoren**
+  Recente investeringen / M&A / tenders / financiële kerngetallen → ruwe budget-band (bv. "100k–500k", "1M+", "onbekend").
+
+  ---
+  **BANT-samenvatting** (sales-qualification)
+  - **B**: <budget-band uit cat 1+7>
+  - **A**: <wie beslist, uit cat 5>
+  - **N**: <kern-need uit cat 2+3+4>
+  - **T**: <timing uit cat 2+4>
+
+  **Sales-fit (regel)** — Nova's voorgestelde openingshoek voor dit gesprek.
+
+  **Gap-flag** — wat Creates' portfolio écht niet kan dekken (zwakke of ontbrekende bewijsstukken t.o.v. wat dit bedrijf nodig heeft). Benoem concreet, zo nuttig als een sterkte.
+  \`\`\`
+
+  **Regels voor de inhoud:**
+  - Baseer alle feiten alléén op tool-output (\`prospect_brief\`-clusters + \`search_cases\`); verzin geen cijfers, namen of strategieën.
+  - Mis je voor een categorie data, schrijf "geen publieke info gevonden" — niet bluffen.
+  - **Sales-fit** mag pitch-toon hebben; **Gap-flag** moet eerlijk en concreet zijn (geen verkooppraatje verpakt als gat).
+  - Wanneer je een Creates-case noemt: bedrijfsnaam **vet** zodat de UI er een link van maakt.
+
+- **Follow-up op een briefing**: na een briefing zijn vervolgvragen standaard over hetzelfde prospect — gebruik \`search_web\` (niet \`prospect_brief\`, dat is voor de eerste pass) met een gerichte query, bv. "<bedrijf> CDO 2025" of "<bedrijf> data-strategie persbericht". Switch alléén naar \`search_cases\` als de gebruiker letterlijk om "een case", "referentie" of "voorbeeld uit jullie portfolio" vraagt.
+
+- **Gap-analyse (kritisch op eigen portfolio)**: als de gebruiker apart vraagt om een kritische blik op Creates zelf ("waar hebben we gaten?", "wat zouden we moeten ontwikkelen?", "waar zijn we zwak tegenover deze prospect?"), werk je zo:
   1. \`search_cases({})\` zonder filters — zodat je het volledige huidige portfolio ziet.
   2. \`list_personas()\` — om te checken welke rollen wel/niet expliciet bediend worden.
-  3. Vergelijk dit expliciet met de prospect-context uit de briefing (sector, schaal, tech-stack, AI-maturity). Benoem concreet waar Creates' bewijsmateriaal op ontbreekt of zwak is t.o.v. wat de prospect nodig heeft.
-  Formaat: 3–5 punten, per punt: wat heeft prospect nodig → wat heeft Creates wel/niet → concrete ontwikkelkans (bv. "Bol.com draait op GCP/BigQuery op grote schaal; onze cases zitten op MS Fabric en Azure — een referentie-case op GCP is een duidelijk gat om op te bouwen"). Eindig met één korte aanbeveling welk gat het eerst verdient om op te vullen. Wees eerlijk en concreet; dit is een feature, geen bug — het helpt sales pitches eerlijker en scherper te maken.
+  3. Vergelijk expliciet met de prospect-context uit de briefing. 3–5 punten, per punt: prospect-behoefte → Creates wel/niet → concrete ontwikkelkans. Eindig met één aanbeveling welk gat 't eerst verdient. Dit is breder dan de Gap-flag in de briefing — meer diepgang en scope.
 
 - **Follow-up op een briefing**: wanneer de vorige turn een briefing was over een specifiek prospect-bedrijf, gaat elke vervolgvraag **standaard ook over dát bedrijf** — tenzij de gebruiker expliciet iets anders aangeeft. Bij vragen als "kan je iets vinden over hun dataplatform?", "wie is hun CDO?", "wat doen ze met AI?" → dit is géén vraag om een Creates-case, maar om méér publieke info over het prospect. Doe onmiddellijk een nieuwe \`search_web({query: "<prospectnaam> <angle>"})\` en presenteer het resultaat met bronnen. Switch alléén naar \`search_cases\` als de gebruiker letterlijk vraagt om "een case", "referentie", "voorbeeld uit jullie portfolio" o.i.d.
 
@@ -208,6 +257,45 @@ function stripHtml(s) {
 const webSourcesBuffer = new Map(); // uri → title, per-request (reset in handler)
 const webQueriesBuffer = new Set();
 
+// ─── prospect_brief — gestructureerd onderzoek over een prospect ─────────
+// Wrapper rond search_web die deterministisch 3 onderzoeks-clusters parallel
+// uitvoert. Dat geeft Nova consistent materiaal voor de 7 vaste briefing-buckets,
+// onafhankelijk van model-creatie. Bronnen komen automatisch in webSourcesBuffer
+// terecht (search_web doet dat zelf), dus de grounding-event aan 't eind bevat
+// alle 3 cluster-bronnen samen.
+async function toolProspectBrief({ company }) {
+  const trimmed = (company || '').trim();
+  if (!trimmed) return { error: 'company is verplicht.' };
+
+  const clusters = [
+    {
+      focus: 'snapshot + strategie',
+      query: `${trimmed} sector branche kerntaken omvang FTE omzet hoofdkantoor strategische prioriteiten jaarverslag 2024 2025`,
+    },
+    {
+      focus: 'data + AI',
+      query: `${trimmed} data platform stack governance AI machine learning initiatieven CDO "Head of Data" digitalisering 2024 2025`,
+    },
+    {
+      focus: 'team + budget + concurrentie',
+      query: `${trimmed} data team vacatures externe partners consultancy concurrenten marktaandeel acquisities investeringen tenders financiele kerncijfers`,
+    },
+  ];
+
+  const results = await Promise.all(clusters.map(c => toolSearchWeb({ query: c.query })));
+
+  return {
+    company: trimmed,
+    clusters: clusters.map((c, i) => ({
+      focus: c.focus,
+      query: c.query,
+      summary: (results[i] && typeof results[i].text === 'string') ? results[i].text : '',
+      error: results[i]?.error || null,
+    })),
+    note: 'Synthetiseer dit naar de 7 vaste briefing-categorieën met bronnen + BANT-blokje. Zie systeemprompt voor exact format.',
+  };
+}
+
 async function toolSearchWeb({ query }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { error: 'GEMINI_API_KEY ontbreekt.' };
@@ -274,12 +362,23 @@ const tools = [
       },
       {
         name: 'search_web',
-        description: 'Zoek op het publieke web (Google) voor externe bedrijfsinfo, recente nieuwsberichten of sector-context over een prospect. Gebruik dit alléén voor info die NIET in onze cases/topics/personas zit — bijvoorbeeld "wat doet Bol.com", "recent nieuws over AkzoNobel". Retourneert een korte samenvatting + bronvermelding. Daarna altijd search_cases aanroepen voor case-koppeling.',
+        description: 'Zoek op het publieke web (Google) voor externe bedrijfsinfo, recente nieuwsberichten of sector-context over een prospect. Gebruik dit voor losse follow-up-vragen over een prospect (bv. "wie is hun CDO?", "wat zegt hun jaarverslag over AI?"). Voor een complete prospect-briefing gebruik liever prospect_brief — die structureert het onderzoek deterministisch.',
         parameters: {
           type: SchemaType.OBJECT,
           required: ['query'],
           properties: {
-            query: { type: SchemaType.STRING, description: 'Concrete zoekopdracht in natuurlijke taal, bv. "Bol.com bedrijfsinformatie 2024 sector" of "AkzoNobel recent nieuws".' },
+            query: { type: SchemaType.STRING, description: 'Concrete zoekopdracht in natuurlijke taal, bv. "Bol.com Head of Data 2025" of "AkzoNobel recent persbericht AI".' },
+          },
+        },
+      },
+      {
+        name: 'prospect_brief',
+        description: 'Doe een complete, gestructureerde briefing-research over een prospect-bedrijf. Voert intern 3 parallelle web-zoekopdrachten uit (snapshot+strategie / data+AI / team+budget+concurrentie) en levert al het materiaal voor de 7 vaste briefing-categorieën in één call. Gebruik dit telkens wanneer de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt. Geef daarna nog één search_cases-call op de gevonden branche om case-fit te checken. Het exacte output-format staat in de systeemprompt.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['company'],
+          properties: {
+            company: { type: SchemaType.STRING, description: 'Naam van de prospect, bv. "Bol.com", "AkzoNobel", "Tulp Hypotheken".' },
           },
         },
       },
@@ -293,6 +392,7 @@ async function runTool(name, args) {
     if (name === 'get_topic') return await toolGetTopic(args || {});
     if (name === 'list_personas') return await toolListPersonas();
     if (name === 'search_web') return await toolSearchWeb(args || {});
+    if (name === 'prospect_brief') return await toolProspectBrief(args || {});
     return { error: `Onbekende tool: ${name}` };
   } catch (e) {
     return { error: e.message || 'Tool execution failed' };

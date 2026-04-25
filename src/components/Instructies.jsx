@@ -235,12 +235,15 @@ function TabNova() {
             <em>Voorbeeld:</em> "Zet deze gespreksnotities om naar een actielijst."
           </li>
           <li>
-            <strong>Prospect-briefing via web</strong> — noemt de gebruiker een prospect dat Nova niet
-            kent, dan zoekt ze via Google naar publieke info (sector, grootte, recent nieuws) en
-            koppelt dat aan een passende Creates-case. Onder het antwoord verschijnt een lijst met
-            bronnen (klikbare links) zodat je kunt checken waar de info vandaan komt. Alleen publieke
-            pagina's; géén LinkedIn-scrapes of CRM-data.<br />
-            <em>Voorbeeld:</em> "Maak een briefing over Bol.com — wat doen ze en welke case past?"
+            <strong>Prospect-briefing (7-bucket raamwerk)</strong> — vraag een briefing over een bedrijf
+            en Nova levert een gestructureerd rapport in vaste categorieën:
+            <em>Bedrijfssnapshot · Strategische prioriteiten · Data-volwassenheid (Gartner DMM-stage)
+            · AI-initiatieven · Team & sourcing-houding · Concurrentiepositie · Buying signals & budget</em>.
+            Afsluitend een <strong>BANT-samenvatting</strong> (Budget, Authority, Need, Timeline) +
+            <strong>Sales-fit</strong> (openingshoek) + <strong>Gap-flag</strong> (eerlijk waar Creates
+            zwak staat). Onder het antwoord een klikbare bronnenlijst (Google Search). Alleen publiek
+            web; géén LinkedIn-scrapes of CRM-data.<br />
+            <em>Voorbeeld:</em> "Maak een briefing over Bol.com." (de structuur volgt automatisch)
           </li>
           <li>
             <strong>Gap-analyse</strong> — vraag Nova om een kritische blik op Creates' eigen portfolio
