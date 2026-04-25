@@ -27,6 +27,8 @@ export default function ChatSidebar({
 }) {
   // Per-sessie ⋮-menu state: welke sessie heeft 'm open?
   const [openMenuId, setOpenMenuId] = useState(null);
+  // Bevestiging vóór delete: welke sessie staat in confirm-mode?
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
   // Inline-rename state in de sidebar: actieve id + draft-titel.
   const [renameId, setRenameId] = useState(null);
   const [renameDraft, setRenameDraft] = useState('');
@@ -42,12 +44,13 @@ export default function ChatSidebar({
     ? [{ label: 'Vastgepind', pinned: true, items: pinnedItems }, ...dateGroups]
     : dateGroups;
 
-  // Klik buiten een open ⋮-menu: sluiten.
+  // Klik buiten een open ⋮-menu: sluiten (en evt. confirm-state opheffen).
   useEffect(() => {
     if (!openMenuId) return;
     const onDoc = (e) => {
       if (!e.target.closest('.chat-sidebar-item-menu') && !e.target.closest('.chat-sidebar-item-menu-trigger')) {
         setOpenMenuId(null);
+        setConfirmingDeleteId(null);
       }
     };
     document.addEventListener('mousedown', onDoc);
@@ -83,13 +86,19 @@ export default function ChatSidebar({
     setRenameDraft('');
   };
 
-  const handleDelete = (s) => {
+  // Twee-staps delete: eerste klik zet confirm-mode aan in dezelfde dropdown,
+  // tweede klik op "Verwijder" voert 't echt uit. Native browser-confirm
+  // gebruikten we eerst maar paste niet bij de stijl.
+  const beginDelete = (s) => {
+    setConfirmingDeleteId(s.id);
+  };
+  const confirmDelete = (s) => {
     setOpenMenuId(null);
-    // Lichte bevestiging zodat een per-ongeluk-klik niet meteen een gesprek wist.
-    // Browser-confirm is genoeg voor MVP — geen modal-overhead nodig.
-    if (confirm(`Verwijder "${s.title}"?`)) {
-      onDeleteSession?.(s.id);
-    }
+    setConfirmingDeleteId(null);
+    onDeleteSession?.(s.id);
+  };
+  const cancelDelete = () => {
+    setConfirmingDeleteId(null);
   };
 
   return (
@@ -206,30 +215,47 @@ export default function ChatSidebar({
                           </svg>
                         </button>
                         {openMenuId === s.id && (
-                          <div className="chat-sidebar-item-menu" role="menu">
-                            <button type="button" onClick={() => { setOpenMenuId(null); onTogglePin?.(s.id, !s.pinned); }} role="menuitem">
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M12 17v5" />
-                                <path d="M9 17h6" />
-                                <path d="M7 17h10l-1.5-3 1.5-7H7.5L9 7l-2 7z" />
-                              </svg>
-                              <span>{s.pinned ? 'Vastgepind verwijderen' : 'Vastpinnen'}</span>
-                            </button>
-                            <button type="button" onClick={() => startRename(s)} role="menuitem">
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z" />
-                              </svg>
-                              <span>Hernoemen</span>
-                            </button>
-                            <button type="button" onClick={() => handleDelete(s)} role="menuitem" className="chat-sidebar-item-menu-danger">
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                              </svg>
-                              <span>Verwijderen</span>
-                            </button>
-                          </div>
+                          confirmingDeleteId === s.id ? (
+                            <div className="chat-sidebar-item-menu chat-sidebar-item-menu--confirm" role="menu">
+                              <div className="chat-sidebar-item-confirm-text">
+                                Weet je het zeker?
+                                <span className="chat-sidebar-item-confirm-sub">"{s.title}" wordt verwijderd.</span>
+                              </div>
+                              <div className="chat-sidebar-item-confirm-actions">
+                                <button type="button" onClick={cancelDelete} className="chat-sidebar-item-confirm-cancel">
+                                  Annuleer
+                                </button>
+                                <button type="button" onClick={() => confirmDelete(s)} className="chat-sidebar-item-confirm-delete">
+                                  Verwijder
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="chat-sidebar-item-menu" role="menu">
+                              <button type="button" onClick={() => { setOpenMenuId(null); onTogglePin?.(s.id, !s.pinned); }} role="menuitem">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M12 17v5" />
+                                  <path d="M9 17h6" />
+                                  <path d="M7 17h10l-1.5-3 1.5-7H7.5L9 7l-2 7z" />
+                                </svg>
+                                <span>{s.pinned ? 'Vastgepind verwijderen' : 'Vastpinnen'}</span>
+                              </button>
+                              <button type="button" onClick={() => startRename(s)} role="menuitem">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M12 20h9" />
+                                  <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z" />
+                                </svg>
+                                <span>Hernoemen</span>
+                              </button>
+                              <button type="button" onClick={() => beginDelete(s)} role="menuitem" className="chat-sidebar-item-menu-danger">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                </svg>
+                                <span>Verwijderen</span>
+                              </button>
+                            </div>
+                          )
                         )}
                       </>
                     )}

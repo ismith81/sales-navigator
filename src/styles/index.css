@@ -4225,6 +4225,68 @@ body::before {
 .chat-sidebar-item-menu-danger:hover {
   background: rgba(237,23,75,0.06);
 }
+/* Inline-confirm in dropdown bij delete: vervangt de menu-items door een
+   bevestigings-prompt met [Annuleer] [Verwijder]-buttons. Geen native
+   browser-confirm meer (paste niet bij de huisstijl). */
+.chat-sidebar-item-menu--confirm {
+  padding: 0.6rem 0.65rem;
+  min-width: 220px;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.chat-sidebar-item-confirm-text {
+  font-size: 0.83rem;
+  color: var(--navy);
+  font-weight: 600;
+  line-height: 1.35;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.chat-sidebar-item-confirm-sub {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+}
+.chat-sidebar-item-confirm-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.chat-sidebar-item-confirm-cancel,
+.chat-sidebar-item-confirm-delete {
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+.chat-sidebar-item-confirm-cancel {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-light);
+}
+.chat-sidebar-item-confirm-cancel:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+.chat-sidebar-item-confirm-delete {
+  background: var(--accent, #ED174B);
+  color: #fff;
+}
+.chat-sidebar-item-confirm-delete:hover {
+  background: #c8133e;
+}
 .chat-sidebar-rename-input {
   flex: 1 1 auto;
   width: 100%;
