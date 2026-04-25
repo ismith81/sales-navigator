@@ -56,16 +56,6 @@ export default function TeamGrid() {
                 <div className="team-grid-role">
                   {[m.seniority, m.role].filter(Boolean).join(' · ')}
                 </div>
-                <div className="team-grid-tags">
-                  {(m.kernskills || []).slice(0, 3).map(s => (
-                    <span key={s} className="team-tag">{s}</span>
-                  ))}
-                  {(m.kernskills || []).length > 3 && (
-                    <span className="team-tag team-tag--more">
-                      +{(m.kernskills.length - 3) + ((m.technologies || []).length)}
-                    </span>
-                  )}
-                </div>
                 {m.current_client && (
                   <div className="team-grid-client" title="Huidige klant / opdracht">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
