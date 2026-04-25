@@ -32,8 +32,15 @@ Regels voor extractie:
 - role: huidige functietitel of meest dominante rol (bv. "Analytics Engineer",
   "Data Engineer", "BI Consultant"). Kijk naar de meest recente functie of
   de titel die opent op het CV.
-- seniority: één van [Junior, Medior, Professional, Senior, Lead, Principal].
-  Kies op basis van: jaren ervaring, expliciet vermelde titel, scope van projecten.
+- seniority: één van [Starter, Young Professional, Professional, Senior, Expert]
+  (Creates-eigen schaal). Kies op basis van: jaren ervaring, expliciet vermelde
+  titel (junior/medior/senior/lead in de tekst → vertaal naar onze schaal),
+  scope/eindverantwoordelijkheid van projecten. Globale richtlijn:
+    Starter ≈ < 2 jaar ervaring
+    Young Professional ≈ 2-4 jaar
+    Professional ≈ 4-8 jaar
+    Senior ≈ 8-12 jaar of duidelijke lead-rol
+    Expert ≈ 12+ jaar of principal-niveau
   Bij echt geen aanwijzing → "Professional".
 - kernskills: 5–12 hoofd-vaardigheden (vakmanschap, geen tools). Voorbeelden:
   "Datamodellering", "Stakeholdermanagement", "Pipeline-bouw", "DAX",

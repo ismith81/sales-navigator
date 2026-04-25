@@ -13,7 +13,16 @@ import {
 // uploaden"-flow uit TeamManager: parsed fields + de originele File object onder
 // _pendingPdf (die we hier uploaden bij save).
 
-const SENIORITY_OPTIONS = ['Junior', 'Medior', 'Professional', 'Senior', 'Lead', 'Principal'];
+// Creates-eigen senioriteits-schaal (vervangt de eerdere generieke
+// Junior/Medior/Lead/Principal). Mapping voor reeds opgeslagen oude waardes:
+// Junior → Starter, Medior → Young Professional, Lead/Principal → Expert.
+const SENIORITY_OPTIONS = ['Starter', 'Young Professional', 'Professional', 'Senior', 'Expert'];
+const SENIORITY_MIGRATION = {
+  Junior: 'Starter',
+  Medior: 'Young Professional',
+  Lead: 'Expert',
+  Principal: 'Expert',
+};
 
 // Klein hulpmiddel: array <-> komma-gescheiden string voor de tag-inputs.
 const arrToText = (a = []) => Array.isArray(a) ? a.join(', ') : '';
@@ -55,6 +64,33 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
     ? cvPath.split('/').slice(-1)[0].replace(/^\d+-/, '')
     : '';
 
+  // Echte download flow: een gewoon <a download={name}> werkt cross-origin
+  // niet (Supabase Storage staat op een andere domain → browser negeert
+  // het download-attribuut en opent in plaats daarvan in nieuw tab). Fix:
+  // de blob ophalen, daar een object-URL van maken (same-origin) en die
+  // klikken. Resultaat: echte save-as-dialog met de juiste filename.
+  const handleDownload = async () => {
+    if (!cvSignedUrl) return;
+    try {
+      const res = await fetch(cvSignedUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = cvFileName || 'cv.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // Geef de browser even tijd om de download te starten voor we de URL
+      // weggooien — Chrome heeft 'm direct nodig, Safari soms iets later.
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch (err) {
+      console.warn('CV-download fout:', err);
+      // Fallback: gewoon openen in nieuw tab (zoals voorheen).
+      window.open(cvSignedUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   // ─── load existing OR apply prefill ────────────────────────────────────
   useEffect(() => {
     if (isNew) {
@@ -62,7 +98,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       if (prefill) {
         setName(prefill.name || '');
         setRole(prefill.role || '');
-        setSeniority(prefill.seniority || 'Professional');
+        setSeniority(SENIORITY_MIGRATION[prefill.seniority] || prefill.seniority || 'Professional');
         setKernskills(arrToText(prefill.kernskills));
         setTechnologies(arrToText(prefill.technologies));
         setSectors(arrToText(prefill.sectors));
@@ -84,7 +120,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       }
       setName(m.name || '');
       setRole(m.role || '');
-      setSeniority(m.seniority || 'Professional');
+      setSeniority(SENIORITY_MIGRATION[m.seniority] || m.seniority || 'Professional');
       setKernskills(arrToText(m.kernskills));
       setTechnologies(arrToText(m.technologies));
       setSectors(arrToText(m.sectors));
@@ -134,7 +170,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       const f = result.fields || {};
       if (f.name) setName(f.name);
       if (f.role) setRole(f.role);
-      if (f.seniority) setSeniority(f.seniority);
+      if (f.seniority) setSeniority(SENIORITY_MIGRATION[f.seniority] || f.seniority);
       if (Array.isArray(f.kernskills) && f.kernskills.length) setKernskills(arrToText(f.kernskills));
       if (Array.isArray(f.technologies) && f.technologies.length) setTechnologies(arrToText(f.technologies));
       if (Array.isArray(f.sectors) && f.sectors.length) setSectors(arrToText(f.sectors));
@@ -326,7 +362,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
         <label className="team-field team-field--wide">
           <span className="team-field-label">
             Certificaten
-            <span className="team-field-hint">Officiële certificaten — <em>PL-300, DP-203, Azure Data Engineer Associate</em></span>
+            <span className="team-field-hint">Officiële certificaten</span>
           </span>
           <input
             type="text"
@@ -412,14 +448,14 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
                   >
                     Bekijken
                   </a>
-                  <a
-                    href={cvSignedUrl}
-                    download={cvFileName || 'cv.pdf'}
+                  <button
+                    type="button"
                     className="team-cv-link"
-                    title="Bestand downloaden"
+                    onClick={handleDownload}
+                    title="Naar je downloads-map opslaan"
                   >
                     Downloaden
-                  </a>
+                  </button>
                 </>
               )}
             </div>

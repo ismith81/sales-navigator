@@ -2554,16 +2554,9 @@ body::before {
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   white-space: nowrap;
-}
-.team-tag--skill {
   background: rgba(49,183,185,0.08);
   color: var(--teal-dim, var(--teal));
   border: 1px solid rgba(49,183,185,0.16);
-}
-.team-tag--tech {
-  background: rgba(44,60,82,0.05);
-  color: var(--navy);
-  border: 1px solid rgba(44,60,82,0.12);
 }
 .team-badge {
   font-size: 0.65rem;
@@ -2865,6 +2858,11 @@ body::before {
   padding: 0.25rem 0.55rem;
   border: 1px solid rgba(49,183,185,0.3);
   border-radius: 5px;
+  /* Werkt voor <a> én <button> versies van deze klasse: button-default
+     reset zodat 'ie er identiek uitziet als de link. */
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 .team-cv-link:hover { background: rgba(49,183,185,0.06); }
 .team-cv-replace {

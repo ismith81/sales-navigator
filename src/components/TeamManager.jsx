@@ -135,12 +135,14 @@ export default function TeamManager() {
                   {[m.seniority, m.role].filter(Boolean).join(' · ')}
                 </div>
                 <div className="team-row-tags">
-                  {(m.kernskills || []).slice(0, 6).map(s => (
-                    <span key={s} className="team-tag team-tag--skill">{s}</span>
-                  ))}
-                  {(m.technologies || []).slice(0, 4).map(t => (
-                    <span key={t} className="team-tag team-tag--tech">{t}</span>
-                  ))}
+                  {/* Skills + technologies in dezelfde teal-stijl — visueel
+                      lossen we 't onderscheid niet op want voor sales is 't
+                      één gecombineerde "wat kan deze persoon"-set. */}
+                  {[...(m.kernskills || []), ...(m.technologies || [])]
+                    .slice(0, 10)
+                    .map((tag, idx) => (
+                      <span key={`${tag}-${idx}`} className="team-tag">{tag}</span>
+                    ))}
                 </div>
               </div>
               <div className="team-row-actions">
