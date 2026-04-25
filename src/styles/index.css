@@ -1115,7 +1115,16 @@ body::before {
 @media (max-width: 640px) {
   .view-toggle { gap: 1.25rem; }
   .view-toggle-btn { font-size: 1.05rem; }
-  .view-subnav { gap: 0.6rem; overflow-x: auto; }
+  /* Subnav overflow-x scrolt nog steeds (swipe blijft werken) maar de
+     scrollbar zelf wordt verborgen — 4+ items op een smal scherm gaven
+     anders een lichte grijze balk dwars door de navy-strook. */
+  .view-subnav {
+    gap: 0.6rem;
+    overflow-x: auto;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/oude Edge */
+  }
+  .view-subnav::-webkit-scrollbar { display: none; } /* Chrome/Safari */
   .view-subnav-btn {
     font-size: 0.9rem;
     padding: 0.35rem 0.8rem;
@@ -2463,6 +2472,836 @@ body::before {
   padding: 0.5rem 1rem;
 }
 
+/* ═══ TEAM MANAGER (Beheer → Team) ═════════════════════════════════════════
+   Lijst van consultant-profielen + per-row acties. Editor (TeamMemberEditor)
+   gebruikt aparte form-styling. Volgt dezelfde teal-accent / navy-tekst /
+   zachte-cards stijl als case-manager. */
+.team-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.team-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+.team-parse-status,
+.team-parse-error {
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.team-parse-status {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.18);
+}
+.team-parse-error {
+  background: rgba(237,23,75,0.06);
+  color: var(--accent, #ED174B);
+  border: 1px solid rgba(237,23,75,0.22);
+}
+.team-empty {
+  padding: 1.5rem 1.2rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.92rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft, #F5F7FA);
+  line-height: 1.5;
+}
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.team-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.team-row:hover {
+  border-color: rgba(49,183,185,0.4);
+  box-shadow: 0 2px 6px rgba(44,60,82,0.05);
+}
+.team-row-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.team-row-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.team-row-role {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+/* Huidige-klant-regel: subtiel gebouw-icon + naam, alleen zichtbaar als gevuld. */
+.team-row-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+  margin-top: 0.05rem;
+}
+.team-row-client svg { flex-shrink: 0; }
+.team-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+.team-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.16);
+}
+.team-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.team-badge--now {
+  background: rgba(43,179,108,0.1);
+  color: #1f8c52;
+  border: 1px solid rgba(43,179,108,0.25);
+}
+.team-badge--soon {
+  background: rgba(240,163,58,0.12);
+  color: #b6750e;
+  border: 1px solid rgba(240,163,58,0.3);
+}
+.team-badge--far {
+  background: rgba(176,183,192,0.18);
+  color: var(--muted);
+  border: 1px solid rgba(176,183,192,0.4);
+}
+.team-badge--off { /* legacy — kan weg in latere refactor */
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+.team-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.team-row-cv-icon {
+  color: var(--teal);
+  display: inline-flex;
+}
+.team-row-del {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.team-row-del:hover {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+
+/* ─── Editor ─────────────────────────────────────────────────────────────── */
+.team-editor { display: flex; flex-direction: column; gap: 0.85rem; }
+.team-editor--loading {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--muted);
+}
+.team-editor-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: sticky;
+  top: var(--topbar-height, 100px);
+  z-index: 5;
+}
+.team-editor-back,
+.team-editor-save {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--navy);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: inherit;
+}
+.team-editor-back:hover { background: var(--bg-soft, #F5F7FA); }
+.team-editor-save {
+  border-color: var(--teal);
+  color: #fff;
+  background: var(--teal);
+}
+.team-editor-save:hover:not(:disabled) { background: #2aa3a5; }
+.team-editor-save:disabled { opacity: 0.6; cursor: not-allowed; }
+.team-editor-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.team-editor-eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.team-editor-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.team-editor-error,
+.team-editor-status {
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.team-editor-error {
+  background: rgba(237,23,75,0.06);
+  color: var(--accent, #ED174B);
+  border: 1px solid rgba(237,23,75,0.22);
+}
+.team-editor-status {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.18);
+}
+.team-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.team-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+.team-field--wide { grid-column: 1 / -1; }
+.team-field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.team-field-hint {
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.team-field input[type="text"],
+.team-field select,
+.team-field textarea {
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--navy);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.team-field input[type="text"]:focus,
+.team-field select:focus,
+.team-field textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.team-field textarea { resize: vertical; min-height: 60px; }
+.team-field--toggle .team-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+.team-toggle input { width: 16px; height: 16px; cursor: pointer; }
+
+/* ─── Sectoren chip-picker (synchroon met cases.mapping.branches) ─── */
+.team-sector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+}
+.team-sector-chip {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.team-sector-chip:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+  border-color: rgba(44,60,82,0.18);
+}
+.team-sector-chip.is-active {
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, var(--teal));
+  border-color: rgba(49,183,185,0.4);
+}
+.team-sector-empty {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ═══ TEAM-GRID (Gids "Beschikbare collega's"-strip) ═══════════════════════
+   Compacte horizontale rij van team-cards bovenop het case-grid in Gids.
+   Bewust kleiner dan case-cards zodat ze niet de aandacht stelen, maar
+   informatief genoeg om in 1 oogopslag te zien wie er klaarstaat. */
+.team-grid-strip {
+  margin: 1.5rem 0 0.5rem;
+}
+.team-grid-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.team-grid-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.team-grid-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ─── Kanban-layout: buckets als kolommen naast elkaar ─────────────────
+   auto-fill (niet auto-fit) zodat een eenzame bucket niet over de volle
+   row stretched op tablet-breedte; hij blijft op z'n min-width van 220px,
+   eventuele lege tracks blijven gereserveerd. */
+.team-grid-buckets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: start;
+  margin-top: 0.4rem;
+}
+/* ─── Bucket-secties (Nu / Vrij in mei / … / Later / Bezet onbekend) ── */
+.team-grid-bucket {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.team-grid-bucket-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  padding: 0.1rem 0.1rem 0.35rem;
+  border-bottom: 1px dashed var(--border);
+}
+.team-grid-bucket-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+}
+.team-grid-bucket--now .team-grid-bucket-dot {
+  background: #2BB36C; /* groen — direct */
+  box-shadow: 0 0 0 3px rgba(43,179,108,0.18);
+}
+.team-grid-bucket--soon .team-grid-bucket-dot {
+  background: #F0A33A; /* oranje — komende maanden */
+}
+.team-grid-bucket--far .team-grid-bucket-dot {
+  background: #B0B7C0; /* grijs — later / onbekend */
+}
+.team-grid-bucket-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.team-grid-bucket-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+/* Cards stacken nu verticaal binnen elke bucket-kolom (was horizontale
+   scroll-rij voor een gestackte layout). */
+.team-grid-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0;
+}
+
+.team-grid-card {
+  width: 100%;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+.team-grid-card:hover {
+  border-color: rgba(49,183,185,0.4);
+  box-shadow: 0 4px 12px rgba(44,60,82,0.07);
+  transform: translateY(-1px);
+}
+.team-grid-avatar {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #2aa3a5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.team-grid-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.team-grid-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.team-grid-role {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.team-grid-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.18rem;
+}
+.team-grid-tags .team-tag { font-size: 0.65rem; padding: 0.1rem 0.4rem; }
+.team-tag--more {
+  background: rgba(44,60,82,0.05) !important;
+  color: var(--muted) !important;
+  border-color: rgba(44,60,82,0.1) !important;
+}
+.team-grid-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+  margin-top: 0.18rem;
+}
+
+@media (max-width: 640px) {
+  /* Echt-mobile: één kolom (buckets onder elkaar) zodat de cards
+     volledige scherm-breedte pakken. Tablet (640-768px) kan de auto-fill
+     met minmax(220px) doen — geeft 1-2 kolommen afhankelijk van breedte. */
+  .team-grid-buckets { grid-template-columns: 1fr; gap: 0.7rem; }
+  .team-grid-card { padding: 0.6rem 0.7rem; }
+  .team-grid-avatar { width: 32px; height: 32px; font-size: 0.72rem; }
+}
+
+/* ═══ TEAM-DETAIL MODAL (klik op team-grid-card) ════════════════════════ */
+.team-detail-overlay {
+  /* Hergebruikt .modal-overlay-base maar overschrijft sommige defaults
+     omdat onze content scrollbaar moet zijn op kleine schermen. */
+  padding: 1.5rem 1rem;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+.team-detail-box {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  width: min(640px, 100%);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
+  padding: 1.4rem 1.4rem 1.6rem;
+  box-shadow: 0 24px 60px rgba(44,60,82,0.25);
+}
+.team-detail-close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.team-detail-close:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+.team-detail-loading,
+.team-detail-error {
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--muted);
+}
+.team-detail-error { color: var(--accent, #ED174B); }
+
+.team-detail-header {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-right: 2rem; /* ruimte voor close-knop */
+}
+.team-detail-avatar {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #2aa3a5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.team-detail-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.team-detail-role {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.18rem;
+}
+.team-detail-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--teal-dim, var(--teal));
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+.team-detail-section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+}
+.team-detail-h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+.team-detail-summary {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.team-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.team-detail-projects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.team-detail-projects li {
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-soft, #F5F7FA);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.team-detail-project-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  color: var(--navy);
+}
+.team-detail-project-role {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.team-detail-project-desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  line-height: 1.45;
+}
+.team-detail-cv-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Projectervaring inline-editor ─── */
+.team-projects {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.team-projects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.team-projects-add {
+  border: 1px solid rgba(49,183,185,0.4);
+  background: transparent;
+  color: var(--teal);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.team-projects-add:hover { background: rgba(49,183,185,0.05); }
+.team-projects-empty {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.team-project {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-soft, #F5F7FA);
+}
+.team-project-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 28px;
+  gap: 0.4rem;
+  align-items: center;
+}
+.team-project input[type="text"],
+.team-project textarea {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--navy);
+  outline: none;
+}
+.team-project input:focus,
+.team-project textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.team-project textarea { resize: vertical; min-height: 50px; }
+.team-project-del {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.team-project-del:hover {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+
+/* ─── CV-bestand (PDF) sectie ─── */
+.team-cv {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.team-cv-current,
+.team-cv-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--navy);
+}
+.team-cv-name {
+  font-weight: 600;
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+.team-cv-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(49,183,185,0.3);
+  border-radius: 5px;
+  /* Werkt voor <a> én <button> versies van deze klasse: button-default
+     reset zodat 'ie er identiek uitziet als de link. */
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+.team-cv-link:hover { background: rgba(49,183,185,0.06); }
+.team-cv-replace {
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--navy);
+  padding: 0.3rem 0.7rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.team-cv-replace:hover {
+  background: var(--bg-soft, #F5F7FA);
+  border-color: rgba(44,60,82,0.18);
+}
+/* Twee-knop-rij voor "vervangen + extracten" / "alleen PDF vervangen". */
+.team-cv-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--border);
+}
+.team-cv-replace-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 0.2rem;
+}
+
+/* Mobile: tweede kolom in editor-grid + project-row aanpassen */
+@media (max-width: 768px) {
+  .team-editor-grid { grid-template-columns: 1fr; }
+  .team-project-row { grid-template-columns: 1fr 28px; }
+  .team-project-row > input.team-project-role { grid-column: 1 / -1; }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
   .cm-col-tags { display: none; }
@@ -2696,20 +3535,42 @@ body::before {
 .cases-overview {
   margin-top: 1.5rem;
 }
+/* Section-header matched aan TeamGrid (zelfde stijl: kleine titel + teal
+   count-pill) zodat de Gids consistent oogt: Beschikbaarheid team — N · Cases — N. */
 .co-header {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.3rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.6rem;
 }
+.co-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.co-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+/* Legacy h2 styling — niet meer gebruikt sinds we naar h3.co-title zijn,
+   maar laat 'm staan zodat oude consumers (search-results-view) niet breken. */
 .co-header h2 {
   font-family: 'Nunito Sans', sans-serif;
   font-weight: 800;
   font-size: 1.3rem;
   color: var(--navy);
 }
-.co-count {
+.co-count--legacy {
   font-size: 0.85rem;
   color: var(--text-light);
   font-weight: 600;

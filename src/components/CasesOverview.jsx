@@ -39,11 +39,10 @@ export default function CasesOverview({ cases, personas = {}, searchQuery, headi
 
   return (
     <div className="cases-overview">
-      {heading && (
-        <div className="co-header">
-          <h2>{heading}</h2>
-        </div>
-      )}
+      <div className="co-header">
+        <h3 className="co-title">{heading || 'Cases'}</h3>
+        <span className="co-count">{filtered.length}</span>
+      </div>
       {hint && <p className="co-hint">{hint}</p>}
 
       {filtered.length === 0 ? (
@@ -65,11 +64,9 @@ export default function CasesOverview({ cases, personas = {}, searchQuery, headi
 function CasePreviewCard({ caseData, personas = {} }) {
   const [expanded, setExpanded] = React.useState(false);
   const preview = stripHtml(caseData.businessImpact) || stripHtml(caseData.resultaat);
-  const tags = [
-    ...(caseData.mapping?.doelen || []).map(t => ({ text: t, cat: 'doelen' })),
-    ...(caseData.mapping?.behoeften || []).map(t => ({ text: t, cat: 'behoeften' })),
-    ...(caseData.mapping?.diensten || []).map(t => ({ text: t, cat: 'diensten' })),
-  ];
+  // Doelen/behoeften/diensten tags maakten de cards te druk in 't Gids-overzicht.
+  // Branche-chip + persona-badges blijven (dat is identiteit op één regel);
+  // de strategische mapping-tags zijn beschikbaar zodra je de card uitklapt.
 
   if (expanded) {
     return (
@@ -116,13 +113,6 @@ function CasePreviewCard({ caseData, personas = {} }) {
         </div>
       )}
       {preview && <div className="co-preview">{preview}</div>}
-      {tags.length > 0 && (
-        <div className="co-tags">
-          {tags.map((t, i) => (
-            <span key={i} className={`tag ${TAG_CLASS[t.cat]} small`}>{t.text}</span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

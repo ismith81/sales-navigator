@@ -30,6 +30,24 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 - **Vergelijken**: zet meerdere cases naast elkaar (bijv. per doel of per sector) met korte duiding waar ze verschillen.
 - **Follow-up mail**: zet ruwe gespreksnotities om in een kort follow-up mailconcept in Creates-toon, met duidelijke samenvatting en volgende stap.
 - **Actielijst uit notities**: haal uit ruwe notes een concrete wie-doet-wat-wanneer lijst. Gebruik een markdown-checklist en benoem open punten expliciet.
+
+- **Team-match (consultant zoeken voor klantvraag)**: als de gebruiker vraagt "wie van ons heeft X-ervaring?" / "welke collega past bij deze klantvraag?" / "wie kan ik meenemen naar een gesprek over Y?" / een tender/RFP plakt, gebruik \`find_team_members\` om kandidaten op te halen. Werk zo:
+  1. Lees de klantvraag uit en pak de evident-gemaakte criteria (skills, technologies, sector, senioriteits-vereiste). Roep \`find_team_members\` aan met die filters. Begin met \`available_only:true\` als de gebruiker urgentie suggereert; anders laat 't open zodat alle matches zichtbaar zijn.
+  2. Als er <2 matches zijn, roep \`find_team_members\` opnieuw aan met soepelere filters (laat skill of sector weg, of gebruik \`keyword\` voor breder zoeken).
+  3. Voor één specifieke naam → \`get_team_member({name})\`.
+  4. Lever max 3 (uitzonderlijk 5) consultants in dit format:
+
+  \`\`\`
+  **<Naam>** — <Senioriteit> · <Functietitel>
+  Motivatie: <1–2 zinnen waarom 'ie past — refereer aan SPECIFIEKE skills/technologies/sectors/projecten uit z'n profiel die aansluiten op de klantvraag>. Voorbeeld: "Niels past sterk: Fabric uit het CITO-traject, datamodellering en retail-ervaring matchen je Bol.com-vraag."
+  Beschikbaarheid: <available_for_sales-status> · <current_client als ingevuld>
+
+  ---
+  **Sales-fit (regel)**: <welke kandidaat is je primaire keuze en waarom — één korte regel>.
+  **Aandacht / gat**: <als geen kandidaat alle vereisten dekt, benoem dat eerlijk: bv. "we hebben niemand met Snowflake-ervaring; voor dat onderdeel hebben we een externe partner of nieuwe hire nodig". Verzin geen skills die niet in een profiel staan.>
+  \`\`\`
+
+- **Klantgerichte profielpitch**: als de gebruiker vraagt "schrijf een pitch voor <naam>" of "maak een paragraaf voor een offerte over <naam>", roep \`get_team_member({name})\`. Gebruik de \`summary\` als basis + relevante \`project_experience\` + matching skills/technologies bij de specifieke klantvraag (als die genoemd is). Format: 3–4 zinnen, derde persoon, professioneel-zelfverzekerd, geen marketing-jargon. Eindig met één regel waarom 'ie commercieel sterk is voor het beoogde traject. Géén citatie-markers ([n]) — die zijn alleen voor web-bronnen.
 - **Prospect-briefing (vast 7-bucket raamwerk)**: telkens als de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt, werk je in deze vaste volgorde:
   1. Roep \`prospect_brief({company})\` aan — dat doet intern 3 parallelle web-zoekopdrachten en levert al het materiaal.
   2. Roep daarna \`search_cases({branche})\` op de branche die je in cluster 1 oppikte — om case-fit te checken (niet om er per se eentje aan te plakken).
@@ -132,7 +150,10 @@ TYPISCHE VRAGEN:
 - "Welke cases passen bij AI ready?"
 - "Maak van deze gespreksnotities een follow-up mail."
 - "Haal uit deze notes een actielijst met eigenaar en volgende stap."
-- "Maak een briefing over [bedrijfsnaam] — wat doen ze, welke sector, recent nieuws?"`;
+- "Maak een briefing over [bedrijfsnaam] — wat doen ze, welke sector, recent nieuws?"
+- "Welke collega heeft Fabric-ervaring in retail?"
+- "Wie kan ik meenemen naar een gesprek over een nieuw dataplatform?"
+- "Schrijf een klantgerichte pitch voor [naam] voor een Power BI-traject."`;
 
 // ─── Supabase (read-only) ────────────────────────────────────────────────
 function getSupabase() {
@@ -248,6 +269,118 @@ async function toolListPersonas() {
 function stripHtml(s) {
   if (!s || typeof s !== 'string') return '';
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// ─── team_members tools ──────────────────────────────────────────────────
+// Zoekt consultants in 't Creates-team. Filter-velden mappen 1-op-1 op de
+// team_members-kolommen. Substring-match (case-insensitive) op skills/tech;
+// exacte match op sector (uit canonical lijst); free-text keyword zoekt
+// breder. cv_text wordt NIET teruggestuurd — privacy + token-budget. Vector-
+// search op cv_text staat op de roadmap (Fase C).
+async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
+  if (error) throw error;
+
+  const lc = (s) => (s || '').toLowerCase();
+  const arrIncludesIC = (arr, q) => (arr || []).some(x => lc(x).includes(lc(q)));
+
+  // Bereken availability-status zoals in lib/teamMembers.js — gedeelde logica
+  // omdat we inline geen module-import willen op de server.
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isAvailableNow = (m) => {
+    const hasClient = !!(m.current_client && m.current_client.trim());
+    if (!hasClient) return true;
+    if (m.available_from) {
+      const d = new Date(m.available_from); d.setHours(0, 0, 0, 0);
+      if (d <= today) return true;
+    }
+    return false;
+  };
+  const isAvailableBefore = (m, isoDate) => {
+    if (isAvailableNow(m)) return true;
+    if (!m.available_from) return false; // bezet onbekend → niet bevestigd vrij
+    const d = new Date(m.available_from); d.setHours(0, 0, 0, 0);
+    const cutoff = new Date(isoDate); cutoff.setHours(23, 59, 59, 999);
+    return !isNaN(cutoff) && d <= cutoff;
+  };
+
+  const filtered = (data || []).filter(m => {
+    if (skill && !arrIncludesIC(m.kernskills, skill)) return false;
+    if (technology && !arrIncludesIC(m.technologies, technology)) return false;
+    if (sector) {
+      const list = (m.sectors || []).map(lc);
+      if (!list.includes(lc(sector))) return false;
+    }
+    if (seniority && lc(m.seniority) !== lc(seniority)) return false;
+    if (available_now === true && !isAvailableNow(m)) return false;
+    if (available_before && !isAvailableBefore(m, available_before)) return false;
+    if (keyword) {
+      const projects = (m.project_experience || []).flatMap(p => [p.name, p.role, p.description]);
+      const hay = [
+        m.name, m.role, m.summary, m.current_client,
+        ...(m.kernskills || []),
+        ...(m.technologies || []),
+        ...(m.certifications || []),
+        ...projects,
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(lc(keyword))) return false;
+    }
+    return true;
+  });
+
+  // Beperkte payload — top 8, projectervaring afgeknipt op 5 stuks van 200 chars.
+  // Inclusief afgeleide availability_status zodat Nova in haar antwoord direct
+  // de bucket kan benoemen ("Niels is nu beschikbaar", "Sara komt vrij in juni").
+  return filtered.slice(0, 8).map(m => {
+    const status = isAvailableNow(m)
+      ? 'beschikbaar_nu'
+      : (m.available_from ? `vrij_vanaf_${m.available_from}` : 'bezet_einddatum_onbekend');
+    return {
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      seniority: m.seniority,
+      kernskills: m.kernskills,
+      technologies: m.technologies,
+      sectors: m.sectors,
+      certifications: m.certifications,
+      current_client: m.current_client,
+      available_from: m.available_from,
+      availability_status: status,
+      summary: m.summary,
+      project_experience: (m.project_experience || []).slice(0, 5).map(p => ({
+        name: p.name,
+        role: p.role,
+        description: (p.description || '').slice(0, 220),
+      })),
+    };
+  });
+}
+
+// Volledige profiel-fetch op naam (fuzzy). Geen cv_text/cv_pdf-info terug
+// (privacy/size). Gebruik dit als de gebruiker een specifieke naam noemt.
+async function toolGetTeamMember({ name } = {}) {
+  if (!name || typeof name !== 'string') return { error: 'name is verplicht.' };
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
+  if (error) throw error;
+  const target = (data || []).find(m => {
+    const a = (m.name || '').toLowerCase();
+    const b = name.toLowerCase();
+    return a === b || a.includes(b) || b.includes(a);
+  });
+  if (!target) {
+    return {
+      error: `Geen teamlid gevonden met naam "${name}".`,
+      beschikbaar: (data || []).map(m => m.name),
+    };
+  }
+  return target;
 }
 
 // ─── search_web — Google Search grounding als sub-call ───────────────────
@@ -404,6 +537,33 @@ const tools = [
           },
         },
       },
+      {
+        name: 'find_team_members',
+        description: 'Zoek consultants in het Creates-team voor een klantvraag of skill-match. Filter op skill, technology, sector, senioriteit en/of beschikbaarheid (nu of vóór een datum). Gebruik dit als de gebruiker vraagt "wie heeft X-ervaring?" of "welke collega past bij deze klantvraag?" of bij een tender/RFP-match. Retourneert top 8 matches inclusief availability_status (beschikbaar_nu / vrij_vanaf_YYYY-MM-DD / bezet_einddatum_onbekend) zodat je de bucket per consultant in je antwoord kunt benoemen.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            skill: { type: SchemaType.STRING, description: 'Hoofd-vaardigheid (kernskills) — bv. "Datamodellering", "Stakeholdermanagement", "Pipeline-bouw". Substring-match, case-insensitive.' },
+            technology: { type: SchemaType.STRING, description: 'Tool/platform/framework — bv. "Power BI", "Microsoft Fabric", "Databricks", "Snowflake", "Python". Substring-match, case-insensitive.' },
+            sector: { type: SchemaType.STRING, description: 'Sector waar de consultant werkervaring in heeft (uit canonical lijst: "Financial services", "Onderwijs", "Retail & e-commerce", "Industrie & manufacturing", "Overheid & non-profit", "Zorg", "Energy & utilities", "Logistiek & transport", "Professional services", "Telecom & media", "Bouw & vastgoed", "Agri & food", "Cultuur & recreatie"). Case-insensitive exact match.' },
+            seniority: { type: SchemaType.STRING, description: 'Een van: "Starter", "Young Professional", "Professional", "Senior", "Expert".' },
+            available_now: { type: SchemaType.BOOLEAN, description: 'true = alleen direct-beschikbare consultants (geen current_client, of available_from is verleden). Default false (toont alle matches; sales kan zelf prioriteren op de availability_status in het antwoord).' },
+            available_before: { type: SchemaType.STRING, description: 'ISO-datum YYYY-MM-DD. Filter op consultants die uiterlijk op deze datum vrijkomen (incl. nu-beschikbaren). Bv. "2026-07-01" voor "tegen Q3". Bezet-einddatum-onbekend valt automatisch buiten deze filter.' },
+            keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt door naam, rol, samenvatting, projectervaring, certificaten. Handig voor specifieke termen die niet als skill/tech zijn ge-tagd (bv. "klantportaal", "embedded BI").' },
+          },
+        },
+      },
+      {
+        name: 'get_team_member',
+        description: 'Haal het volledige profiel van één consultant op (alle gestructureerde velden incl. projectervaring + samenvatting + huidige klant). Gebruik dit als de gebruiker een specifieke naam noemt of een diepere blik wil op één teamlid voor bv. een klantgerichte profielpitch.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          required: ['name'],
+          properties: {
+            name: { type: SchemaType.STRING, description: 'Voor- + achternaam, of een deel ervan (bv. "Niels"). Fuzzy match op de naam-kolom.' },
+          },
+        },
+      },
     ],
   },
 ];
@@ -415,6 +575,8 @@ async function runTool(name, args) {
     if (name === 'list_personas') return await toolListPersonas();
     if (name === 'search_web') return await toolSearchWeb(args || {});
     if (name === 'prospect_brief') return await toolProspectBrief(args || {});
+    if (name === 'find_team_members') return await toolFindTeamMembers(args || {});
+    if (name === 'get_team_member') return await toolGetTeamMember(args || {});
     return { error: `Onbekende tool: ${name}` };
   } catch (e) {
     return { error: e.message || 'Tool execution failed' };
