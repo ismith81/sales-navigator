@@ -4238,13 +4238,14 @@ body::before {
   box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
 }
 
-/* Mobile-overlay backdrop */
+/* Mobile-overlay backdrop. z-index moet boven .chat-panel--inline (1000) en
+   onder .chat-sidebar — anders dekt de panel-aside de sidebar af. */
 .chat-sidebar-backdrop {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(44,60,82,0.45);
-  z-index: 60;
+  z-index: 1100;
   animation: chat-sidebar-fade-in 0.18s ease;
 }
 @keyframes chat-sidebar-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -4628,6 +4629,84 @@ body::before {
 }
 .chat-stop:hover { background: #1d2a3b !important; }
 
+/* ═══ Sidebar mobile-mode: ≤768px (zelfde breakpoint als topbar mobile) ═══
+   Tussen 641-768px gaf de oude 640-only-rule een buggy halve toestand:
+   topbar al mobile, maar sidebar nog desktop-flex-kolom. Nu lijnen ze gelijk.
+   Bulletproof hide: display:none + visibility:hidden default; pas bij
+   .chat-sidebar--mobile-open flippen naar zichtbaar. Geen transform-only-trick. */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 280px;
+    flex-basis: 280px;
+    /* Boven .chat-panel--inline (z:1000) zodat de drawer ook echt zichtbaar is. */
+    z-index: 1110;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    box-shadow: 0 16px 40px rgba(44,60,82,0.18);
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .chat-sidebar--mobile-open {
+    display: flex;
+    animation: chat-sidebar-slide-in 0.22s ease;
+  }
+  /* Collapsed-rail bestaat niet op mobiel — altijd full-drawer als open. */
+  .chat-sidebar--collapsed { width: 280px; flex-basis: 280px; }
+  .chat-sidebar--collapsed .chat-sidebar-scroll { display: block; }
+  .chat-sidebar--collapsed .chat-sidebar-new {
+    justify-content: flex-start;
+    padding: 0.5rem 0.7rem;
+    margin: 0.1rem 0.6rem 0.6rem;
+  }
+  .chat-sidebar--collapsed .chat-sidebar-new-label { display: inline; }
+  .chat-sidebar-toggle { display: none; }
+  .chat-sidebar-close { display: inline-flex; }
+  .chat-sidebar-backdrop { display: block; }
+  .chat-sidebar-item-menu-trigger { opacity: 1; } /* hover bestaat niet op touch */
+
+  /* Hamburger zichtbaar in chat-header */
+  .chat-panel--inline .chat-header-hamburger { display: inline-flex; }
+  /* Header-titel iets kleiner */
+  .chat-header-title-text { max-width: 200px; font-size: 0.82rem; }
+  .chat-header-title-input { min-width: 140px; max-width: 200px; }
+
+  /* Header-layout op mobiel: hamburger absolute links, Nova-label gecentreerd.
+     - chat-header-inner: position relative (anker voor absolute hamburger),
+       flex op center zodat de meta-row mooi gecentered wordt
+     - chat-header-meta: flex-row + justify-center, fills 100%
+     - hamburger: absoluut links, uit de flow zodat de meta-centering klopt */
+  .chat-panel--inline .chat-header-inner {
+    position: relative;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .chat-panel--inline .chat-header-meta {
+    flex: 1 1 auto;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+  }
+  .chat-panel--inline .chat-header-title { flex-wrap: nowrap; }
+  .chat-panel--inline .chat-header-hamburger {
+    position: absolute;
+    left: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .chat-panel--inline .chat-header-actions {
+    flex: 0 0 32px; /* spiegel-breedte van de hamburger; houdt centering visueel klopt */
+  }
+}
+@keyframes chat-sidebar-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
 @media (max-width: 640px) {
   .chat-quickgroups { grid-template-columns: 1fr; }
   .chat-panel--inline {
@@ -4644,46 +4723,6 @@ body::before {
   .chat-layout .chat-panel--inline {
     height: 100%;
   }
-  .chat-sidebar {
-    /* Off-canvas links — slidet in via .chat-sidebar--mobile-open. */
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 280px;
-    flex-basis: 280px;
-    z-index: 70;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    background: #fff;
-    border-right: 1px solid var(--border);
-    box-shadow: 0 16px 40px rgba(44,60,82,0.18);
-    padding-top: env(safe-area-inset-top, 0);
-  }
-  .chat-sidebar--mobile-open {
-    transform: translateX(0);
-  }
-  /* In collapsed-state heeft sidebar geen rail-mode op mobiel — altijd óf
-     verborgen óf full-width drawer. Reset breedte. */
-  .chat-sidebar--collapsed {
-    width: 280px;
-    flex-basis: 280px;
-  }
-  .chat-sidebar-toggle { display: none; }
-  .chat-sidebar-close { display: inline-flex; }
-  .chat-sidebar--collapsed .chat-sidebar-scroll { display: block; }
-  .chat-sidebar--collapsed .chat-sidebar-new { justify-content: flex-start; padding: 0.5rem 0.7rem; margin: 0.1rem 0.6rem 0.6rem; }
-  .chat-sidebar--collapsed .chat-sidebar-new-label { display: inline; }
-  .chat-sidebar-backdrop { display: block; }
-  /* Hamburger zichtbaar in chat-header op mobiel. */
-  .chat-panel--inline .chat-header-hamburger {
-    display: inline-flex;
-  }
-  /* Op mobiel maakt de menu-trigger altijd zichtbaar (hover bestaat niet). */
-  .chat-sidebar-item-menu-trigger { opacity: 1; }
-  /* Header-titel op mobiel iets kleiner. */
-  .chat-header-title-text { max-width: 200px; font-size: 0.82rem; }
-  .chat-header-title-input { min-width: 140px; max-width: 200px; }
   .chat-panel--inline .chat-messages {
     padding: 0.85rem 0.85rem 7.9rem;
     overscroll-behavior: contain;
