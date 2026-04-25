@@ -2744,6 +2744,41 @@ body::before {
 }
 .team-toggle input { width: 16px; height: 16px; cursor: pointer; }
 
+/* ─── Sectoren chip-picker (synchroon met cases.mapping.branches) ─── */
+.team-sector-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+}
+.team-sector-chip {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.team-sector-chip:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+  border-color: rgba(44,60,82,0.18);
+}
+.team-sector-chip.is-active {
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, var(--teal));
+  border-color: rgba(49,183,185,0.4);
+}
+.team-sector-empty {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 /* ─── Projectervaring inline-editor ─── */
 .team-projects {
   background: #fff;

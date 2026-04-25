@@ -6,8 +6,25 @@
 
 import { supabase } from './supabase';
 import { authedFetch } from './auth';
+import { DEFAULT_BRANCHES } from '../data/branches';
 
 const STORAGE_BUCKET = 'team-cvs';
+
+// Haalt de canonical branches-lijst uit app_config — zelfde bron die cases
+// gebruiken (zie src/lib/store.js). Fallback naar DEFAULT_BRANCHES als de
+// row nog niet bestaat (bv. fresh seed, of test-omgeving).
+export async function listBranches() {
+  const { data, error } = await supabase
+    .from('app_config')
+    .select('value')
+    .eq('key', 'branches')
+    .maybeSingle();
+  if (error) {
+    console.warn('listBranches fout:', error.message);
+    return DEFAULT_BRANCHES;
+  }
+  return Array.isArray(data?.value) && data.value.length ? data.value : DEFAULT_BRANCHES;
+}
 
 // ─── reads ───────────────────────────────────────────────────────────────
 export async function listTeamMembers() {

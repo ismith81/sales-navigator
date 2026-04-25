@@ -5,6 +5,7 @@ import {
   deleteTeamMember,
   parseCvPdf,
   uploadCvPdf,
+  listBranches,
 } from '../lib/teamMembers';
 import TeamMemberEditor from './TeamMemberEditor';
 
@@ -13,6 +14,7 @@ import TeamMemberEditor from './TeamMemberEditor';
 // uploaden (PDF → parse → prefill editor).
 export default function TeamManager() {
   const [members, setMembers] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editingPrefill, setEditingPrefill] = useState(null);
@@ -21,7 +23,9 @@ export default function TeamManager() {
 
   const refresh = async () => {
     setLoading(true);
-    setMembers(await listTeamMembers());
+    const [m, b] = await Promise.all([listTeamMembers(), listBranches()]);
+    setMembers(m);
+    setBranches(b);
     setLoading(false);
   };
 
@@ -84,6 +88,7 @@ export default function TeamManager() {
       <TeamMemberEditor
         memberId={editingId === 'new' ? null : editingId}
         prefill={editingPrefill}
+        branches={branches}
         onClose={handleEditorClose}
       />
     );

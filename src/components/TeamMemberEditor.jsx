@@ -29,7 +29,7 @@ const arrToText = (a = []) => Array.isArray(a) ? a.join(', ') : '';
 const textToArr = (s = '') => (s || '')
   .split(',').map(x => x.trim()).filter(Boolean);
 
-export default function TeamMemberEditor({ memberId, prefill, onClose }) {
+export default function TeamMemberEditor({ memberId, prefill, branches = [], onClose }) {
   const isNew = !memberId;
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -41,7 +41,9 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
   const [seniority, setSeniority] = useState('Professional');
   const [kernskills, setKernskills] = useState('');
   const [technologies, setTechnologies] = useState('');
-  const [sectors, setSectors] = useState('');
+  // sectors is een array (chip-picker uit canonical branches-lijst), niet
+  // free-text zoals de andere tag-velden — gegarandeerd synchroon met cases.
+  const [sectors, setSectors] = useState([]);
   const [certifications, setCertifications] = useState('');
   const [summary, setSummary] = useState('');
   const [available, setAvailable] = useState(true);
@@ -101,7 +103,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
         setSeniority(SENIORITY_MIGRATION[prefill.seniority] || prefill.seniority || 'Professional');
         setKernskills(arrToText(prefill.kernskills));
         setTechnologies(arrToText(prefill.technologies));
-        setSectors(arrToText(prefill.sectors));
+        setSectors(Array.isArray(prefill.sectors) ? prefill.sectors : []);
         setCertifications(arrToText(prefill.certifications));
         setSummary(prefill.summary || '');
         setProjectExperience(Array.isArray(prefill.project_experience) ? prefill.project_experience : []);
@@ -123,7 +125,7 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       setSeniority(SENIORITY_MIGRATION[m.seniority] || m.seniority || 'Professional');
       setKernskills(arrToText(m.kernskills));
       setTechnologies(arrToText(m.technologies));
-      setSectors(arrToText(m.sectors));
+      setSectors(Array.isArray(m.sectors) ? m.sectors : []);
       setCertifications(arrToText(m.certifications));
       setSummary(m.summary || '');
       setAvailable(!!m.available_for_sales);
@@ -173,7 +175,13 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       if (f.seniority) setSeniority(SENIORITY_MIGRATION[f.seniority] || f.seniority);
       if (Array.isArray(f.kernskills) && f.kernskills.length) setKernskills(arrToText(f.kernskills));
       if (Array.isArray(f.technologies) && f.technologies.length) setTechnologies(arrToText(f.technologies));
-      if (Array.isArray(f.sectors) && f.sectors.length) setSectors(arrToText(f.sectors));
+      if (Array.isArray(f.sectors) && f.sectors.length) {
+        // Filter naar alleen canonical waardes — Gemini's enum-constraint
+        // moet 't al doen, defensief filter blokkeert vrij-text-drift bij
+        // oudere parses.
+        const valid = f.sectors.filter(s => branches.includes(s));
+        setSectors(valid);
+      }
       if (Array.isArray(f.certifications) && f.certifications.length) setCertifications(arrToText(f.certifications));
       if (f.summary) setSummary(f.summary);
       if (Array.isArray(f.project_experience) && f.project_experience.length) setProjectExperience(f.project_experience);
@@ -213,7 +221,8 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
       seniority: seniority || null,
       kernskills: textToArr(kernskills),
       technologies: textToArr(technologies),
-      sectors: textToArr(sectors),
+      // sectors is al een array (chip-picker) — geen textToArr-conversie nodig.
+      sectors: sectors,
       certifications: textToArr(certifications),
       summary: summary.trim() || null,
       available_for_sales: available,
@@ -347,18 +356,31 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
             placeholder="komma-gescheiden"
           />
         </label>
-        <label className="team-field team-field--wide">
+        <div className="team-field team-field--wide">
           <span className="team-field-label">
             Sectoren
-            <span className="team-field-hint"><em>Onderwijs, Retail & e-commerce, Financial services, …</em></span>
+            <span className="team-field-hint">Klik om te (de)selecteren — synchroon met cases</span>
           </span>
-          <input
-            type="text"
-            value={sectors}
-            onChange={(e) => setSectors(e.target.value)}
-            placeholder="komma-gescheiden"
-          />
-        </label>
+          <div className="team-sector-chips">
+            {branches.length === 0 ? (
+              <span className="team-sector-empty">Nog geen branches geconfigureerd.</span>
+            ) : (
+              branches.map(b => {
+                const active = sectors.includes(b);
+                return (
+                  <button
+                    key={b}
+                    type="button"
+                    className={`team-sector-chip${active ? ' is-active' : ''}`}
+                    onClick={() => {
+                      setSectors(prev => active ? prev.filter(s => s !== b) : [...prev, b]);
+                    }}
+                  >{b}</button>
+                );
+              })
+            )}
+          </div>
+        </div>
         <label className="team-field team-field--wide">
           <span className="team-field-label">
             Certificaten
