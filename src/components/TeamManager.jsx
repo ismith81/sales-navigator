@@ -50,6 +50,15 @@ export default function TeamManager() {
         setParseError(result.error);
         return;
       }
+      // Diagnose: meld als 't extract erg dun was zodat sales weet of 't
+      // model 't liet liggen of dat 't aan de PDF lag.
+      const d = result.diagnostics || {};
+      if (d.fieldsFilled !== undefined && d.fieldsFilled < 4) {
+        const hint = d.textLength < 800
+          ? `Slechts ${d.textLength} chars uit PDF gehaald — mogelijk gescand of image-zwaar. Vul handmatig aan of probeer een tekst-PDF.`
+          : `Tekst gelezen (${d.textLength} chars), maar Gemini vond weinig velden (${d.fieldsFilled}/9). Check of 't CV de gangbare structuur heeft (rol, skills, projecten).`;
+        setParseError(`⚠️ Beperkte extractie. ${hint}`);
+      }
       // Editor wordt geopend in 'new'-mode met de parsed fields voorgevuld
       // én het PDF-bestand zodat de editor het bij saven kan uploaden.
       setEditingPrefill({ ...result.fields, _pendingPdf: file });

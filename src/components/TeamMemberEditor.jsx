@@ -129,17 +129,27 @@ export default function TeamMemberEditor({ memberId, prefill, onClose }) {
         return;
       }
       // Velden updaten met geëxtraheerde waarden — gebruiker kan na de save
-      // alsnog wijzigen voor 't echt opslaat.
+      // alsnog wijzigen voor 't echt opslaat. Alleen overschrijven als
+      // er een waarde uit kwam — anders behouden we wat de user had.
       const f = result.fields || {};
       if (f.name) setName(f.name);
       if (f.role) setRole(f.role);
       if (f.seniority) setSeniority(f.seniority);
-      if (Array.isArray(f.kernskills)) setKernskills(arrToText(f.kernskills));
-      if (Array.isArray(f.technologies)) setTechnologies(arrToText(f.technologies));
-      if (Array.isArray(f.sectors)) setSectors(arrToText(f.sectors));
-      if (Array.isArray(f.certifications)) setCertifications(arrToText(f.certifications));
+      if (Array.isArray(f.kernskills) && f.kernskills.length) setKernskills(arrToText(f.kernskills));
+      if (Array.isArray(f.technologies) && f.technologies.length) setTechnologies(arrToText(f.technologies));
+      if (Array.isArray(f.sectors) && f.sectors.length) setSectors(arrToText(f.sectors));
+      if (Array.isArray(f.certifications) && f.certifications.length) setCertifications(arrToText(f.certifications));
       if (f.summary) setSummary(f.summary);
-      if (Array.isArray(f.project_experience)) setProjectExperience(f.project_experience);
+      if (Array.isArray(f.project_experience) && f.project_experience.length) setProjectExperience(f.project_experience);
+
+      // Diagnose tonen als de extractie dun was.
+      const d = result.diagnostics || {};
+      if (d.fieldsFilled !== undefined && d.fieldsFilled < 4) {
+        const hint = d.textLength < 800
+          ? `Slechts ${d.textLength} chars uit PDF gehaald — mogelijk gescand of image-zwaar.`
+          : `Tekst gelezen (${d.textLength} chars), maar Gemini vond weinig velden (${d.fieldsFilled}/9).`;
+        setError(`⚠️ Beperkte extractie. ${hint} Vul handmatig aan waar nodig.`);
+      }
     }
     // mode === 'pdf-only' → niets met de fields doen, alleen pendingPdf zetten
 

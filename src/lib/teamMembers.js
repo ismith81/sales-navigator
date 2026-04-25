@@ -126,7 +126,11 @@ export async function parseCvPdf(file) {
     if (!res.ok) {
       return { error: json.error || `Server ${res.status}` };
     }
-    return { fields: json.fields || {}, text: json.text || '' };
+    return {
+      fields: json.fields || {},
+      text: json.text || '',
+      diagnostics: json.diagnostics || {},
+    };
   } catch (err) {
     return { error: err.message || 'Onbekende fout.' };
   }

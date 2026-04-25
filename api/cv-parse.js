@@ -22,32 +22,50 @@ import { requireUser } from './_lib/auth.js';
 const EXTRACT_PROMPT = `Je krijgt de platte tekst van een CV. Haal hier de volgende
 gestructureerde velden uit en lever ze terug als JSON volgens het opgegeven schema.
 
+**Wees ruimhartig in extractie**: als een term, project, sector of skill in de tekst
+staat, neem 'm op. Pas op met "verzinnen" — je mag niets toevoegen dat NIET in
+de tekst voorkomt — maar als iets letterlijk genoemd wordt of impliciet evident
+is (bv. een bedrijfsnaam in een projectsectie = projectervaring), gebruik 't.
+
 Regels voor extractie:
 - name: voor- + achternaam zoals 't in 't CV staat. Eén string.
-- role: huidige functietitel (bv. "Analytics Engineer", "Data Engineer", "BI Consultant").
-- seniority: één van [Junior, Medior, Professional, Senior, Lead, Principal] op basis
-  van wat 't CV zegt; als 't onduidelijk is kies "Professional".
-- kernskills: 5–10 hoofd-vaardigheden (bv. "Datamodellering", "Stakeholdermanagement",
-  "Pipeline-bouw", "DAX"). Geen merknamen — die horen bij technologies.
-- technologies: tools, platforms, frameworks (bv. "Power BI", "Microsoft Fabric",
-  "Databricks", "Azure", "SQL Server", "Python", "dbt"). Merknamen, geen vage termen.
+- role: huidige functietitel of meest dominante rol (bv. "Analytics Engineer",
+  "Data Engineer", "BI Consultant"). Kijk naar de meest recente functie of
+  de titel die opent op het CV.
+- seniority: één van [Junior, Medior, Professional, Senior, Lead, Principal].
+  Kies op basis van: jaren ervaring, expliciet vermelde titel, scope van projecten.
+  Bij echt geen aanwijzing → "Professional".
+- kernskills: 5–12 hoofd-vaardigheden (vakmanschap, geen tools). Voorbeelden:
+  "Datamodellering", "Stakeholdermanagement", "Pipeline-bouw", "DAX",
+  "Solution-architectuur", "Requirements-elicitation", "Coaching".
+  Géén tools/merknamen (die horen onder technologies).
+- technologies: tools, platforms, frameworks, talen, services. Voorbeelden:
+  "Power BI", "Microsoft Fabric", "Databricks", "Azure", "AWS", "SQL Server",
+  "Python", "dbt", "Snowflake", "Tableau". Pak ALLES wat duidelijk een tech-
+  stack-onderdeel is — wees ruimhartig.
 - sectors: branches/sectoren waarin de consultant heeft gewerkt
-  (bv. "Onderwijs", "Retail", "Overheid & non-profit", "Financial services", "Zorg",
-  "Industrie & manufacturing", "Logistiek & transport", "Energy & utilities",
-  "Professional services").
-- project_experience: 3–8 belangrijkste projecten met { name, role, description }.
-  description = 1–2 zinnen wat de consultant deed en waarom 't relevant is.
-- certifications: officiële certificaten/diploma's (bv. "PL-300", "DP-203",
-  "Azure Data Engineer Associate"). Géén self-paced cursussen of opleidingen.
+  (bv. "Onderwijs", "Retail & e-commerce", "Overheid & non-profit",
+  "Financial services", "Zorg", "Industrie & manufacturing",
+  "Logistiek & transport", "Energy & utilities", "Professional services").
+  Gebaseerd op project- of klantnamen die in een bekende sector vallen.
+- project_experience: 3–10 belangrijkste projecten met { name, role, description }.
+  name = klantnaam of projectnaam. role = wat de consultant deed (bv. "Lead
+  Data Engineer", "Solution architect"). description = 1–2 zinnen over scope/
+  impact. Pak liever te veel dan te weinig — sales kan filteren.
+- certifications: officiële certificaten/diploma's met afkorting of leverancier
+  (bv. "PL-300", "DP-203", "Azure Data Engineer Associate", "AWS Solutions
+  Architect"). Géén interne cursussen of self-paced trainingen.
 - summary: 2–3 zinnen klantgerichte profielsamenvatting in de derde persoon
   ("Jessica is een Analytics Engineer met sterke ervaring in..."). Bedoeld
-  voor sales om te kopiëren naar offertes/voorstellen.
+  voor sales om te kopiëren naar offertes/voorstellen. Toon = professioneel-
+  zelfverzekerd, geen marketing-jargon.
 
 Wees consistent in casing en spelling. Gebruik exacte titels uit het CV waar
 mogelijk; bij twijfel: kies de meest commerciële formulering.
 
-Als een veld echt niet uit 't CV te halen is: lege string of lege array,
-maar nooit verzinnen.`;
+**Belangrijk**: laat een veld alléén leeg als 't echt nergens uit te halen is.
+Bij 5+ jaar Power BI-ervaring zou je niet "geen technologies" moeten teruggeven.
+Bij een uitgebreid project-overzicht zou je niet 0 projects moeten extracten.`;
 
 const responseSchema = {
   type: SchemaType.OBJECT,
@@ -166,5 +184,28 @@ export default async function handler(req, res) {
     return;
   }
 
-  res.status(200).json({ text: truncated, fields });
+  // Diagnose-info zodat de UI bij dunne extractie kan vertellen wat er
+  // gebeurde (was 't tekst-armoede of Gemini-extract-armoede?).
+  const diagnostics = {
+    textLength: truncated.length,
+    fieldsFilled: countFilledFields(fields),
+  };
+  console.log('cv-parse OK', diagnostics);
+  res.status(200).json({ text: truncated, fields, diagnostics });
+}
+
+// Telt hoeveel "echte" velden er gevuld zijn — om te bepalen of de
+// extractie matig was (puur signaal voor diagnostics, geen logica).
+function countFilledFields(f = {}) {
+  let n = 0;
+  if (f.name) n++;
+  if (f.role) n++;
+  if (f.seniority) n++;
+  if (Array.isArray(f.kernskills) && f.kernskills.length) n++;
+  if (Array.isArray(f.technologies) && f.technologies.length) n++;
+  if (Array.isArray(f.sectors) && f.sectors.length) n++;
+  if (Array.isArray(f.project_experience) && f.project_experience.length) n++;
+  if (Array.isArray(f.certifications) && f.certifications.length) n++;
+  if (f.summary) n++;
+  return n;
 }
