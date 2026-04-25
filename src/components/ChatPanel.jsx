@@ -345,23 +345,25 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
         aria-label="Nova — sales assistent"
       >
         <header className="chat-header">
-          <div className="chat-header-meta">
-            <div className="chat-header-title">
-              <span className="chat-header-dot" aria-hidden="true" />
-              <strong>Nova</strong>
-              <span className="chat-header-subtitle">sales-assistent</span>
+          <div className="chat-header-inner">
+            <div className="chat-header-meta">
+              <div className="chat-header-title">
+                <span className="chat-header-dot" aria-hidden="true" />
+                <strong>Nova</strong>
+                <span className="chat-header-subtitle">sales-assistent</span>
+              </div>
+              <div className="chat-header-trust">werkt met jullie cases, topics en persona’s</div>
             </div>
-            <div className="chat-header-trust">werkt met jullie cases, topics en persona’s</div>
-          </div>
-          <div className="chat-header-actions">
-            {messages.length > 0 && (
-              <button type="button" className="chat-header-btn" onClick={clearChat} title="Gesprek wissen">
-                Wissen
-              </button>
-            )}
-            {!inline && (
-              <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
-            )}
+            <div className="chat-header-actions">
+              {messages.length > 0 && (
+                <button type="button" className="chat-header-btn" onClick={clearChat} title="Gesprek wissen">
+                  Wissen
+                </button>
+              )}
+              {!inline && (
+                <button type="button" className="chat-header-btn chat-close" onClick={onClose} aria-label="Sluiten">✕</button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -495,7 +497,6 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
               placeholder="Plak notities of beschrijf je gesprek…"
               rows={1}
             />
-            <div className="chat-input-helper">Tip: noem rol, sector of onderwerp voor een sterker antwoord.</div>
             {busy ? (
               <button type="button" className="chat-send chat-stop" onClick={stopGenerating} aria-label="Stop genereren" title="Stop genereren">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
