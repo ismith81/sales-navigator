@@ -16,7 +16,7 @@
 //   { text: string, fields: { name, role, seniority, kernskills[], ... } }
 
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-import pdfParse from 'pdf-parse';
+import { extractText, getDocumentProxy } from 'unpdf';
 import { requireUser } from './_lib/auth.js';
 
 const EXTRACT_PROMPT = `Je krijgt de platte tekst van een CV. Haal hier de volgende
@@ -118,13 +118,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  // ─── Stap 1: PDF → platte tekst ────────────────────────────────────────
+  // ─── Stap 1: PDF → platte tekst (via unpdf, serverless-friendly) ───────
+  // unpdf is een modern alternatief voor pdf-parse zonder de test-file-bug
+  // bij module-load (pdf-parse v1/v2 probeert ./test/data/05-versions-space.pdf
+  // te lezen tijdens require, wat op Vercel-functies een ENOENT-crash gaf).
   let text = '';
   try {
-    const parsed = await pdfParse(buffer);
-    text = (parsed?.text || '').trim();
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text: pages } = await extractText(pdf, { mergePages: true });
+    text = (Array.isArray(pages) ? pages.join('\n') : (pages || '')).trim();
   } catch (err) {
-    console.error('cv-parse: pdf-parse fout', err);
+    console.error('cv-parse: unpdf extractie fout', err);
     res.status(500).json({ error: 'Kon PDF niet lezen. Is het bestand een geldige PDF?' });
     return;
   }

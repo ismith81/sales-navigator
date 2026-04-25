@@ -112,7 +112,17 @@ export async function parseCvPdf(file) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pdfBase64, fileName: file.name }),
     });
-    const json = await res.json().catch(() => ({}));
+    // Probeer JSON; als 't faalt (bv. crash → HTML-response van Vercel), meld
+    // dat onderscheidend zodat we module-crash van content-error kunnen scheiden.
+    let json;
+    try {
+      json = await res.json();
+    } catch {
+      const body = await res.text().catch(() => '');
+      return {
+        error: `Server gaf geen JSON terug (${res.status}). Vermoedelijk een crash op de server. Eerste 200 chars van response: ${body.slice(0, 200)}`,
+      };
+    }
     if (!res.ok) {
       return { error: json.error || `Server ${res.status}` };
     }
