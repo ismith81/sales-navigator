@@ -3,6 +3,7 @@ import CaseEditor from './CaseEditor';
 import ImportCase from './ImportCase';
 import FilterManager from './FilterManager';
 import PersonaManager from './PersonaManager';
+import TeamManager from './TeamManager';
 import { exportCaseToDocx } from '../utils/exportCase';
 import { PersonaIcon } from '../lib/personaIcons.jsx';
 
@@ -213,7 +214,15 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
         />
       )}
 
-      {/* Backup / Restore — inklapbaar, zeldzame beheer-actie */}
+      {section === 'team' && (
+        <TeamManager />
+      )}
+
+      {/* Backup / Restore — inklapbaar, zeldzame beheer-actie. Alleen relevant
+          voor de Cases-sectie omdat de backup zelf cases/topics/personas dumpt;
+          op andere sub-tabs (Onderwerpen, Persona's, Team) heeft 'ie geen
+          contextuele functie en voelt 't als onnodige clutter. */}
+      {section === 'cases' && (
       <details className="cm-backup-details">
         <summary className="cm-backup-summary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -232,6 +241,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
           </button>
         </div>
       </details>
+      )}
 
       {/* Delete confirmation modal */}
       {confirmDeleteId && (

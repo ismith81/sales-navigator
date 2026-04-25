@@ -380,6 +380,8 @@ function TabBeheer() {
             vervolgvragen, omschrijving en klantsignalen.</li>
           <li><strong>Persona's</strong> — de vier kwadranten (plus eventuele extra's) met iconen,
             rollen en coaching-tekst.</li>
+          <li><strong>Team</strong> — consultant-profielen (CV's). Upload een PDF en de structuur
+            wordt automatisch ingelezen, of vul handmatig in. Zie hieronder voor details.</li>
         </ul>
       </section>
 
@@ -445,6 +447,58 @@ function TabBeheer() {
           De coaching-tekst verschijnt in de Gids-route als je een persona selecteert. De
           klantsignalen helpen je te herkennen <em>wie</em> je aan de lijn hebt op basis van wat
           ze zeggen.
+        </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>Team — consultant-profielen</h3>
+        <p>
+          Beheer → Team is de plek voor de profielen van collega's: wie heeft welke expertise,
+          welke certificaten, in welke sectoren ervaring, en welke projecten heeft 'ie gedaan.
+          Sales gebruikt dit om snel de juiste collega aan een klantvraag te koppelen
+          (matching komt later via Nova; in deze fase is 't een doorzoekbaar overzicht).
+        </p>
+        <ul>
+          <li>
+            <strong>+ CV uploaden</strong> — upload een PDF, Nova haalt er automatisch de
+            structuur uit (naam, rol, senioriteit, kernskills, technologieën, sectoren,
+            projectervaring, certificaten + een klantgerichte 2–3 zinnen-samenvatting).
+            Daarna kun je in de editor nog corrigeren voor je opslaat. <em>De PDF wordt
+            ook bewaard</em> zodat je 'm later opnieuw kunt openen.
+          </li>
+          <li>
+            <strong>+ Nieuw teamlid</strong> — leeg formulier voor handmatig invullen
+            (zonder PDF). Handig voor een snelle stub; je kunt later alsnog een CV
+            uploaden via "Vervangen + opnieuw inlezen".
+          </li>
+          <li>
+            <strong>Tags-velden</strong> (Kernskills, Technologieën, Sectoren, Certificaten)
+            zijn komma-gescheiden tekstvelden. Bewust simpel zodat je snel kunt typen;
+            bij save splitsen we op komma's en bewaren we ze als arrays in de database
+            (voor straks-zoeken).
+          </li>
+          <li>
+            <strong>Beschikbaar voor sales</strong> — toggle: Ja/Nee. Niet-beschikbare
+            collega's blijven zichtbaar in de lijst (met een grijs label) maar zou Nova
+            straks lager rangschikken bij een match.
+          </li>
+          <li>
+            <strong>Projectervaring</strong> — inline-editor met naam + rol + 1–2 zinnen
+            beschrijving per project. Wordt door Nova gebruikt als bewijslast bij een pitch
+            ("collega X heeft eerder Y gedaan"). Auto-extractie uit CV werkt meestal goed
+            voor de top 3–8 projecten; controleer wel.
+          </li>
+          <li>
+            <strong>Klantgerichte samenvatting</strong> — 2–3 zinnen die sales kan kopiëren
+            naar offertes/voorstellen. Anders dan de interne CV-samenvatting; bewust
+            commercieel verwoord.
+          </li>
+        </ul>
+        <p>
+          <strong>Privacy</strong>: zorg dat de CV's al AVG-proof zijn vóór upload — geen
+          BSN, geboortedatum, NAW-gegevens of andere gevoelige info die niet nodig is voor
+          sales-matching. De PDF's komen in een privé-bucket op Supabase Storage, alleen
+          zichtbaar voor ingelogde users van deze app.
         </p>
       </section>
 

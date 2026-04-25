@@ -2463,6 +2463,433 @@ body::before {
   padding: 0.5rem 1rem;
 }
 
+/* ═══ TEAM MANAGER (Beheer → Team) ═════════════════════════════════════════
+   Lijst van consultant-profielen + per-row acties. Editor (TeamMemberEditor)
+   gebruikt aparte form-styling. Volgt dezelfde teal-accent / navy-tekst /
+   zachte-cards stijl als case-manager. */
+.team-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.team-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+.team-parse-status,
+.team-parse-error {
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.team-parse-status {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.18);
+}
+.team-parse-error {
+  background: rgba(237,23,75,0.06);
+  color: var(--accent, #ED174B);
+  border: 1px solid rgba(237,23,75,0.22);
+}
+.team-empty {
+  padding: 1.5rem 1.2rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.92rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft, #F5F7FA);
+  line-height: 1.5;
+}
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.team-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.team-row:hover {
+  border-color: rgba(49,183,185,0.4);
+  box-shadow: 0 2px 6px rgba(44,60,82,0.05);
+}
+.team-row-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.team-row-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.team-row-role {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.team-row-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+.team-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.team-tag--skill {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.16);
+}
+.team-tag--tech {
+  background: rgba(44,60,82,0.05);
+  color: var(--navy);
+  border: 1px solid rgba(44,60,82,0.12);
+}
+.team-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.team-badge--off {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+.team-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.team-row-cv-icon {
+  color: var(--teal);
+  display: inline-flex;
+}
+.team-row-del {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.team-row-del:hover {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+
+/* ─── Editor ─────────────────────────────────────────────────────────────── */
+.team-editor { display: flex; flex-direction: column; gap: 0.85rem; }
+.team-editor--loading {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--muted);
+}
+.team-editor-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: sticky;
+  top: var(--topbar-height, 100px);
+  z-index: 5;
+}
+.team-editor-back,
+.team-editor-save {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--navy);
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: inherit;
+}
+.team-editor-back:hover { background: var(--bg-soft, #F5F7FA); }
+.team-editor-save {
+  border-color: var(--teal);
+  color: #fff;
+  background: var(--teal);
+}
+.team-editor-save:hover:not(:disabled) { background: #2aa3a5; }
+.team-editor-save:disabled { opacity: 0.6; cursor: not-allowed; }
+.team-editor-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.team-editor-eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.team-editor-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.team-editor-error,
+.team-editor-status {
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.team-editor-error {
+  background: rgba(237,23,75,0.06);
+  color: var(--accent, #ED174B);
+  border: 1px solid rgba(237,23,75,0.22);
+}
+.team-editor-status {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal-dim, var(--teal));
+  border: 1px solid rgba(49,183,185,0.18);
+}
+.team-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.team-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+.team-field--wide { grid-column: 1 / -1; }
+.team-field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.team-field-hint {
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.team-field input[type="text"],
+.team-field select,
+.team-field textarea {
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--navy);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.team-field input[type="text"]:focus,
+.team-field select:focus,
+.team-field textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.team-field textarea { resize: vertical; min-height: 60px; }
+.team-field--toggle .team-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+.team-toggle input { width: 16px; height: 16px; cursor: pointer; }
+
+/* ─── Projectervaring inline-editor ─── */
+.team-projects {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.team-projects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.team-projects-add {
+  border: 1px solid rgba(49,183,185,0.4);
+  background: transparent;
+  color: var(--teal);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.team-projects-add:hover { background: rgba(49,183,185,0.05); }
+.team-projects-empty {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.team-project {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-soft, #F5F7FA);
+}
+.team-project-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 28px;
+  gap: 0.4rem;
+  align-items: center;
+}
+.team-project input[type="text"],
+.team-project textarea {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--navy);
+  outline: none;
+}
+.team-project input:focus,
+.team-project textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.team-project textarea { resize: vertical; min-height: 50px; }
+.team-project-del {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.team-project-del:hover {
+  background: rgba(237,23,75,0.08);
+  color: var(--accent, #ED174B);
+}
+
+/* ─── CV-bestand (PDF) sectie ─── */
+.team-cv {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.team-cv-current,
+.team-cv-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--navy);
+}
+.team-cv-name {
+  font-weight: 600;
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+.team-cv-link {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(49,183,185,0.3);
+  border-radius: 5px;
+}
+.team-cv-link:hover { background: rgba(49,183,185,0.06); }
+.team-cv-replace {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--navy);
+  padding: 0.3rem 0.7rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.team-cv-replace:hover {
+  background: var(--bg-soft, #F5F7FA);
+  border-color: rgba(44,60,82,0.18);
+}
+
+/* Mobile: tweede kolom in editor-grid + project-row aanpassen */
+@media (max-width: 768px) {
+  .team-editor-grid { grid-template-columns: 1fr; }
+  .team-project-row { grid-template-columns: 1fr 28px; }
+  .team-project-row > input.team-project-role { grid-column: 1 / -1; }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
   .cm-col-tags { display: none; }

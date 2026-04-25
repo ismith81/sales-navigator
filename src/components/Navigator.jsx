@@ -543,6 +543,9 @@ export default function Navigator() {
               <button type="button" role="tab" aria-selected={beheerSection === 'personas'}
                 className={`view-subnav-btn ${beheerSection === 'personas' ? 'active' : ''}`}
                 onClick={() => setBeheerSection('personas')}>Persona's</button>
+              <button type="button" role="tab" aria-selected={beheerSection === 'team'}
+                className={`view-subnav-btn ${beheerSection === 'team' ? 'active' : ''}`}
+                onClick={() => setBeheerSection('team')}>Team</button>
             </div>
           )}
           {view === 'instructies' && (
