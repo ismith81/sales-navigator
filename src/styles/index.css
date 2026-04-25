@@ -4385,7 +4385,13 @@ body::before {
 .chat-panel--inline.chat-panel--empty .chat-messages {
   padding-top: 0.9rem;
 }
-.chat-panel--inline .chat-header-title { color: var(--navy); font-size: 0.9rem; }
+.chat-panel--inline .chat-header-title {
+  color: var(--navy);
+  font-size: 0.9rem;
+  /* baseline werkt niet met de hamburger-button (geen tekst-baseline) en
+     de teal-dot — vervangen door center voor consistente vertical-align. */
+  align-items: center;
+}
 .chat-panel--inline .chat-header-trust { color: var(--text-light); }
 .chat-panel--inline .chat-header-btn {
   border: none;
