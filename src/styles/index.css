@@ -2514,7 +2514,8 @@ body::before {
     margin-left: calc(-1 * var(--topbar-gutter));
     margin-right: calc(-1 * var(--topbar-gutter));
     margin-top: 0.24rem;
-    padding: 0.45rem 1rem 0.7rem;
+    /* Top en bottom gelijk — zelfde fix als desktop, was 0.45/0.7 asymmetrisch. */
+    padding: 0.5rem 1rem;
   }
   .topbar-search input {
     padding: 0.45rem 2rem 0.45rem 0.75rem;
