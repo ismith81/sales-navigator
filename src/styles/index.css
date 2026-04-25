@@ -4356,6 +4356,12 @@ body::before {
   justify-content: space-between;
   gap: 1rem;
   max-width: 1000px;
+  /* flex-grow:1 zodat de inner ook bij smalle/korte content de volledige
+     beschikbare breedte van .chat-header pakt (tot max-width). Zonder dit
+     kreeg-ie content-breedte en duwde margin:0 auto 'm naar het midden,
+     wat op mobiel rare 77px-side-margins gaf. */
+  flex: 1 1 auto;
+  width: 100%;
   margin: 0 auto;
   padding: 0.7rem 1rem;
 }
@@ -4674,32 +4680,23 @@ body::before {
   .chat-header-title-text { max-width: 200px; font-size: 0.82rem; }
   .chat-header-title-input { min-width: 140px; max-width: 200px; }
 
-  /* Header-layout op mobiel: hamburger absolute links, Nova-label gecentreerd.
-     - chat-header-inner: position relative (anker voor absolute hamburger),
-       flex op center zodat de meta-row mooi gecentered wordt
-     - chat-header-meta: flex-row + justify-center, fills 100%
-     - hamburger: absoluut links, uit de flow zodat de meta-centering klopt */
+  /* Header-layout op mobiel: simpele links-flow (à la Claude.ai mobile):
+     ≡ ● Nova · {titel}. Geen centering — content kan lang zijn (titel)
+     en dan zou centreren met ellipsis-truncatie er rommelig uitzien.
+     Hamburger gewoon in flow op de start van de title-row. */
   .chat-panel--inline .chat-header-inner {
-    position: relative;
     gap: 0.4rem;
     align-items: center;
   }
   .chat-panel--inline .chat-header-meta {
     flex: 1 1 auto;
     flex-direction: row;
-    justify-content: center;
     align-items: center;
     min-width: 0;
   }
-  .chat-panel--inline .chat-header-title { flex-wrap: nowrap; }
-  .chat-panel--inline .chat-header-hamburger {
-    position: absolute;
-    left: 0.6rem;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .chat-panel--inline .chat-header-actions {
-    flex: 0 0 32px; /* spiegel-breedte van de hamburger; houdt centering visueel klopt */
+  .chat-panel--inline .chat-header-title {
+    min-width: 0;
+    flex-wrap: nowrap;
   }
 }
 @keyframes chat-sidebar-slide-in {
