@@ -241,8 +241,10 @@ function TabNova() {
             · AI-initiatieven · Team & sourcing-houding · Concurrentiepositie · Buying signals & budget</em>.
             Afsluitend een <strong>BANT-samenvatting</strong> (Budget, Authority, Need, Timeline) +
             <strong>Sales-fit</strong> (openingshoek) + <strong>Gap-flag</strong> (eerlijk waar Creates
-            zwak staat). Onder het antwoord een klikbare bronnenlijst (Google Search). Alleen publiek
-            web; géén LinkedIn-scrapes of CRM-data.<br />
+            zwak staat). Achter elk web-feit staat een klein <strong>[n]</strong>-citatie-nummer
+            (klik = scroll naar bron + flash); onderaan het antwoord verschijnt een ingeklapte
+            chip <strong>"N bronnen ▾"</strong> die je open kunt klikken voor de volledige genummerde
+            bronnenlijst. Alleen publiek web; géén LinkedIn-scrapes of CRM-data.<br />
             <em>Voorbeeld:</em> "Maak een briefing over Bol.com." (de structuur volgt automatisch)
           </li>
           <li>
@@ -301,6 +303,31 @@ function TabNova() {
           Ook bij notes-taken geldt: als Nova een relevant referentie-haakje toevoegt op basis van
           een echte case, blijft die bedrijfsnaam klikbaar zodat je de onderliggende case kunt checken.
         </p>
+      </section>
+
+      <section className="ins-section">
+        <h3>Web-bronnen &amp; citaties</h3>
+        <p>
+          Als Nova externe info ophaalt (typisch bij prospect-briefings) plaatst ze achter elk feit
+          een klein <strong>[n]</strong>-nummer als citatie. Onderaan het antwoord verschijnt een
+          ingeklapte chip met <em>"N bronnen ▾"</em>; klik 'm open voor de volledige genummerde
+          lijst.
+        </p>
+        <ul>
+          <li>
+            <strong>Klik op een [n]-nummer</strong> in de tekst — bronnen-blok klapt automatisch
+            open en scrollt naar bron #n met een korte flash-highlight.
+          </li>
+          <li>
+            <strong>Klik op een bron-titel</strong> in het uitgeklapte blok — opent de originele
+            webpagina in een nieuw tabblad.
+          </li>
+          <li>
+            <strong>Bronnen alleen voor publiek web</strong> (Google Search). Bij interne content
+            uit Creates' eigen cases/topics/personas verschijnen géén [n]-citaties — die zijn
+            immers geen externe bron.
+          </li>
+        </ul>
       </section>
 
       <section className="ins-section">
