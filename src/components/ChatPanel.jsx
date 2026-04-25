@@ -31,6 +31,13 @@ const QUICK_PROMPT_GROUPS = [
     ],
   },
   {
+    label: 'Team-match',
+    items: [
+      { kind: 'Match', text: 'Welke collega past het beste bij [klantvraag]? Geef top 3 met motivatie.', shortText: 'Collega zoeken voor klantvraag' },
+      { kind: 'Pitch', text: 'Schrijf een klantgerichte pitch voor [naam] voor een [type] traject', shortText: 'Pitch voor consultant' },
+    ],
+  },
+  {
     label: 'Na het gesprek',
     items: [
       { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail', shortText: 'Mail uit gespreksnotities' },
@@ -45,6 +52,8 @@ const TOOL_LABELS = {
   list_personas: 'Persona’s',
   search_web: 'Web',
   prospect_brief: 'Briefing',
+  find_team_members: 'Team',
+  get_team_member: 'Profiel',
 };
 
 export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {

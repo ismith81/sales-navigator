@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Negen skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Elf skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -253,6 +253,25 @@ function TabNova() {
             we zwak of leeg staan, met een ontwikkel-aanbeveling. Eerlijker dan "en wij kunnen dit
             ook" — helpt pitches scherper en geloofwaardiger maken.<br />
             <em>Voorbeeld:</em> "Waar hebben we gaten t.o.v. Bol.com? Wat zouden we moeten ontwikkelen?"
+          </li>
+          <li>
+            <strong>Team-match</strong> — Nova zoekt in jullie consultant-profielen
+            (Beheer → Team) en geeft top 3 collega's met een specifieke motivatie waarom
+            ze passen bij de klantvraag (welke skills/technologies/sectors/projecten
+            matchen). Eindigt met een sales-fit-regel + eerlijk gat als geen kandidaat
+            alle vereisten dekt. Werkt zowel met losse vragen ("wie heeft Fabric-ervaring?")
+            als geplakte tender-tekst ("we zoeken een senior data engineer met …").<br />
+            <em>Voorbeelden:</em> "Welke collega heeft Fabric-ervaring in retail?"  ·
+            "Wie kan ik meenemen naar een gesprek over een dataplatform?"  ·
+            [tender-paragraaf plakken] "Match deze klantvraag met onze collega's."
+          </li>
+          <li>
+            <strong>Klantgerichte profielpitch</strong> — Nova schrijft een korte (3–4 zinnen)
+            paragraaf over één collega die je in offertes/voorstellen kunt plakken.
+            Gebaseerd op de klantgerichte samenvatting uit z'n profiel + relevante
+            projectervaring + skills. Derde persoon, professioneel-zelfverzekerd, geen
+            marketing-jargon.<br />
+            <em>Voorbeeld:</em> "Schrijf een pitch voor Niels voor een Power BI Embedded-traject."
           </li>
         </ul>
       </section>
