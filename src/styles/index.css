@@ -2955,9 +2955,15 @@ body::before {
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
 }
-.team-grid-card:focus-visible {
+/* :focus (zichtbaar op zowel muisklik als toetsenbord) ipv enkel
+   :focus-visible — anders zie je 't outline-effect alleen via Tab. */
+.team-grid-card:focus {
   outline: 2px solid var(--teal);
   outline-offset: 2px;
+}
+.team-grid-card:active {
+  transform: translateY(0); /* press-feedback: kort terug naar baseline */
+  box-shadow: 0 2px 8px rgba(44,60,82,0.1);
 }
 /* Stoplicht-tint op kaart-borders (subtiel ~0.35 opacity) — reinforcement
    van bucket-urgentie, niet domineren. Hover bumpt naar sterkere versie
@@ -3708,7 +3714,9 @@ body::before {
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
 }
-.co-card:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+/* :focus (niet enkel :focus-visible) — outline ook zichtbaar op muisklik. */
+.co-card:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
+.co-card:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(44,60,82,0.1); }
 .co-card--expanded {
   grid-column: 1 / -1;
   padding: 0.75rem 0.75rem 0.5rem;
