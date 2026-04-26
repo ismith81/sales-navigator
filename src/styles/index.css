@@ -2818,14 +2818,21 @@ body::before {
    Compacte horizontale rij van team-cards bovenop het case-grid in Gids.
    Bewust kleiner dan case-cards zodat ze niet de aandacht stelen, maar
    informatief genoeg om in 1 oogopslag te zien wie er klaarstaat. */
+/* Card-omlijning matcht de "Met wie praat je?"-context-strip-card zodat
+   beide blokken op de Gids-startpagina visueel rijmen. */
 .team-grid-strip {
   margin: 1.5rem 0 0.5rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(44,60,82,0.04);
 }
 .team-grid-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.85rem;
 }
 .team-grid-title {
   margin: 0;
@@ -2847,31 +2854,28 @@ body::before {
   font-weight: 700;
 }
 
-/* ─── Kanban-layout: buckets als kolommen naast elkaar ─────────────────
-   auto-fill (niet auto-fit) zodat een eenzame bucket niet over de volle
-   row stretched op tablet-breedte; hij blijft op z'n min-width van 220px,
-   eventuele lege tracks blijven gereserveerd. */
+/* ─── Sectie-layout: buckets onder elkaar, full-width ──────────────────
+   Eerder kanban (3 kolommen) — werkte slecht bij ongelijke buckets
+   (bv. 2/2/7 cards gaf veel wasted whitespace). Nu vertikaal stacken,
+   bucket-header full-width, en cards binnen elke bucket in een
+   auto-fit grid die de volle ruimte pakt. */
 .team-grid-buckets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.85rem 1rem;
-  align-items: start;
-  margin-top: 0.4rem;
-}
-/* ─── Bucket-secties (Nu / Vrij in mei / … / Later / Bezet onbekend) ── */
-.team-grid-bucket {
-  margin-top: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 1.1rem;
+  margin-top: 0.4rem;
+}
+.team-grid-bucket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
   min-width: 0;
 }
 .team-grid-bucket-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.45rem;
-  padding: 0.1rem 0.1rem 0.35rem;
+  padding: 0.1rem 0 0.4rem;
   border-bottom: 1px dashed var(--border);
 }
 .team-grid-bucket-dot {
@@ -2903,12 +2907,13 @@ body::before {
   color: var(--muted);
   font-weight: 600;
 }
-/* Cards stacken nu verticaal binnen elke bucket-kolom (was horizontale
-   scroll-rij voor een gestackte layout). */
+/* Cards in een auto-fit grid binnen elke bucket: vullen automatisch
+   2-3-4 kolommen afhankelijk van beschikbare breedte. Min 240px per kaart
+   zodat naam/rol/datum-regel netjes lezen. */
 .team-grid-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.55rem;
   padding: 0;
 }
 
@@ -3001,10 +3006,9 @@ body::before {
 }
 
 @media (max-width: 640px) {
-  /* Echt-mobile: één kolom (buckets onder elkaar) zodat de cards
-     volledige scherm-breedte pakken. Tablet (640-768px) kan de auto-fill
-     met minmax(220px) doen — geeft 1-2 kolommen afhankelijk van breedte. */
-  .team-grid-buckets { grid-template-columns: 1fr; gap: 0.7rem; }
+  /* Mobile: alles full-width onder elkaar (auto-fit grid in .team-grid-row
+     valt natuurlijk terug op 1 kolom als minmax(240px) niet past). */
+  .team-grid-strip { padding: 0.85rem 1rem; border-radius: 12px; }
   .team-grid-card { padding: 0.6rem 0.7rem; }
   .team-grid-avatar { width: 32px; height: 32px; font-size: 0.72rem; }
 }
