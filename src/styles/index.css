@@ -3362,11 +3362,13 @@ body::before {
     font-size: 16px;
   }
   .topbar-search-row.is-open {
-    /* Mobile: matchende margin/padding met de subnav-strook eronder zodat
-       beide blokken visueel symmetrisch zijn. */
-    margin: 0 -1rem;
-    padding: 0.5rem 1rem 0.65rem;
+    /* Sit binnen de topbar-gutters; geen edge-to-edge bleed (anders raakt
+       de offsetHeight-meting van .topbar in de war en springt 't chat-panel
+       eroverheen). Wel een dunne divider zodat 'ie visueel bij de topbar
+       hoort. */
     gap: 0.45rem;
+    margin: 0.4rem 0 0.3rem;
+    padding-top: 0.5rem;
   }
   /* Op smal mobiel-scherm verbergt 't label — de pijl-naar-rechts is het icon
      en zegt visueel "stuur door". Vierkante tap-target voor duim-bediening. */
@@ -3437,18 +3439,12 @@ body::before {
 }
 
 /* ---- Topbar search ----
-   display-regels scoped op >=769px zodat de mobiele collapse (regel 2148,
-   display:none tenzij .is-open) niet overschreven wordt door deze default. */
-/* Search-row is standaard collapsed op álle breedtes. Klik op zoek-icon in
-   .topbar-actions → .is-open rendert de input-rij. flex-basis: 100% zorgt
-   dat 'ie onder de topbar-inhoud op een eigen rij komt (flex-wrap).
-   Negatieve horizontale margin + matching padding trekt de strook
-   edge-to-edge in dezelfde stijl als .topbar-subnav-row, met een dunne
-   divider-line bovenaan zodat 'ie visueel bij de topbar-block hoort. */
+   Search-row is standaard collapsed op álle breedtes. Klik op zoek-icon in
+   .topbar-actions → .is-open rendert de input-rij. Sit binnen de topbar-
+   gutters (geen negatieve margin) zodat de offsetHeight van .topbar correct
+   meegroeit en de topbar-spacer + chat-panel layout niet in de war raakt. */
 .topbar-search-row {
   display: none;
-  flex-basis: 100%;
-  order: 30;
   margin: 0;
   padding: 0;
 }
@@ -3456,8 +3452,8 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin: 0 calc(-1 * var(--topbar-gutter));
-  padding: 0.55rem var(--topbar-gutter) 0.7rem;
+  margin: 0.55rem 0 0.4rem;
+  padding-top: 0.55rem;
   border-top: 1px solid rgba(255,255,255,0.12);
 }
 .topbar-search {
@@ -5004,7 +5000,8 @@ body::before {
   display: flex;
   align-items: stretch;
   margin: 0 -1.5rem -4rem;
-  height: calc(100dvh - 165px);
+  /* Live-gemeten topbar zodat search-row openen niet overlapt. */
+  height: calc(100dvh - var(--topbar-height, 165px));
   background: #fff;
   border-top: 1px solid var(--border);
   overflow: hidden;
@@ -5401,8 +5398,10 @@ body::before {
   max-width: none;
   /* Negatieve margins cancellen .app-padding (2rem 1.5rem 4rem desktop) — zie mobile override beneden. */
   margin: 0 -1.5rem -4rem;
-  /* Viewport vullen: topbar (~100px desktop met subnav) + route-toggle (~55px) + kleine buffer. */
-  height: calc(100dvh - 165px);
+  /* Viewport vullen: laat de hoogte meebewegen met de live-gemeten topbar
+     (incl. subnav + eventueel open search-row). Fallback 165px voor de
+     allereerste paint vóór de var gezet is. */
+  height: calc(100dvh - var(--topbar-height, 165px));
   min-height: 0;
   max-height: none;
   background: #fff;
@@ -5788,13 +5787,13 @@ body::before {
   .chat-panel--inline {
     /* Mobile: .app-padding is 1.25rem 1rem 3rem → match. */
     margin: 0 -1rem -3rem;
-    /* Topbar ~88px met subnav + route-toggle ~50px + buffer. */
-    height: calc(100dvh - 150px);
+    /* Live-gemeten topbar (incl. subnav + eventueel open search-row). */
+    height: calc(100dvh - var(--topbar-height, 150px));
   }
   /* Chat-layout op mobiel: alleen het panel zichtbaar; sidebar wordt overlay. */
   .chat-layout {
     margin: 0 -1rem -3rem;
-    height: calc(100dvh - 150px);
+    height: calc(100dvh - var(--topbar-height, 150px));
   }
   .chat-layout .chat-panel--inline {
     height: 100%;
