@@ -6009,7 +6009,11 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   .chat-panel--inline .chat-input-row {
     border-top: 1px solid rgba(226,230,235,0.78);
     background: #fff;
-    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    /* padding-bottom respecteert iOS home-indicator safe-area MAAR stapelt
+       'r geen extra 0.65rem bovenop — anders krijgt iOS 10px+34px=44px
+       witruimte onder de textarea ("input te ver van bottom"). max()
+       neemt de grootste van de twee: visuele 0.4rem of de safe-area. */
+    padding: 0.5rem 1rem max(0.4rem, env(safe-area-inset-bottom, 0px));
     flex-shrink: 0;
   }
   .chat-panel--inline.chat-panel--empty .chat-input-row {
