@@ -5096,7 +5096,17 @@ body::before {
 .context-strip--card > * { margin-bottom: 0; }
 .context-strip--card .nav-tabs-row { margin-bottom: 0; }
 @media (max-width: 640px) {
-  .context-strip--card { padding: 0.75rem 0.85rem; border-radius: 12px; }
+  /* Mobile: alle vier Gids-cards (persona / topic / team / cases) krijgen
+     dezelfde padding zodat de section-title-icons op één verticale lijn
+     blijven staan. Inner-margins op mobiel iets compacter dan desktop —
+     kleinere schermen hebben minder behoefte aan ademruimte. */
+  .context-strip--card { padding: 0.85rem 1rem; border-radius: 12px; }
+  .topic-card.context-strip--card { padding: 0.85rem 1rem 1rem; }
+  .card-section-title { font-size: 17px; margin-bottom: 1.1rem; }
+  .card-section-title-icon { width: 18px; height: 18px; }
+  .card-section-title-icon svg { width: 18px; height: 18px; }
+  .topic-card.context-strip--card > .card-section-title { margin-bottom: 1.1rem; }
+  .topic-card.context-strip--card .nav-tabs-row { margin-bottom: 1rem; }
 }
 .route-toggle-btn {
   display: inline-flex;
