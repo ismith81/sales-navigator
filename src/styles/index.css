@@ -2949,11 +2949,14 @@ body::before {
      ritme heeft: 0.2s ease op alles. */
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-/* Hover-effect gelijkgetrokken aan .co-card: zelfde lift (-2px) en
-   shadow, zodat case- en team-tiles op de Gids hetzelfde aanvoelen. */
+/* Hover-effect gelijkgetrokken aan .co-card: zelfde lift (-2px), shadow
+   én teal outline, zodat case- en team-tiles op de Gids hetzelfde
+   aanvoelen onder de cursor. */
 .team-grid-card:hover {
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 /* :focus (zichtbaar op zowel muisklik als toetsenbord) ipv enkel
    :focus-visible — anders zie je 't outline-effect alleen via Tab. */
@@ -3713,6 +3716,8 @@ body::before {
   border-color: var(--teal);
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 /* :focus (niet enkel :focus-visible) — outline ook zichtbaar op muisklik. */
 .co-card:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
