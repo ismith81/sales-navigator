@@ -542,11 +542,19 @@ body::before {
 .topic-description p:first-child { margin-top: 0; }
 .topic-description p:last-child { margin-bottom: 0; }
 
+/* Card-omlijning matcht .context-strip--card / .team-grid-strip /
+   .cases-overview zodat de Gids-pagina overal dezelfde card-blokken
+   gebruikt — geen "loose" content op een transparante achtergrond. */
 .topic-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.75rem;
   margin-bottom: 1.5rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(44,60,82,0.04);
 }
 .topic-col {
   min-width: 0;
@@ -558,6 +566,8 @@ body::before {
   .topic-columns {
     grid-template-columns: 1fr;
     gap: 1rem;
+    padding: 0.85rem 1rem 1rem;
+    border-radius: 12px;
   }
 }
 
