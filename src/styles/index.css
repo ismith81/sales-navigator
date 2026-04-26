@@ -3900,9 +3900,13 @@ body::before {
 }
 .kompas--collapsed .kompas-header { margin-bottom: 0; }
 .kompas-title-btn {
-  display: inline-flex;
+  /* Display: flex met flex:1 zodat de button de beschikbare breedte
+     pakt — chevron met margin-left:auto kan dan netjes rechts uitlijnen
+     (zelfde patroon als .card-section-title in andere cards). */
+  display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
   background: transparent;
   border: none;
   color: var(--navy, var(--text));
@@ -3912,6 +3916,7 @@ body::before {
   letter-spacing: -0.005em;
   cursor: pointer;
   padding: 2px 0;
+  text-align: left;
 }
 .kompas-title-icon { width: 22px; height: 22px; }
 .kompas-title-text { line-height: 1.1; }
