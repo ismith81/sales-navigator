@@ -2949,37 +2949,30 @@ body::before {
      ritme heeft: 0.2s ease op alles. */
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-/* Hover-effect gelijkgetrokken aan .co-card: zelfde lift (-2px), shadow
-   én teal outline, zodat case- en team-tiles op de Gids hetzelfde
-   aanvoelen onder de cursor. */
+/* Hover-effect gelijkgetrokken aan .co-card: lift (-2px), shadow, en de
+   BESTAANDE border verandert van bucket-tint naar teal. Geen extra
+   outline-ring eromheen — alleen de border-kleur verschuift. */
 .team-grid-card:hover {
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
+  border-color: var(--teal);
 }
-/* :focus (zichtbaar op zowel muisklik als toetsenbord) ipv enkel
-   :focus-visible — anders zie je 't outline-effect alleen via Tab. */
+/* Focus (klik of toetsenbord): zelfde teal-border zonder extra ring,
+   zodat klik-feedback consistent is met hover. */
 .team-grid-card:focus {
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--teal);
 }
 .team-grid-card:active {
   transform: translateY(0); /* press-feedback: kort terug naar baseline */
   box-shadow: 0 2px 8px rgba(44,60,82,0.1);
 }
-/* Stoplicht-tint op kaart-borders (subtiel ~0.35 opacity) — reinforcement
-   van bucket-urgentie, niet domineren. Hover bumpt naar sterkere versie
-   van dezelfde kleur ipv generic teal — bucket-identiteit blijft zo ook
-   in hover-state behouden (zelfde idee als case-tiles maar bucket-aware). */
+/* Stoplicht-tint op kaart-borders in rust-state (subtiel ~0.35 opacity)
+   — reinforcement van bucket-urgentie. Op hover wordt de border teal
+   (zie .team-grid-card:hover hierboven). */
 .team-grid-bucket--now .team-grid-card { border-color: rgba(43,179,108,0.35); }
-.team-grid-bucket--now .team-grid-card:hover { border-color: rgba(43,179,108,0.85); }
-
 .team-grid-bucket--soon .team-grid-card { border-color: rgba(240,163,58,0.4); }
-.team-grid-bucket--soon .team-grid-card:hover { border-color: rgba(240,163,58,0.9); }
-
 .team-grid-bucket--later .team-grid-card { border-color: rgba(214,58,92,0.32); }
-.team-grid-bucket--later .team-grid-card:hover { border-color: rgba(214,58,92,0.8); }
 .team-grid-avatar {
   flex: 0 0 auto;
   width: 36px;
@@ -3716,11 +3709,10 @@ body::before {
   border-color: var(--teal);
   box-shadow: 0 6px 20px rgba(44,60,82,0.08);
   transform: translateY(-2px);
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
 }
-/* :focus (niet enkel :focus-visible) — outline ook zichtbaar op muisklik. */
-.co-card:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
+/* Focus (klik of toetsenbord): zelfde teal-border als hover, zonder
+   extra outline-ring eromheen. */
+.co-card:focus { outline: none; border-color: var(--teal); }
 .co-card:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(44,60,82,0.1); }
 .co-card--expanded {
   grid-column: 1 / -1;
