@@ -2945,23 +2945,32 @@ body::before {
   text-align: left;
   font-family: inherit;
   min-width: 0;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+  /* Transition matched aan .co-card (cases) zodat hover-feel hetzelfde
+     ritme heeft: 0.2s ease op alles. */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
+/* Hover-effect gelijkgetrokken aan .co-card: zelfde lift (-2px) en
+   shadow, zodat case- en team-tiles op de Gids hetzelfde aanvoelen. */
 .team-grid-card:hover {
-  box-shadow: 0 4px 12px rgba(44,60,82,0.07);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(44,60,82,0.08);
+  transform: translateY(-2px);
+}
+.team-grid-card:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 /* Stoplicht-tint op kaart-borders (subtiel ~0.35 opacity) — reinforcement
    van bucket-urgentie, niet domineren. Hover bumpt naar sterkere versie
-   van dezelfde kleur ipv generic teal — visueel consistenter. */
+   van dezelfde kleur ipv generic teal — bucket-identiteit blijft zo ook
+   in hover-state behouden (zelfde idee als case-tiles maar bucket-aware). */
 .team-grid-bucket--now .team-grid-card { border-color: rgba(43,179,108,0.35); }
-.team-grid-bucket--now .team-grid-card:hover { border-color: rgba(43,179,108,0.7); }
+.team-grid-bucket--now .team-grid-card:hover { border-color: rgba(43,179,108,0.85); }
 
 .team-grid-bucket--soon .team-grid-card { border-color: rgba(240,163,58,0.4); }
-.team-grid-bucket--soon .team-grid-card:hover { border-color: rgba(240,163,58,0.75); }
+.team-grid-bucket--soon .team-grid-card:hover { border-color: rgba(240,163,58,0.9); }
 
 .team-grid-bucket--later .team-grid-card { border-color: rgba(214,58,92,0.32); }
-.team-grid-bucket--later .team-grid-card:hover { border-color: rgba(214,58,92,0.65); }
+.team-grid-bucket--later .team-grid-card:hover { border-color: rgba(214,58,92,0.8); }
 .team-grid-avatar {
   flex: 0 0 auto;
   width: 36px;
