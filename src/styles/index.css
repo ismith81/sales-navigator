@@ -570,12 +570,17 @@ body::before {
     padding-top: 0.85rem;
   }
 }
-/* Onderwerp-card houdt z'n inner content netjes met onderlinge spacing. */
+/* Onderwerp-card houdt z'n inner content netjes met onderlinge spacing.
+   Override .context-strip--card defaults die margin-bottom op 0 zetten —
+   in deze nieuwe stacked layout willen we juist ademruimte tussen tabs,
+   chips en de talking-points divider. */
 .topic-card {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
+.topic-card .nav-tabs-row { margin-bottom: 0.85rem; }
+.topic-card .filter-row { margin-bottom: 0; }
 /* Persona-card: standalone persona-kompas zonder context-strip flex.
    Reset de margins die kompas krijgt via .context-strip-overrides. */
 .persona-card .kompas {
