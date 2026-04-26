@@ -590,6 +590,7 @@ body::before {
   padding: 1.1rem 1.1rem 1.25rem;
 }
 .topic-card.context-strip--card > .card-section-title { margin-bottom: 1.6rem; }
+.topic-card.context-strip--card > .card-section-title.is-collapsed { margin-bottom: 0; }
 .topic-card.context-strip--card .nav-tabs-row { margin-bottom: 1.3rem; }
 .topic-card.context-strip--card .filter-row { margin-bottom: 0; gap: 0.85rem; }
 /* Persona-card: standalone persona-kompas zonder context-strip flex.
@@ -3921,7 +3922,7 @@ body::before {
    font-weight en font-size — zodat alle Gids-cards (Onderwerp / Team / Cases)
    hetzelfde titel-ritme krijgen als "Met wie praat je?". */
 .card-section-title {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10px;
   margin: 0 0 1.6rem;
@@ -3932,6 +3933,33 @@ body::before {
   color: var(--navy);
   line-height: 1.1;
 }
+/* Wanneer .card-section-title een <button> is (collapsible variant):
+   neem volledige breedte zodat de chevron rechts-uitlijnt, geen border/
+   bg, en hover-cue als bij kompas. */
+button.card-section-title {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+button.card-section-title:hover { color: var(--teal); }
+button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
+.card-section-title-chevron {
+  margin-left: auto; /* chevron uiterst rechts */
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.18s ease;
+}
+.card-section-title-chevron svg { display: block; }
+.card-section-title.is-collapsed .card-section-title-chevron {
+  transform: rotate(-90deg);
+}
+/* Wanneer ingeklapt: geen onderlinge margin meer — anders krijgt de card
+   onnodig extra ruimte onder de titel terwijl er geen content is. */
+.card-section-title.is-collapsed { margin-bottom: 0; }
 .card-section-title-icon { width: 22px; height: 22px; color: var(--teal); flex-shrink: 0; }
 .card-section-title-icon svg { display: block; }
 .card-section-title-count {
@@ -5105,6 +5133,10 @@ body::before {
   .card-section-title { font-size: 17px; margin-bottom: 1.1rem; }
   .card-section-title-icon { width: 18px; height: 18px; }
   .card-section-title-icon svg { width: 18px; height: 18px; }
+  /* Persona-kompas titel óók op 17px op mobiel zodat 'ie matched met
+     de andere section-titels — was 20px. */
+  .kompas-title-btn { font-size: 17px; }
+  .kompas-title-icon { width: 18px; height: 18px; }
   .topic-card.context-strip--card > .card-section-title { margin-bottom: 1.1rem; }
   .topic-card.context-strip--card .nav-tabs-row { margin-bottom: 1rem; }
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listTeamMembers, groupTeamByAvailability, formatAvailableFrom } from '../lib/teamMembers';
 import TeamMemberDetail from './TeamMemberDetail';
+import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 
 // "Beschikbaarheid"-strip voor de Gids-startpagina, gegroepeerd in 3 buckets:
 //   • Nu beschikbaar
@@ -15,6 +16,7 @@ export default function TeamGrid() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState(null);
+  const { collapsed, toggle } = useCollapsibleSection('team', false);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,24 +37,28 @@ export default function TeamGrid() {
   return (
     <>
       <section className="team-grid-strip" aria-label="Team">
-        <h2 className="card-section-title">
-          <span className="card-section-title-icon" aria-hidden="true">
+        <CardSectionTitle
+          icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
-          </span>
-          Team
-          <span className="card-section-title-count">{members.length}</span>
-        </h2>
+          }
+          label="Team"
+          count={members.length}
+          collapsible
+          collapsed={collapsed}
+          onToggle={toggle}
+        />
 
         {/* Sectie-layout: buckets onder elkaar (full-width), met cards
             binnen elke bucket in een auto-fit grid (2-4 kolommen
             afhankelijk van beschikbare breedte). Eerder kanban met
             buckets-als-kolommen, maar dat gaf veel wasted whitespace
             zodra een bucket veel meer cards had dan de andere. */}
+        {!collapsed && (
         <div className="team-grid-buckets">
         {buckets.map(b => (
           <div key={b.label} className={`team-grid-bucket team-grid-bucket--${b.bucket}`}>
@@ -112,6 +118,7 @@ export default function TeamGrid() {
           </div>
         ))}
         </div>
+        )}
       </section>
 
       {openId && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReferenceCard from './ReferenceCard';
 import { PersonaIcon } from '../lib/personaIcons.jsx';
+import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 
 const TAG_CLASS = { doelen: 'doel', behoeften: 'behoefte', diensten: 'dienst' };
 
@@ -26,6 +27,7 @@ function matches(caseData, query) {
 }
 
 export default function CasesOverview({ cases, personas = {}, searchQuery, heading, hint, activeTab, activeFilter, activePersona }) {
+  const { collapsed, toggle } = useCollapsibleSection('cases', false);
   let filtered = cases;
   if (searchQuery?.trim()) {
     filtered = filtered.filter(c => matches(c, searchQuery.trim()));
@@ -39,28 +41,34 @@ export default function CasesOverview({ cases, personas = {}, searchQuery, headi
 
   return (
     <div className="cases-overview">
-      <h2 className="card-section-title">
-        <span className="card-section-title-icon" aria-hidden="true">
+      <CardSectionTitle
+        icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
           </svg>
-        </span>
-        {heading || 'Cases'}
-        <span className="card-section-title-count">{filtered.length}</span>
-      </h2>
-      {hint && <p className="co-hint">{hint}</p>}
-
-      {filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="icon-large">🔍</div>
-          <p>Geen cases gevonden{searchQuery ? ` voor "${searchQuery}"` : ''}.</p>
-        </div>
-      ) : (
-        <div className="co-grid">
-          {filtered.map(c => (
-            <CasePreviewCard key={c.id} caseData={c} personas={personas} />
-          ))}
-        </div>
+        }
+        label={heading || 'Cases'}
+        count={filtered.length}
+        collapsible
+        collapsed={collapsed}
+        onToggle={toggle}
+      />
+      {!collapsed && (
+        <>
+          {hint && <p className="co-hint">{hint}</p>}
+          {filtered.length === 0 ? (
+            <div className="empty-state">
+              <div className="icon-large">🔍</div>
+              <p>Geen cases gevonden{searchQuery ? ` voor "${searchQuery}"` : ''}.</p>
+            </div>
+          ) : (
+            <div className="co-grid">
+              {filtered.map(c => (
+                <CasePreviewCard key={c.id} caseData={c} personas={personas} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

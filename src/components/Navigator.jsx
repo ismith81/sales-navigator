@@ -9,6 +9,7 @@ import TopicView from './TopicView';
 import CaseManager from './CaseManager';
 import Instructies from './Instructies';
 import CasesOverview from './CasesOverview';
+import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
 import Login from './Login';
@@ -92,6 +93,10 @@ export default function Navigator() {
   });
   const [searchOpen, setSearchOpen] = useState(false); // mobile: collapsed search toggle
   const [showTopbarSubnav, setShowTopbarSubnav] = useState(true);
+  // Collapse-state voor de Onderwerp-card op de Gids-route. Persistent in
+  // localStorage zodat refreshes de keuze onthouden — zelfde patroon als
+  // Team/Cases (zie useCollapsibleSection in CardSectionTitle.jsx).
+  const { collapsed: topicCollapsed, toggle: toggleTopic } = useCollapsibleSection('topic', false);
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
@@ -685,39 +690,48 @@ export default function Navigator() {
 
               {/* Card 2: Onderwerp — tabs + chips + talking-points + vragen.
                   Alles wat conceptueel "kies onderwerp → krijg content"
-                  is, zit hier samen. */}
+                  is, zit hier samen. Collapsible zodat sales 'm tijdens
+                  een gesprek kan inklappen om Team/Cases in beeld te
+                  hebben. */}
               <div className="topic-card context-strip--card">
-                <h2 className="card-section-title">
-                  <span className="card-section-title-icon" aria-hidden="true">
+                <CardSectionTitle
+                  icon={
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />
                       <circle cx="12" cy="12" r="6" />
                       <circle cx="12" cy="12" r="2" />
                     </svg>
-                  </span>
-                  Waar gaat het over?
-                </h2>
-                <FilterBar
-                  filters={filters}
-                  topics={topics}
-                  activeTab={activeTab}
-                  activeFilter={activeFilter}
-                  onTabChange={handleTabChange}
-                  onFilterChange={handleFilterChange}
+                  }
+                  label="Waar gaat het over?"
+                  collapsible
+                  collapsed={topicCollapsed}
+                  onToggle={toggleTopic}
                 />
-                {activeFilter && currentTopic && (
-                  <TopicView
-                    topicKey={activeFilter}
-                    tab={activeTab}
-                    topicData={currentTopic}
-                    cases={cases}
-                    personas={personas}
-                    branches={branches}
-                    onUpdateTopic={handleUpdateTopic}
-                    hideReferences
-                    hideTitle
-                    activePersona={activePersona ? personas[activePersona] : null}
-                  />
+                {!topicCollapsed && (
+                  <>
+                    <FilterBar
+                      filters={filters}
+                      topics={topics}
+                      activeTab={activeTab}
+                      activeFilter={activeFilter}
+                      onTabChange={handleTabChange}
+                      onFilterChange={handleFilterChange}
+                    />
+                    {activeFilter && currentTopic && (
+                      <TopicView
+                        topicKey={activeFilter}
+                        tab={activeTab}
+                        topicData={currentTopic}
+                        cases={cases}
+                        personas={personas}
+                        branches={branches}
+                        onUpdateTopic={handleUpdateTopic}
+                        hideReferences
+                        hideTitle
+                        activePersona={activePersona ? personas[activePersona] : null}
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
