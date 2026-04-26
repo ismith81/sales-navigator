@@ -355,3 +355,51 @@ De bouwvolgorde (1 → 5) is op impact/moeite, niet op chronologie van de sales-
   3. Storage-bucket `team-cvs` aanmaken (privé) via Supabase UI als nog niet gedaan; policies zitten in `supabase/team-members.sql`.
   4. Update `app_config.branches` met de 13 canonical sectoren (zie `src/data/branches.js` voor de lijst).
   5. SQL voor `chat_sessions` (zie `supabase/chat-sessions.sql`) als deze omgeving die nog niet had — `pinned`-column is onderdeel van Fase 5-uitbreiding.
+
+## Status (sessie eind april 2026 — fix-mobile-and-nova-issues + Gids-redesign)
+Alles live op `main` na merge van `fix-mobile-and-nova-issues` (commit `cb9a38d`) plus aanvullende fixes erop. Vercel deployt automatisch.
+
+### Nova / API-fixes
+- **RLS-auth fix (cruciaal!):** `requireUser` returnt nu `{ user, token }`. De chat-handler zet via `setSupabaseUserToken(token)` een module-scope var; `getSupabase()` voegt 'm als `Authorization: Bearer …` header toe. Vóór deze fix queryden alle Nova-tools als `anon`-role en kregen daarom 0 rijen op `team_members` (RLS = `to authenticated`). Cases werkten toevallig omdat hun policy historisch losser stond. Nu queryen alle tools als de ingelogde user. Zelfde patroon in `chat-feedback.js`. NB: `cv-parse.js` `loadBranches()` heeft nog anon-key (geen kritiek probleem — DEFAULT_BRANCHES als fallback).
+- **Briefing finishReason=STOP fix:** `generationConfig.maxOutputTokens: 8192` expliciet + retry-nudge voor STOP-zonder-tekst. Nudge is contextueel: bij `toolsRanThisRequest` → "synthetiseer nu", anders → context-aware "voer de gebruikersvraag uit op basis van de conversatie hierboven; verduidelijking-input ('Bol.com', 'velthoven') = altijd tool-call". De nudge heeft een eigen mini-tool-loop (max 3 rondes) zodat 't model alsnog `prospect_brief` etc. kan callen na de retry.
+- **`get_team_member` fuzzy-match:** NFD-normalisatie + token-prefix-match + score-based ranking. "Niels" matcht "Niels van Velthoven", "Velthoven" matcht ook, "velthoven" als clarification-input ook. Bij meerdere matches (e.g. twee Niels) returned `{ ambiguous: true, matches: [...] }`. Bij geen match retourneert `{ database_aantal, beschikbare_namen, hint }` zodat Nova de beschikbare lijst kan tonen i.p.v. vaag "geen match".
+- **Systeemprompt-versterking:** vuistregel "Vragen die ALTIJD een tool-call triggeren" met patronen ("is er een cv van X?", "ik zoek een collega met Y", typo-tolerant). Plus "Hervat na verduidelijking"-sectie expliciet met team-naam-voorbeelden ("velthoven" na "welke Niels?" → direct opnieuw `get_team_member`). Plus dwingender ambiguous-payload hint zodat Nova bij vervolgnaam-input wél de tool roept i.p.v. opnieuw te vragen.
+
+### Mobile UX-fixes
+- **iOS keyboard / chat-input** ging door 4 iteraties:
+  1. position:fixed + visualViewport JS — fragile, soms verdween input
+  2. iOS Safari URL-bar buffer (UA-detect + 48px add) — overlap weg, te ver
+  3. Switched naar normal-flow flexbox (chat-input-row in flex-column panel, geen position:fixed) — iOS scrollt textarea zelf in beeld
+  4. `padding-bottom` van `0.65rem + safe-area` naar `max(0.4rem, safe-area)` — geen stapeling meer; textarea zit ~10px dichter op home-indicator op iOS.
+  - Plus `interactive-widget=resizes-content` in viewport meta zodat iOS 17+ de layout shrinkt bij keyboard.
+- **Topbar search-row + chat-panel overlap:** topbar-spacer's `margin-bottom: 1.5rem` + chat-panel `height: calc(100dvh - 165px)` (hardcoded) lieten de chat-panel over de search-row vallen. Fix: chat-panel hoogte via live-gemeten `var(--topbar-height)` ipv hardcoded. Plus negative top-margin op chat-layout/-panel om spacer-margin te cancellen — page-height = 100dvh exact, geen scrollbar.
+- **Vraag-Nova-knop in zoekbalk:** Enter of klik in de topbar-search switcht naar Assistent-route met de query als initialPrompt. Op smal scherm icon-only pill.
+
+### Gids-route visual redesign (uitgebreid)
+- **Vier blokken met consistente card-stijl** (witte bg, dunne border, soft shadow, 14px radius, padding 0.9rem 1.1rem):
+  1. **Persona** — "Met wie praat je?" (was gecombineerd met onderwerp; nu eigen card)
+  2. **Onderwerp** — "Waar gaat het over?" — tabs/chips/talking-points/vragen samen in één card
+  3. **Team** — was "Beschikbaarheid team", nu kort "Team"
+  4. **Cases**
+- **Drie buckets ipv per-maand** in TeamGrid: Nu / Komende 3 maanden / >3 maanden. Mensen zonder einddatum (`current_client` zonder `available_from`) onderaan in >3 maanden bucket. Datum-badge per kaart ("vanaf 15 mei 2026"). **Layout**: buckets stacken vertikaal full-width, cards binnen elke bucket in `auto-fill minmax(240px, 1fr)` grid (2-4 kolommen afhankelijk van breedte) — eerder was kanban-layout met buckets-als-kolommen, gaf ongebalanceerde whitespace.
+- **Stoplicht-kleuren** op TeamGrid:
+  - Groen (`#2BB36C`) = nu beschikbaar
+  - Oranje (`#F0A33A`) = komende 3 maanden
+  - Rood (`#D63A5C`, gedempte versie van brand-accent) = >3 maanden
+  - Toegepast op: bucket-dot + bucket-label + bucket-header-border-bottom + card-border (subtiel ~0.35 opacity)
+  - Hover op kaart: border verkleurt naar **teal** (geen extra outline-ring), zelfde patroon als case-tiles. Plus `:focus`/`:active` voor klik-feedback.
+- **Collapsible cards** — alle vier sections (Persona, Onderwerp, Team, Cases) zijn in/uitklapbaar via chevron rechts. State persistent in localStorage (`sn.collapse.team` etc.). Default open. Generieke `<CardSectionTitle>` component + `useCollapsibleSection(key)` hook in `src/components/CardSectionTitle.jsx`. Persona-kompas chevron ge-sync naar dezelfde SVG-look (was Unicode `▸`).
+- **Section-titels uniform**: 20px desktop / 17px mobiel, weight 700, teal icon links, count-pill rechts (alleen waar zinnig — Persona heeft 'm niet, Team/Cases wel). Iconen: persona = users-with-arrows, onderwerp = target-rings (matched aan Doelen-tab), team = users, cases = folder.
+- **TopicView spacing**: card-section-title margin-bottom 1.6rem desktop / 1.1rem mobile, nav-tabs-row margin-bottom 1.3rem / 1rem, dashed border-top tussen chips en talking-points (within-card divider). Klantsignalen-toggle was naar rechts gedrukt door `flex: 1 1 auto` op `.button-grid` — nu `flex: 0 1 auto` zodat 'ie hugt.
+- **CSS-cascade les:** `.context-strip--card > * { margin-bottom: 0 }` en `.context-strip--card .nav-tabs-row { margin-bottom: 0 }` overschreef m'n nieuwe topic-card spacing-rules door source-order (zelfde specificity, latere wint). Fix: `.topic-card.context-strip--card` selector (dubbele class, hogere specificity).
+
+### Backlog / volgende werk
+- **🔍 Onderzoek (gepland):** Gemini 2.5 Flash vervangen door Mistral 4 Small? Onderzoek nodig naar:
+  - Function-calling support (vergelijkbaar met Gemini's, of beperkter?)
+  - Streaming + Nederlandse taal-kwaliteit
+  - Cost-vergelijking (huidig vs Mistral pricing)
+  - Tool-use accuracy op onze 7 tools (search_cases, get_topic, list_personas, search_web, prospect_brief, find_team_members, get_team_member)
+  - Migratie-effort: api-endpoint, Mistral-SDK ipv `@google/generative-ai`, prompt-aanpassingen?
+  - **Niet** noodzakelijk: Google Search grounding (zit alleen bij Gemini) → zou via search_web-tool met Mistral + aparte search-API moeten (Brave Search, Tavily, etc.)
+- **Team-feature Fase C/D/E** (zoals eerder genoteerd): pgvector embeddings, cases ↔ team-leden mapping, sales-enablement output-format.
+- **Cleanup**: `cv-parse.js` `loadBranches()` token-forwarden voor RLS-consistentie (nu: anon-key met DEFAULT_BRANCHES fallback). Niet kritiek maar wel netjes.
