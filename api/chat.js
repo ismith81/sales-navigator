@@ -109,6 +109,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
+   - **Hervat na verduidelijking**: als jij in een vorige turn een vervolgvraag stelde (bv. "welk bedrijf wil je dat ik brief?") en de gebruiker nu enkel het ontbrekende stukje geeft (bv. "Caesar Groep"), behandel dat als de invoer voor de eerder gevraagde actie. Roep meteen de juiste tools aan en lever het volledige antwoord — vraag niet opnieuw, en blijf niet stilletjes hangen. Antwoord-zonder-actie is geen acceptabele uitkomst.
 2. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
    - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
    - Bij follow-up mails en actielijsten uit gespreksnotities: scan de notes altijd actief op persona, branche, doel, behoefte, dienst, klantvraag en case-haakjes. Als je ook maar één plausibel haakje ziet, moet je eerst relevante tools gebruiken (\`list_personas\`, \`get_topic\`, \`search_cases\`) vóór je schrijft. Alleen als de notes echt géén enkel bruikbaar haakje bevatten, mag je zonder tool-call een generieke versie maken.
@@ -750,41 +751,68 @@ export default async function handler(req, res) {
       if (!sawText && safetyLoop >= 5) break;
     }
 
-    // Synthese-nudge: Gemini 2.5 Flash stopt soms na een tool-call met
-    // `finishReason: STOP` zonder synthese-tekst — alsof 't model denkt
-    // "tool-call wás 't antwoord". Komt vooral voor bij `prospect_brief`
-    // (lange tool-output, model raakt 't spoor bij). Eén expliciete nudge
-    // dwingt 'm tot daadwerkelijke synthese. Alleen bij STOP — niet bij
-    // MAX_TOKENS (echt limiet bereikt) of SAFETY (filter-block).
-    if (!totalSawText && toolsRanThisRequest && lastFinishReason === 'STOP') {
-      console.warn('Synthese-nudge: STOP zonder tekst na tool-calls. Eén retry met expliciete prompt.');
+    // Retry-nudge bij STOP-zonder-tekst. Gemini 2.5 Flash stopt soms abrupt
+    // met `finishReason: STOP` en geen output — meestal in twee scenario's:
+    //   (a) Tool-call gedaan, daarna model "denkt klaar" zonder synthese.
+    //       Komt vooral voor bij `prospect_brief` (lange tool-output).
+    //   (b) Korte user-input na een eigen verduidelijkings-vraag (bv.
+    //       Nova vraagt "welk bedrijf?", user typt "Caesar Groep" — model
+    //       stopt zonder iets te doen i.p.v. de eerder gevraagde actie te
+    //       hervatten).
+    // Eén expliciete nudge lost beide op. Niet bij MAX_TOKENS (echt limiet
+    // bereikt) of SAFETY (filter-block) — daar helpt retry niets.
+    if (!totalSawText && lastFinishReason === 'STOP') {
+      console.warn('Retry-nudge: STOP zonder tekst (toolsRan:', toolsRanThisRequest, ')');
       try {
-        const nudge = 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".';
+        const nudge = toolsRanThisRequest
+          ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
+          : 'Voer de gebruikersvraag uit op basis van de conversatie-context hierboven. Als je in een vorige turn iets vroeg (bv. "welk bedrijf?") en de gebruiker nu enkel die info gaf, hervat de oorspronkelijke actie (bv. een briefing) met die invoer. Roep tools aan als nodig en lever het volledige antwoord — niet alleen een bevestiging.';
         const result = await chat.sendMessageStream(nudge);
-        for await (const chunk of result.stream) {
-          const text = chunk.text?.();
-          if (text) {
-            totalSawText = true;
-            send({ type: 'text', value: text });
+        // Tweede tool-loop: na de nudge mag het model alsnog tools aanroepen
+        // (scenario b: model deed niks de eerste keer, gaat nu pas prospect_brief
+        // doen). Beperk tot 3 rondes om budget te bewaren.
+        let nudgeLoop = 0;
+        let nextNudgeInput = result;
+        while (nudgeLoop++ < 3) {
+          const stream = nudgeLoop === 1 ? result : await chat.sendMessageStream(nextNudgeInput);
+          const calls = [];
+          for await (const chunk of stream.stream) {
+            const fc = chunk.functionCalls?.() || [];
+            if (fc.length) calls.push(...fc);
+            const text = chunk.text?.();
+            if (text) {
+              totalSawText = true;
+              send({ type: 'text', value: text });
+            }
+            const fr = chunk.candidates?.[0]?.finishReason;
+            if (fr) lastFinishReason = fr;
           }
-          const fr = chunk.candidates?.[0]?.finishReason;
-          if (fr) lastFinishReason = fr;
+          if (calls.length === 0) break;
+          send({ type: 'tool', value: calls.map(c => c.name) });
+          toolsRanThisRequest = true;
+          nextNudgeInput = await Promise.all(
+            calls.map(async (c) => ({
+              functionResponse: { name: c.name, response: { result: await runTool(c.name, c.args) } },
+            }))
+          );
         }
       } catch (nudgeErr) {
-        console.warn('Synthese-nudge mislukt:', nudgeErr?.message || nudgeErr);
+        console.warn('Retry-nudge mislukt:', nudgeErr?.message || nudgeErr);
       }
     }
 
-    // Fallback: tool-loop (én eventuele nudge) heeft geresulteerd in tools maar géén tekst — model gaf op zonder
-    // synthese. Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Komt o.a. voor
-    // bij finishReason === 'MAX_TOKENS' of 'SAFETY' of wanneer de loop-budget op is.
+    // Fallback: tool-loop (én eventuele nudge) heeft geen tekst opgeleverd.
+    // Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Bericht
+    // is context-aware: niet beweren dat tools liepen als dat niet zo is.
     if (!totalSawText) {
-      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop);
+      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop, 'toolsRan:', toolsRanThisRequest);
       const hint = lastFinishReason === 'MAX_TOKENS'
         ? 'Er is veel webmateriaal opgehaald maar de samenvatting paste niet meer in het antwoord-budget. Probeer een kortere vraag of splits hem op.'
         : lastFinishReason === 'SAFETY'
           ? 'Het model heeft z\'n antwoord ingetrokken op basis van safety-filters.'
-          : `Ik heb mijn tools wel kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`;
+          : toolsRanThisRequest
+            ? `Ik heb mijn tools kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`
+            : `Ik kon geen actie ondernemen op deze vraag — herhaal hem alsjeblieft iets explicieter. (debug: finishReason=${lastFinishReason || 'onbekend'})`;
       send({ type: 'text', value: hint });
     }
 
