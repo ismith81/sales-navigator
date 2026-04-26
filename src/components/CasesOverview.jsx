@@ -39,10 +39,15 @@ export default function CasesOverview({ cases, personas = {}, searchQuery, headi
 
   return (
     <div className="cases-overview">
-      <div className="co-header">
-        <h3 className="co-title">{heading || 'Cases'}</h3>
-        <span className="co-count">{filtered.length}</span>
-      </div>
+      <h2 className="card-section-title">
+        <span className="card-section-title-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+          </svg>
+        </span>
+        {heading || 'Cases'}
+        <span className="card-section-title-count">{filtered.length}</span>
+      </h2>
       {hint && <p className="co-hint">{hint}</p>}
 
       {filtered.length === 0 ? (

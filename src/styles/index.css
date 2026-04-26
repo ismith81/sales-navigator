@@ -3898,6 +3898,38 @@ body::before {
 .kompas-title-text { line-height: 1.1; }
 .kompas-title-btn:hover { color: var(--teal); }
 .kompas-title-icon { color: var(--teal); flex-shrink: 0; }
+
+/* Generieke section-titel matched aan .kompas-title-btn — zelfde icon-grootte,
+   font-weight en font-size — zodat alle Gids-cards (Onderwerp / Team / Cases)
+   hetzelfde titel-ritme krijgen als "Met wie praat je?". */
+.card-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 0.75rem;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.005em;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.card-section-title-icon { width: 22px; height: 22px; color: var(--teal); flex-shrink: 0; }
+.card-section-title-icon svg { display: block; }
+.card-section-title-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, var(--teal));
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-left: 0.4rem;
+}
 .kompas-chevron { color: var(--muted); font-size: 11px; }
 .kompas-clear {
   background: transparent;
