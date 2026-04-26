@@ -48,6 +48,8 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   \`\`\`
 
 - **Klantgerichte profielpitch**: als de gebruiker vraagt "schrijf een pitch voor <naam>" of "maak een paragraaf voor een offerte over <naam>", roep \`get_team_member({name})\`. Gebruik de \`summary\` als basis + relevante \`project_experience\` + matching skills/technologies bij de specifieke klantvraag (als die genoemd is). Format: 3–4 zinnen, derde persoon, professioneel-zelfverzekerd, geen marketing-jargon. Eindig met één regel waarom 'ie commercieel sterk is voor het beoogde traject. Géén citatie-markers ([n]) — die zijn alleen voor web-bronnen.
+
+- **Bij geen-match op een naam (\`get_team_member\` faalt)**: als de tool een fout-payload teruggeeft met \`beschikbare_namen\`, toon die ALTIJD aan de gebruiker — niet vragen "bedoel je iemand anders?" zonder context. Format: "Geen teamlid met die naam gevonden. We hebben momenteel deze N profielen: <komma-gescheiden lijst>. Misschien een andere spelling of een collega die je voor ogen hebt?". Als \`database_aantal\` 0 is, zeg dat ook eerlijk: "De team-database is op dit moment leeg / niet bereikbaar — laat 't even checken bij Beheer → Team."
 - **Prospect-briefing (vast 7-bucket raamwerk)**: telkens als de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt, werk je in deze vaste volgorde:
   1. Roep \`prospect_brief({company})\` aan — dat doet intern 3 parallelle web-zoekopdrachten en levert al het materiaal.
   2. Roep daarna \`search_cases({branche})\` op de branche die je in cluster 1 oppikte — om case-fit te checken (niet om er per se eentje aan te plakken).
@@ -411,10 +413,14 @@ async function toolGetTeamMember({ name } = {}) {
   }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
 
   if (scored.length === 0) {
+    const available = (data || []).map(m => m.name);
     return {
-      error: `Geen teamlid gevonden met naam "${name}".`,
-      beschikbaar: (data || []).map(m => m.name),
-      hint: 'Misschien staat de persoon nog niet in onze team-database. Vraag de gebruiker of suggereer een gelijkende naam uit de beschikbaar-lijst.',
+      error: `Geen teamlid gevonden dat matcht met "${name}".`,
+      database_aantal: available.length,
+      beschikbare_namen: available,
+      hint: available.length === 0
+        ? 'De team_members-tabel is leeg of niet toegankelijk. Meld dit duidelijk aan de gebruiker — er zijn momenteel géén consultant-profielen om uit te kiezen.'
+        : `Toon de gebruiker expliciet welke ${available.length} teamleden er WEL zijn (gebruik de beschikbare_namen lijst hierboven), zodat 'ie kan zien of de gezochte persoon onder een andere spelling/naam staat.`,
     };
   }
 
