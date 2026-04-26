@@ -48,6 +48,8 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   \`\`\`
 
 - **Klantgerichte profielpitch**: als de gebruiker vraagt "schrijf een pitch voor <naam>" of "maak een paragraaf voor een offerte over <naam>", roep \`get_team_member({name})\`. Gebruik de \`summary\` als basis + relevante \`project_experience\` + matching skills/technologies bij de specifieke klantvraag (als die genoemd is). Format: 3–4 zinnen, derde persoon, professioneel-zelfverzekerd, geen marketing-jargon. Eindig met één regel waarom 'ie commercieel sterk is voor het beoogde traject. Géén citatie-markers ([n]) — die zijn alleen voor web-bronnen.
+
+- **Bij geen-match op een naam (\`get_team_member\` faalt)**: als de tool een fout-payload teruggeeft met \`beschikbare_namen\`, toon die ALTIJD aan de gebruiker — niet vragen "bedoel je iemand anders?" zonder context. Format: "Geen teamlid met die naam gevonden. We hebben momenteel deze N profielen: <komma-gescheiden lijst>. Misschien een andere spelling of een collega die je voor ogen hebt?". Als \`database_aantal\` 0 is, zeg dat ook eerlijk: "De team-database is op dit moment leeg / niet bereikbaar — laat 't even checken bij Beheer → Team."
 - **Prospect-briefing (vast 7-bucket raamwerk)**: telkens als de gebruiker om een briefing/voorbereiding/research over een bedrijf vraagt, werk je in deze vaste volgorde:
   1. Roep \`prospect_brief({company})\` aan — dat doet intern 3 parallelle web-zoekopdrachten en levert al het materiaal.
   2. Roep daarna \`search_cases({branche})\` op de branche die je in cluster 1 oppikte — om case-fit te checken (niet om er per se eentje aan te plakken).
@@ -109,10 +111,21 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
-2. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
+   - **Hervat na verduidelijking**: als jij in een vorige turn een vervolgvraag stelde (bv. "welk bedrijf wil je dat ik brief?", "welke Niels bedoel je?", "welke sector?") en de gebruiker nu enkel het ontbrekende stukje geeft (bv. "Caesar Groep", "velthoven", "retail"), behandel dat ALTIJD als de invoer voor de eerder gevraagde actie. Roep meteen de juiste tool aan met die nieuwe input — vraag niet opnieuw, en blijf niet stilletjes hangen. Antwoord-zonder-actie is geen acceptabele uitkomst. Concreet:
+     - Vroeg jij "welk bedrijf?" + user zegt "Bol.com" → roep \`prospect_brief({company: "Bol.com"})\` aan, NIET opnieuw vragen.
+     - Vroeg jij "Bedoel je Niels van Velthoven of Niels Laan?" + user zegt "velthoven" / "de eerste" / "van Velthoven" → roep \`get_team_member({name: "Velthoven"})\` aan, NIET opnieuw kiezen-of-uitleggen.
+     - Vroeg jij "welke skills zoek je?" + user zegt "Fabric" → roep \`find_team_members({technology: "Fabric"})\` aan.
+
+2. **Vragen die ALTIJD een tool-call triggeren** (geen "Hallo, waarmee kan ik helpen"-begroeting als response, ook NIET op de allereerste turn van een gesprek als de vraag concreet is):
+   - Een vraag of opmerking met een persoonsnaam erin ("is er een cv van X?", "hebben we een profiel van Y?", "ik zoek het cv van X", "ik wil iets weten over Y", "<naam>'s profiel", "X-cv", typo's daargelaten) → \`get_team_member({name: X})\` direct. Bij meerdere kandidaten doet de tool zelf disambiguation.
+   - "wie heeft <skill/sector>-ervaring?" / "welke collega past bij <klantvraag>?" / "ik zoek iemand met <skill>" → \`find_team_members\` direct.
+   - "maak een briefing over <bedrijf>" / "vertel me iets over <bedrijf>" / "wie is <bedrijf>?" → \`prospect_brief\` direct.
+   - "welke cases passen bij <persona/dienst>?" / "vergelijkbare case voor <X>" → \`search_cases\` direct.
+   - **Vuistregel**: bevat de user-message een eigennaam (persoon/bedrijf), een skill-term, een sector of een dienst-term? → eerst tool-call, dan antwoorden. Een algemene begroeting ("Hallo, ik ben Nova...") hoort alleen op een lege of écht onduidelijke openingsvraag — nooit op iets met inhoud.
+3. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
    - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
    - Bij follow-up mails en actielijsten uit gespreksnotities: scan de notes altijd actief op persona, branche, doel, behoefte, dienst, klantvraag en case-haakjes. Als je ook maar één plausibel haakje ziet, moet je eerst relevante tools gebruiken (\`list_personas\`, \`get_topic\`, \`search_cases\`) vóór je schrijft. Alleen als de notes echt géén enkel bruikbaar haakje bevatten, mag je zonder tool-call een generieke versie maken.
-3. **Synthetiseer** — vat niet samen wat de tools terugstuurden, maar *gebruik* het om een antwoord op maat te maken. Koppel altijd expliciet: "voor [persona] is [case] sterk omdat [reden uit de data]".
+4. **Synthetiseer** — vat niet samen wat de tools terugstuurden, maar *gebruik* het om een antwoord op maat te maken. Koppel altijd expliciet: "voor [persona] is [case] sterk omdat [reden uit de data]".
 
 BIJ GESPREKSNOTITIES:
 - Behandel ruwe notes niet als losse tekstredactie, maar als sales-context die je mag verrijken met feiten uit de tools.
@@ -156,11 +169,21 @@ TYPISCHE VRAGEN:
 - "Schrijf een klantgerichte pitch voor [naam] voor een Power BI-traject."`;
 
 // ─── Supabase (read-only) ────────────────────────────────────────────────
+// Module-level user-token wordt aan 't begin van elke handler gezet via
+// `setSupabaseUserToken(token)`. Tools die `getSupabase()` aanroepen krijgen
+// een client die queries als `authenticated` draait i.p.v. `anon`. Dat is
+// noodzakelijk voor tabellen met RLS `to authenticated` (o.a. team_members).
+let _userToken = null;
+function setSupabaseUserToken(token) { _userToken = token || null; }
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error('Supabase env vars ontbreken (SUPABASE_URL / SUPABASE_ANON_KEY).');
-  return createClient(url, key, { auth: { persistSession: false } });
+  const opts = { auth: { persistSession: false } };
+  if (_userToken) {
+    opts.global = { headers: { Authorization: `Bearer ${_userToken}` } };
+  }
+  return createClient(url, key, opts);
 }
 
 async function fetchConfig(supabase, key) {
@@ -362,6 +385,14 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
 
 // Volledige profiel-fetch op naam (fuzzy). Geen cv_text/cv_pdf-info terug
 // (privacy/size). Gebruik dit als de gebruiker een specifieke naam noemt.
+//
+// Match-logica is bewust ruim:
+//   - normaliseert (lowercase, strip diacritics + leestekens)
+//   - includes-match in beide richtingen ("niels" ↔ "niels van velthoven")
+//   - token-match per woord (zodat "Velthoven" óók match op "Niels van Velthoven")
+//   - bij meerdere matches: lijst teruggeven zodat Nova kan vragen welke
+// Sales noemt vaak alleen voor- óf achternaam ("Niels", "Velthoven"); de oude
+// logica miste dat soms door witregels/diacritics in de DB-naam.
 async function toolGetTeamMember({ name } = {}) {
   if (!name || typeof name !== 'string') return { error: 'name is verplicht.' };
   const supabase = getSupabase();
@@ -369,18 +400,62 @@ async function toolGetTeamMember({ name } = {}) {
     .from('team_members')
     .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
-  const target = (data || []).find(m => {
-    const a = (m.name || '').toLowerCase();
-    const b = name.toLowerCase();
-    return a === b || a.includes(b) || b.includes(a);
-  });
-  if (!target) {
+
+  const norm = (s) => (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip diacritics
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const tokens = (s) => norm(s).split(' ').filter(t => t.length >= 2);
+
+  const queryNorm = norm(name);
+  const queryTokens = tokens(name);
+  if (!queryNorm) return { error: 'name is verplicht.' };
+
+  // Score elke kandidaat; hogere score = beter. We geven de top match terug,
+  // tenzij meerdere kandidaten gelijk scoren (dan vragen we Nova om opheldering).
+  const scored = (data || []).map(m => {
+    const memberNorm = norm(m.name);
+    const memberTokens = tokens(m.name);
+    let score = 0;
+    if (memberNorm === queryNorm) score = 100;                              // exact
+    else if (memberNorm.includes(queryNorm)) score = 80;                    // "niels" in "niels van velthoven"
+    else if (queryNorm.includes(memberNorm)) score = 70;                    // "niels v" includes "niels"
+    else {
+      // Token-match: hoeveel query-tokens zijn ook member-tokens (of prefix)?
+      const hits = queryTokens.filter(qt =>
+        memberTokens.some(mt => mt === qt || mt.startsWith(qt) || qt.startsWith(mt))
+      ).length;
+      if (hits > 0) score = 30 + hits * 10;
+    }
+    return { member: m, score };
+  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
+
+  if (scored.length === 0) {
+    const available = (data || []).map(m => m.name);
     return {
-      error: `Geen teamlid gevonden met naam "${name}".`,
-      beschikbaar: (data || []).map(m => m.name),
+      error: `Geen teamlid gevonden dat matcht met "${name}".`,
+      database_aantal: available.length,
+      beschikbare_namen: available,
+      hint: available.length === 0
+        ? 'De team_members-tabel is leeg of niet toegankelijk. Meld dit duidelijk aan de gebruiker — er zijn momenteel géén consultant-profielen om uit te kiezen.'
+        : `Toon de gebruiker expliciet welke ${available.length} teamleden er WEL zijn (gebruik de beschikbare_namen lijst hierboven), zodat 'ie kan zien of de gezochte persoon onder een andere spelling/naam staat.`,
     };
   }
-  return target;
+
+  // Eén duidelijke winnaar (top-score uniek)?
+  const topScore = scored[0].score;
+  const winners = scored.filter(x => x.score === topScore);
+  if (winners.length === 1) return winners[0].member;
+
+  // Meerdere matches met dezelfde score → Nova moet kiezen / vragen.
+  return {
+    ambiguous: true,
+    error: `Meerdere teamleden komen overeen met "${name}".`,
+    matches: winners.map(w => ({ name: w.member.name, role: w.member.role, seniority: w.member.seniority })),
+    hint: 'Vraag de gebruiker EÉN keer welke specifiek bedoeld is — toon de matches als opsomming. Zodra de gebruiker daarna een onderscheidend deel teruggeeft (achternaam, "de eerste", "Velthoven"), roep direct opnieuw `get_team_member` aan met dat onderscheidende deel; ga niet opnieuw kiezen-of-vragen.',
+  };
 }
 
 // ─── search_web — Google Search grounding als sub-call ───────────────────
@@ -591,8 +666,12 @@ export default async function handler(req, res) {
   }
 
   // Auth-check — zonder geldige sessie geen Gemini-calls.
-  const user = await requireUser(req, res);
-  if (!user) return;
+  const auth = await requireUser(req, res);
+  if (!auth) return;
+  const { user, token } = auth;
+  // User-token mee zodat Supabase-queries vanuit tools als `authenticated`
+  // draaien (verplicht voor RLS `to authenticated` op team_members etc.).
+  setSupabaseUserToken(token);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -640,6 +719,14 @@ export default async function handler(req, res) {
       model: 'gemini-2.5-flash',
       systemInstruction,
       tools,
+      // Briefings (7 buckets + BANT + Sales-fit + Gap-flag) zijn snel >2k tokens
+      // output. SDK-default is conservatief; expliciet ophogen voorkomt dat
+      // Gemini stilletjes afkapt en `finishReason: STOP` terugstuurt zonder
+      // synthese-tekst. 8192 is ruim genoeg voor onze langste responses.
+      generationConfig: {
+        maxOutputTokens: 8192,
+        temperature: 0.7,
+      },
     });
 
     const chat = model.startChat({ history });
@@ -654,6 +741,7 @@ export default async function handler(req, res) {
     let safetyLoop = 0;
     let totalSawText = false;
     let lastFinishReason = null;
+    let toolsRanThisRequest = false; // gebruikt voor de synthese-nudge hieronder
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -678,6 +766,7 @@ export default async function handler(req, res) {
 
       // Voer alle calls uit en stuur responses in één go terug.
       send({ type: 'tool', value: functionCalls.map(c => c.name) });
+      toolsRanThisRequest = true;
       const toolResponses = await Promise.all(
         functionCalls.map(async (call) => ({
           functionResponse: {
@@ -692,16 +781,72 @@ export default async function handler(req, res) {
       if (!sawText && safetyLoop >= 5) break;
     }
 
-    // Fallback: tool-loop heeft geresulteerd in tools maar géén tekst — model gaf op zonder
-    // synthese. Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Komt o.a. voor
-    // bij finishReason === 'MAX_TOKENS' of 'SAFETY' of wanneer de loop-budget op is.
+    // Retry-nudge bij STOP-zonder-tekst. Gemini 2.5 Flash stopt soms abrupt
+    // met `finishReason: STOP` en geen output — meestal in twee scenario's:
+    //   (a) Tool-call gedaan, daarna model "denkt klaar" zonder synthese.
+    //       Komt vooral voor bij `prospect_brief` (lange tool-output).
+    //   (b) Korte user-input na een eigen verduidelijkings-vraag (bv.
+    //       Nova vraagt "welk bedrijf?", user typt "Caesar Groep" — model
+    //       stopt zonder iets te doen i.p.v. de eerder gevraagde actie te
+    //       hervatten).
+    // Eén expliciete nudge lost beide op. Niet bij MAX_TOKENS (echt limiet
+    // bereikt) of SAFETY (filter-block) — daar helpt retry niets.
+    if (!totalSawText && lastFinishReason === 'STOP') {
+      console.warn('Retry-nudge: STOP zonder tekst (toolsRan:', toolsRanThisRequest, ')');
+      // Pak de laatste user-message uit de incoming chat-messages — hij staat
+      // ook in de Gemini-history maar zo voorkomen we dat we de geschiedenis
+      // opnieuw moeten ophalen.
+      const lastUserMsg = (messages[messages.length - 1]?.content || '').trim();
+      try {
+        const nudge = toolsRanThisRequest
+          ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
+          : `De gebruiker zei: "${lastUserMsg}". Op basis van de conversatie-context hierboven: roep DIRECT de meest passende tool aan om deze input te verwerken. Een korte verduidelijking ("Bol.com", "velthoven", "Niels van Velthoven", "retail") na jouw eigen "welke?"- of clarificatie-vraag = ALTIJD tool-call met die input — niet opnieuw vragen, niet bevestigen, niet alleen tekst geven. Specifiek: vroeg jij in een vorige turn welk teamlid bedoeld werd? → roep \`get_team_member({name: "${lastUserMsg}"})\` aan. Vroeg je welk bedrijf? → roep \`prospect_brief({company: "${lastUserMsg}"})\` aan. Begin je response met de tool-call.`;
+        const result = await chat.sendMessageStream(nudge);
+        // Tweede tool-loop: na de nudge mag het model alsnog tools aanroepen
+        // (scenario b: model deed niks de eerste keer, gaat nu pas prospect_brief
+        // doen). Beperk tot 3 rondes om budget te bewaren.
+        let nudgeLoop = 0;
+        let nextNudgeInput = result;
+        while (nudgeLoop++ < 3) {
+          const stream = nudgeLoop === 1 ? result : await chat.sendMessageStream(nextNudgeInput);
+          const calls = [];
+          for await (const chunk of stream.stream) {
+            const fc = chunk.functionCalls?.() || [];
+            if (fc.length) calls.push(...fc);
+            const text = chunk.text?.();
+            if (text) {
+              totalSawText = true;
+              send({ type: 'text', value: text });
+            }
+            const fr = chunk.candidates?.[0]?.finishReason;
+            if (fr) lastFinishReason = fr;
+          }
+          if (calls.length === 0) break;
+          send({ type: 'tool', value: calls.map(c => c.name) });
+          toolsRanThisRequest = true;
+          nextNudgeInput = await Promise.all(
+            calls.map(async (c) => ({
+              functionResponse: { name: c.name, response: { result: await runTool(c.name, c.args) } },
+            }))
+          );
+        }
+      } catch (nudgeErr) {
+        console.warn('Retry-nudge mislukt:', nudgeErr?.message || nudgeErr);
+      }
+    }
+
+    // Fallback: tool-loop (én eventuele nudge) heeft geen tekst opgeleverd.
+    // Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Bericht
+    // is context-aware: niet beweren dat tools liepen als dat niet zo is.
     if (!totalSawText) {
-      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop);
+      console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop, 'toolsRan:', toolsRanThisRequest);
       const hint = lastFinishReason === 'MAX_TOKENS'
         ? 'Er is veel webmateriaal opgehaald maar de samenvatting paste niet meer in het antwoord-budget. Probeer een kortere vraag of splits hem op.'
         : lastFinishReason === 'SAFETY'
           ? 'Het model heeft z\'n antwoord ingetrokken op basis van safety-filters.'
-          : `Ik heb mijn tools wel kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`;
+          : toolsRanThisRequest
+            ? `Ik heb mijn tools kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`
+            : `Ik kon geen actie ondernemen op deze vraag — herhaal hem alsjeblieft iets explicieter. (debug: finishReason=${lastFinishReason || 'onbekend'})`;
       send({ type: 'text', value: hint });
     }
 

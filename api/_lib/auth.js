@@ -1,6 +1,9 @@
 // Server-side JWT-validatie voor de serverless endpoints.
 // Gebruikt supabase-js om de access-token uit de Authorization-header te
-// verifiëren. Returnt de user, of null als ongeldig/ontbrekend.
+// verifiëren. Returnt { user, token } of null als ongeldig/ontbrekend.
+// De token is nodig om Supabase-queries als `authenticated` te laten draaien
+// i.p.v. `anon` (dat is verplicht voor tabellen met RLS `to authenticated`,
+// zoals team_members).
 import { createClient } from '@supabase/supabase-js';
 
 export async function requireUser(req, res) {
@@ -25,5 +28,5 @@ export async function requireUser(req, res) {
     res.status(401).json({ error: 'Sessie ongeldig of verlopen.' });
     return null;
   }
-  return data.user;
+  return { user: data.user, token };
 }

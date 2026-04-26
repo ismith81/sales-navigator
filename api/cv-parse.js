@@ -156,8 +156,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const user = await requireUser(req, res);
-  if (!user) return;
+  const auth = await requireUser(req, res);
+  if (!auth) return;
+  // cv-parse doet zelf geen DB-queries (alleen Gemini-call), dus token niet
+  // verder nodig. We pakken alleen de user voor logging-context als we 'm
+  // willen, maar nu is de auth-check zelf voldoende.
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
