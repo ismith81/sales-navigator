@@ -362,6 +362,14 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
 
 // Volledige profiel-fetch op naam (fuzzy). Geen cv_text/cv_pdf-info terug
 // (privacy/size). Gebruik dit als de gebruiker een specifieke naam noemt.
+//
+// Match-logica is bewust ruim:
+//   - normaliseert (lowercase, strip diacritics + leestekens)
+//   - includes-match in beide richtingen ("niels" ↔ "niels van velthoven")
+//   - token-match per woord (zodat "Velthoven" óók match op "Niels van Velthoven")
+//   - bij meerdere matches: lijst teruggeven zodat Nova kan vragen welke
+// Sales noemt vaak alleen voor- óf achternaam ("Niels", "Velthoven"); de oude
+// logica miste dat soms door witregels/diacritics in de DB-naam.
 async function toolGetTeamMember({ name } = {}) {
   if (!name || typeof name !== 'string') return { error: 'name is verplicht.' };
   const supabase = getSupabase();
@@ -369,18 +377,58 @@ async function toolGetTeamMember({ name } = {}) {
     .from('team_members')
     .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
-  const target = (data || []).find(m => {
-    const a = (m.name || '').toLowerCase();
-    const b = name.toLowerCase();
-    return a === b || a.includes(b) || b.includes(a);
-  });
-  if (!target) {
+
+  const norm = (s) => (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip diacritics
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const tokens = (s) => norm(s).split(' ').filter(t => t.length >= 2);
+
+  const queryNorm = norm(name);
+  const queryTokens = tokens(name);
+  if (!queryNorm) return { error: 'name is verplicht.' };
+
+  // Score elke kandidaat; hogere score = beter. We geven de top match terug,
+  // tenzij meerdere kandidaten gelijk scoren (dan vragen we Nova om opheldering).
+  const scored = (data || []).map(m => {
+    const memberNorm = norm(m.name);
+    const memberTokens = tokens(m.name);
+    let score = 0;
+    if (memberNorm === queryNorm) score = 100;                              // exact
+    else if (memberNorm.includes(queryNorm)) score = 80;                    // "niels" in "niels van velthoven"
+    else if (queryNorm.includes(memberNorm)) score = 70;                    // "niels v" includes "niels"
+    else {
+      // Token-match: hoeveel query-tokens zijn ook member-tokens (of prefix)?
+      const hits = queryTokens.filter(qt =>
+        memberTokens.some(mt => mt === qt || mt.startsWith(qt) || qt.startsWith(mt))
+      ).length;
+      if (hits > 0) score = 30 + hits * 10;
+    }
+    return { member: m, score };
+  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
+
+  if (scored.length === 0) {
     return {
       error: `Geen teamlid gevonden met naam "${name}".`,
       beschikbaar: (data || []).map(m => m.name),
+      hint: 'Misschien staat de persoon nog niet in onze team-database. Vraag de gebruiker of suggereer een gelijkende naam uit de beschikbaar-lijst.',
     };
   }
-  return target;
+
+  // Eén duidelijke winnaar (top-score uniek)?
+  const topScore = scored[0].score;
+  const winners = scored.filter(x => x.score === topScore);
+  if (winners.length === 1) return winners[0].member;
+
+  // Meerdere matches met dezelfde score → Nova moet kiezen / vragen.
+  return {
+    ambiguous: true,
+    error: `Meerdere teamleden komen overeen met "${name}".`,
+    matches: winners.map(w => ({ name: w.member.name, role: w.member.role, seniority: w.member.seniority })),
+    hint: 'Vraag de gebruiker om de specifieke voor- + achternaam, of pak `find_team_members` met aanvullende filters.',
+  };
 }
 
 // ─── search_web — Google Search grounding als sub-call ───────────────────
@@ -640,6 +688,14 @@ export default async function handler(req, res) {
       model: 'gemini-2.5-flash',
       systemInstruction,
       tools,
+      // Briefings (7 buckets + BANT + Sales-fit + Gap-flag) zijn snel >2k tokens
+      // output. SDK-default is conservatief; expliciet ophogen voorkomt dat
+      // Gemini stilletjes afkapt en `finishReason: STOP` terugstuurt zonder
+      // synthese-tekst. 8192 is ruim genoeg voor onze langste responses.
+      generationConfig: {
+        maxOutputTokens: 8192,
+        temperature: 0.7,
+      },
     });
 
     const chat = model.startChat({ history });
@@ -654,6 +710,7 @@ export default async function handler(req, res) {
     let safetyLoop = 0;
     let totalSawText = false;
     let lastFinishReason = null;
+    let toolsRanThisRequest = false; // gebruikt voor de synthese-nudge hieronder
     while (safetyLoop++ < 5) {
       const result = await chat.sendMessageStream(nextInput);
 
@@ -678,6 +735,7 @@ export default async function handler(req, res) {
 
       // Voer alle calls uit en stuur responses in één go terug.
       send({ type: 'tool', value: functionCalls.map(c => c.name) });
+      toolsRanThisRequest = true;
       const toolResponses = await Promise.all(
         functionCalls.map(async (call) => ({
           functionResponse: {
@@ -692,7 +750,32 @@ export default async function handler(req, res) {
       if (!sawText && safetyLoop >= 5) break;
     }
 
-    // Fallback: tool-loop heeft geresulteerd in tools maar géén tekst — model gaf op zonder
+    // Synthese-nudge: Gemini 2.5 Flash stopt soms na een tool-call met
+    // `finishReason: STOP` zonder synthese-tekst — alsof 't model denkt
+    // "tool-call wás 't antwoord". Komt vooral voor bij `prospect_brief`
+    // (lange tool-output, model raakt 't spoor bij). Eén expliciete nudge
+    // dwingt 'm tot daadwerkelijke synthese. Alleen bij STOP — niet bij
+    // MAX_TOKENS (echt limiet bereikt) of SAFETY (filter-block).
+    if (!totalSawText && toolsRanThisRequest && lastFinishReason === 'STOP') {
+      console.warn('Synthese-nudge: STOP zonder tekst na tool-calls. Eén retry met expliciete prompt.');
+      try {
+        const nudge = 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".';
+        const result = await chat.sendMessageStream(nudge);
+        for await (const chunk of result.stream) {
+          const text = chunk.text?.();
+          if (text) {
+            totalSawText = true;
+            send({ type: 'text', value: text });
+          }
+          const fr = chunk.candidates?.[0]?.finishReason;
+          if (fr) lastFinishReason = fr;
+        }
+      } catch (nudgeErr) {
+        console.warn('Synthese-nudge mislukt:', nudgeErr?.message || nudgeErr);
+      }
+    }
+
+    // Fallback: tool-loop (én eventuele nudge) heeft geresulteerd in tools maar géén tekst — model gaf op zonder
     // synthese. Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Komt o.a. voor
     // bij finishReason === 'MAX_TOKENS' of 'SAFETY' of wanneer de loop-budget op is.
     if (!totalSawText) {
