@@ -585,9 +585,9 @@ body::before {
   gap: 0;
   /* Padding matched aan de overige Gids-cards (.context-strip--card,
      .team-grid-strip, .cases-overview) zodat de section-title-icons
-     allemaal op dezelfde linker-uitlijning staan. Breathing-room
-     binnen de card komt uit inner margins (titel/tabs/chips). */
-  padding: 1.1rem 1.1rem 1.25rem;
+     allemaal op dezelfde linker-uitlijning staan EN alle vier de cards
+     dezelfde hoogte hebben wanneer ingeklapt. */
+  padding: 0.9rem 1.1rem;
 }
 .topic-card.context-strip--card > .card-section-title { margin-bottom: 1.6rem; }
 .topic-card.context-strip--card > .card-section-title.is-collapsed { margin-bottom: 0; }
@@ -3954,7 +3954,8 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   transition: transform 0.18s ease;
 }
 .card-section-title-chevron svg { display: block; }
-.card-section-title.is-collapsed .card-section-title-chevron {
+.card-section-title.is-collapsed .card-section-title-chevron,
+.card-section-title-chevron.is-flipped {
   transform: rotate(-90deg);
 }
 /* Wanneer ingeklapt: geen onderlinge margin meer — anders krijgt de card
