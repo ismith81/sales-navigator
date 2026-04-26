@@ -3621,16 +3621,24 @@ body::before {
 }
 
 /* ---- Cases overview (landing) ---- */
+/* Card-omlijning matcht .team-grid-strip en .context-strip--card zodat
+   de Gids-startpagina drie samenhangende blokken toont: persona-kompas,
+   Team, Cases — allemaal in dezelfde card-stijl. */
 .cases-overview {
   margin-top: 1.5rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(44,60,82,0.04);
 }
 /* Section-header matched aan TeamGrid (zelfde stijl: kleine titel + teal
-   count-pill) zodat de Gids consistent oogt: Beschikbaarheid team — N · Cases — N. */
+   count-pill) zodat de Gids consistent oogt: Team — N · Cases — N. */
 .co-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 1rem 0 0.6rem;
+  margin: 0 0 0.85rem;
 }
 .co-title {
   margin: 0;
@@ -3699,6 +3707,9 @@ body::before {
   background: var(--bg-soft, #F5F7FA);
 }
 .co-card--expanded:hover { transform: none; box-shadow: none; border-color: var(--border); }
+@media (max-width: 640px) {
+  .cases-overview { padding: 0.85rem 1rem 1rem; border-radius: 12px; }
+}
 .co-collapse {
   position: absolute;
   top: 0.6rem;
