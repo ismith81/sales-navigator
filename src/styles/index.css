@@ -573,15 +573,21 @@ body::before {
 /* Onderwerp-card houdt z'n inner content netjes met onderlinge spacing.
    Iets ruimere padding én inner-margins dan de standaard
    context-strip--card omdat hier titel + tabs + chips + talking points
-   onder elkaar staan en lucht nodig hebben. */
-.topic-card {
+   onder elkaar staan en lucht nodig hebben.
+   Selectors gebruiken DUBBEL .topic-card.context-strip--card omdat
+   verderop in de file `.context-strip--card > *` en
+   `.context-strip--card .nav-tabs-row` margin-bottom op 0 forceren —
+   die rules waren voor de oude inline persona+filters-strip-layout.
+   Met dubbele class krijgen we hogere specificity en winnen we. */
+.topic-card.context-strip--card {
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 1.25rem 1.4rem 1.4rem;
 }
-.topic-card .nav-tabs-row { margin-bottom: 1.3rem; }
-.topic-card .filter-row { margin-bottom: 0; gap: 0.85rem; }
+.topic-card.context-strip--card > .card-section-title { margin-bottom: 1.6rem; }
+.topic-card.context-strip--card .nav-tabs-row { margin-bottom: 1.3rem; }
+.topic-card.context-strip--card .filter-row { margin-bottom: 0; gap: 0.85rem; }
 /* Persona-card: standalone persona-kompas zonder context-strip flex.
    Reset de margins die kompas krijgt via .context-strip-overrides. */
 .persona-card .kompas {
