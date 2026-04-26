@@ -159,11 +159,21 @@ TYPISCHE VRAGEN:
 - "Schrijf een klantgerichte pitch voor [naam] voor een Power BI-traject."`;
 
 // ─── Supabase (read-only) ────────────────────────────────────────────────
+// Module-level user-token wordt aan 't begin van elke handler gezet via
+// `setSupabaseUserToken(token)`. Tools die `getSupabase()` aanroepen krijgen
+// een client die queries als `authenticated` draait i.p.v. `anon`. Dat is
+// noodzakelijk voor tabellen met RLS `to authenticated` (o.a. team_members).
+let _userToken = null;
+function setSupabaseUserToken(token) { _userToken = token || null; }
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error('Supabase env vars ontbreken (SUPABASE_URL / SUPABASE_ANON_KEY).');
-  return createClient(url, key, { auth: { persistSession: false } });
+  const opts = { auth: { persistSession: false } };
+  if (_userToken) {
+    opts.global = { headers: { Authorization: `Bearer ${_userToken}` } };
+  }
+  return createClient(url, key, opts);
 }
 
 async function fetchConfig(supabase, key) {
@@ -646,8 +656,12 @@ export default async function handler(req, res) {
   }
 
   // Auth-check — zonder geldige sessie geen Gemini-calls.
-  const user = await requireUser(req, res);
-  if (!user) return;
+  const auth = await requireUser(req, res);
+  if (!auth) return;
+  const { user, token } = auth;
+  // User-token mee zodat Supabase-queries vanuit tools als `authenticated`
+  // draaien (verplicht voor RLS `to authenticated` op team_members etc.).
+  setSupabaseUserToken(token);
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

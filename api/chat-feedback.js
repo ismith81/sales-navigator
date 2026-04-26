@@ -12,8 +12,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const user = await requireUser(req, res);
-  if (!user) return;
+  const auth = await requireUser(req, res);
+  if (!auth) return;
+  const { user, token } = auth;
 
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY;
@@ -28,7 +29,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const supabase = createClient(url, key, { auth: { persistSession: false } });
+  // Token meesturen zodat de insert als `authenticated` draait i.p.v. `anon`.
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const { error } = await supabase.from('chat_feedback').insert({
     rating,
     user_message: (userMessage || '').slice(0, 4000),
