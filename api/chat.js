@@ -116,12 +116,12 @@ WERKWIJZE:
      - Vroeg jij "Bedoel je Niels van Velthoven of Niels Laan?" + user zegt "velthoven" / "de eerste" / "van Velthoven" → roep \`get_team_member({name: "Velthoven"})\` aan, NIET opnieuw kiezen-of-uitleggen.
      - Vroeg jij "welke skills zoek je?" + user zegt "Fabric" → roep \`find_team_members({technology: "Fabric"})\` aan.
 
-2. **Vragen die ALTIJD een tool-call triggeren** (geen "Hallo, waarmee kan ik helpen"-begroeting als response):
-   - "is er een cv van X?" / "hebben we een profiel van Y?" → \`get_team_member({name: X})\` of \`find_team_members({keyword: X})\` — direct uitvoeren, niet eerst vragen wat je voor 'm kan doen.
-   - "wie heeft <skill/sector>-ervaring?" / "welke collega past bij <klantvraag>?" → \`find_team_members\` direct.
-   - "maak een briefing over <bedrijf>" → \`prospect_brief\` direct.
-   - "welke cases passen bij <persona/dienst>?" → \`search_cases\` direct.
-   - Een algemene begroeting hoort alleen op een lege of écht onduidelijke openingsvraag; niet op een concrete informatievraag.
+2. **Vragen die ALTIJD een tool-call triggeren** (geen "Hallo, waarmee kan ik helpen"-begroeting als response, ook NIET op de allereerste turn van een gesprek als de vraag concreet is):
+   - Een vraag of opmerking met een persoonsnaam erin ("is er een cv van X?", "hebben we een profiel van Y?", "ik zoek het cv van X", "ik wil iets weten over Y", "<naam>'s profiel", "X-cv", typo's daargelaten) → \`get_team_member({name: X})\` direct. Bij meerdere kandidaten doet de tool zelf disambiguation.
+   - "wie heeft <skill/sector>-ervaring?" / "welke collega past bij <klantvraag>?" / "ik zoek iemand met <skill>" → \`find_team_members\` direct.
+   - "maak een briefing over <bedrijf>" / "vertel me iets over <bedrijf>" / "wie is <bedrijf>?" → \`prospect_brief\` direct.
+   - "welke cases passen bij <persona/dienst>?" / "vergelijkbare case voor <X>" → \`search_cases\` direct.
+   - **Vuistregel**: bevat de user-message een eigennaam (persoon/bedrijf), een skill-term, een sector of een dienst-term? → eerst tool-call, dan antwoorden. Een algemene begroeting ("Hallo, ik ben Nova...") hoort alleen op een lege of écht onduidelijke openingsvraag — nooit op iets met inhoud.
 3. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
    - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
    - Bij follow-up mails en actielijsten uit gespreksnotities: scan de notes altijd actief op persona, branche, doel, behoefte, dienst, klantvraag en case-haakjes. Als je ook maar één plausibel haakje ziet, moet je eerst relevante tools gebruiken (\`list_personas\`, \`get_topic\`, \`search_cases\`) vóór je schrijft. Alleen als de notes echt géén enkel bruikbaar haakje bevatten, mag je zonder tool-call een generieke versie maken.
@@ -793,10 +793,14 @@ export default async function handler(req, res) {
     // bereikt) of SAFETY (filter-block) — daar helpt retry niets.
     if (!totalSawText && lastFinishReason === 'STOP') {
       console.warn('Retry-nudge: STOP zonder tekst (toolsRan:', toolsRanThisRequest, ')');
+      // Pak de laatste user-message uit de incoming chat-messages — hij staat
+      // ook in de Gemini-history maar zo voorkomen we dat we de geschiedenis
+      // opnieuw moeten ophalen.
+      const lastUserMsg = (messages[messages.length - 1]?.content || '').trim();
       try {
         const nudge = toolsRanThisRequest
           ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
-          : 'Voer de gebruikersvraag uit op basis van de conversatie-context hierboven. Als je in een vorige turn iets vroeg (bv. "welk bedrijf?") en de gebruiker nu enkel die info gaf, hervat de oorspronkelijke actie (bv. een briefing) met die invoer. Roep tools aan als nodig en lever het volledige antwoord — niet alleen een bevestiging.';
+          : `De gebruiker zei: "${lastUserMsg}". Op basis van de conversatie-context hierboven: roep DIRECT de meest passende tool aan om deze input te verwerken. Een korte verduidelijking ("Bol.com", "velthoven", "Niels van Velthoven", "retail") na jouw eigen "welke?"- of clarificatie-vraag = ALTIJD tool-call met die input — niet opnieuw vragen, niet bevestigen, niet alleen tekst geven. Specifiek: vroeg jij in een vorige turn welk teamlid bedoeld werd? → roep \`get_team_member({name: "${lastUserMsg}"})\` aan. Vroeg je welk bedrijf? → roep \`prospect_brief({company: "${lastUserMsg}"})\` aan. Begin je response met de tool-call.`;
         const result = await chat.sendMessageStream(nudge);
         // Tweede tool-loop: na de nudge mag het model alsnog tools aanroepen
         // (scenario b: model deed niks de eerste keer, gaat nu pas prospect_brief
