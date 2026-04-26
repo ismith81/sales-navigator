@@ -137,9 +137,9 @@ export default function TeamManager() {
                   {m.name}
                   {(() => {
                     const b = getAvailabilityBucket(m);
-                    const tone = b.sortKey === 0 ? 'now' : b.sortKey >= 9000 ? 'far' : 'soon';
+                    // bucket-key komt nu uit de gedeelde lib: 'now' | 'soon' | 'later'.
                     return (
-                      <span className={`team-badge team-badge--${tone}`}>{b.label}</span>
+                      <span className={`team-badge team-badge--${b.bucket}`}>{b.label}</span>
                     );
                   })()}
                 </div>

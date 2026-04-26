@@ -43,13 +43,24 @@ export async function listTeamMembers() {
 // Bepaalt in welke bucket een team-lid valt voor de Gids-strip én Beheer-
 // badges. Gedeelde logica zodat overal hetzelfde label/groepering komt.
 //
-// Buckets:
-//   { bucket: 'now',     label: 'Nu beschikbaar',                  sortKey: 0 }
-//   { bucket: 'month-…', label: 'Vrij in [maand jaar]',            sortKey: 1..6 }
-//   { bucket: 'later',   label: 'Later (> 6 maanden)',             sortKey: 9000 }
-//   { bucket: 'unknown', label: 'Bezet — einddatum onbekend',      sortKey: 9999 }
+// Drie buckets (eerder per-maand, nu groffer voor overzicht):
+//   { bucket: 'now',    label: 'Nu beschikbaar',                  sortKey: 0     }
+//   { bucket: 'soon',   label: 'Beschikbaar in de komende 3 maanden', sortKey: 1 }
+//   { bucket: 'later',  label: 'Beschikbaar > 3 maanden',         sortKey: 2     }
+//
+// "Bezet — einddatum onbekend" valt nu onder 'later' en wordt binnen die
+// bucket onderaan gesorteerd (zodat concrete datums boven aan staan).
 const MONTH_NL = ['januari', 'februari', 'maart', 'april', 'mei', 'juni',
   'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+// Geeft een korte NL datum-label voor card-rendering: "15 mei 2026" of null.
+export function formatAvailableFrom(member = {}) {
+  const fromStr = member.available_from;
+  if (!fromStr) return null;
+  const d = new Date(fromStr);
+  if (isNaN(d)) return null;
+  return `${d.getDate()} ${MONTH_NL[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export function getAvailabilityBucket(member = {}) {
   const today = new Date();
@@ -67,25 +78,24 @@ export function getAvailabilityBucket(member = {}) {
   if (from && from <= today) {
     return { bucket: 'now', label: 'Nu beschikbaar', sortKey: 0 };
   }
-  // Klant + geen datum → "Bezet onbekend".
+  // Klant + geen datum → 'later'-bucket (komt onderaan binnen die bucket).
   if (!from) {
-    return { bucket: 'unknown', label: 'Bezet — einddatum onbekend', sortKey: 9999 };
+    return { bucket: 'later', label: 'Beschikbaar > 3 maanden', sortKey: 2 };
   }
-  // Klant + future → bucket op kalendermaand.
+  // Klant + future → 'soon' (≤3 mnd) of 'later' (>3 mnd).
   const monthsAhead = (from.getFullYear() - today.getFullYear()) * 12
     + (from.getMonth() - today.getMonth());
-  if (monthsAhead > 6) {
-    return { bucket: 'later', label: 'Later (> 6 maanden)', sortKey: 9000 };
+  if (monthsAhead <= 3) {
+    return { bucket: 'soon', label: 'Beschikbaar in de komende 3 maanden', sortKey: 1 };
   }
-  return {
-    bucket: `month-${from.getFullYear()}-${from.getMonth()}`,
-    label: `Vrij in ${MONTH_NL[from.getMonth()]} ${from.getFullYear()}`,
-    sortKey: monthsAhead,
-  };
+  return { bucket: 'later', label: 'Beschikbaar > 3 maanden', sortKey: 2 };
 }
 
 // Groepeer een lijst van team-leden in beschikbaarheids-buckets,
 // gesorteerd op tijds-volgorde. Lege buckets worden niet teruggegeven.
+// Binnen elke bucket: sorteer chronologisch op available_from. Leden zonder
+// datum komen onderaan (binnen 'later' zijn dat de "bezet, einddatum
+// onbekend"-leden).
 export function groupTeamByAvailability(members = []) {
   const buckets = new Map(); // bucket-key → { label, sortKey, items: [] }
   for (const m of members) {
@@ -94,6 +104,16 @@ export function groupTeamByAvailability(members = []) {
       buckets.set(b.bucket, { label: b.label, sortKey: b.sortKey, items: [] });
     }
     buckets.get(b.bucket).items.push(m);
+  }
+  // Items binnen elke bucket sorteren: leden mét datum oplopend op datum,
+  // leden zonder datum (Infinity) onderaan.
+  const dateKey = (m) => {
+    if (!m.available_from) return Infinity;
+    const d = new Date(m.available_from).getTime();
+    return isNaN(d) ? Infinity : d;
+  };
+  for (const b of buckets.values()) {
+    b.items.sort((a, b) => dateKey(a) - dateKey(b));
   }
   return [...buckets.values()].sort((a, b) => a.sortKey - b.sortKey);
 }

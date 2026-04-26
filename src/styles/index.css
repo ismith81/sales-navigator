@@ -2596,7 +2596,7 @@ body::before {
   color: #b6750e;
   border: 1px solid rgba(240,163,58,0.3);
 }
-.team-badge--far {
+.team-badge--later {
   background: rgba(176,183,192,0.18);
   color: var(--muted);
   border: 1px solid rgba(176,183,192,0.4);
@@ -2888,7 +2888,7 @@ body::before {
 .team-grid-bucket--soon .team-grid-bucket-dot {
   background: #F0A33A; /* oranje — komende maanden */
 }
-.team-grid-bucket--far .team-grid-bucket-dot {
+.team-grid-bucket--later .team-grid-bucket-dot {
   background: #B0B7C0; /* grijs — later / onbekend */
 }
 .team-grid-bucket-label {
@@ -2986,6 +2986,18 @@ body::before {
   color: var(--teal-dim, var(--teal));
   font-weight: 600;
   margin-top: 0.18rem;
+}
+/* Datum-badge per kaart: subtiele grijze regel met kalender-icoon, zodat
+   binnen een bucket nog zichtbaar blijft wie wanneer vrijkomt — anders
+   verdwijnt die info met de overstap van per-maand naar 3-maand-buckets. */
+.team-grid-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--text-light, #6b7280);
+  font-weight: 500;
+  margin-top: 0.16rem;
 }
 
 @media (max-width: 640px) {

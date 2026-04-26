@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { listTeamMembers, groupTeamByAvailability } from '../lib/teamMembers';
+import { listTeamMembers, groupTeamByAvailability, formatAvailableFrom } from '../lib/teamMembers';
 import TeamMemberDetail from './TeamMemberDetail';
 
-// "Beschikbaarheid"-strip voor de Gids-startpagina, gegroepeerd in
-// maand-buckets:
+// "Beschikbaarheid"-strip voor de Gids-startpagina, gegroepeerd in 3 buckets:
 //   • Nu beschikbaar
-//   • Vrij in [maand jaar] (per kalendermaand, tot 6 maanden vooruit)
-//   • Later (> 6 maanden)
-//   • Bezet — einddatum onbekend
+//   • Beschikbaar in de komende 3 maanden
+//   • Beschikbaar > 3 maanden  (incl. mensen zonder einddatum, onderaan)
 // Bucket-logica zit in lib/teamMembers.js (gedeeld met Beheer-list).
+// Binnen elke bucket: chronologisch gesorteerd op available_from.
 //
 // Click op card = read-only detail-modal.
 
@@ -46,14 +45,20 @@ export default function TeamGrid() {
             verticaal binnen elke kolom — geen horizontale scroll meer. */}
         <div className="team-grid-buckets">
         {buckets.map(b => (
-          <div key={b.label} className={`team-grid-bucket team-grid-bucket--${b.sortKey === 0 ? 'now' : b.sortKey >= 9000 ? 'far' : 'soon'}`}>
+          <div key={b.label} className={`team-grid-bucket team-grid-bucket--${b.bucket}`}>
             <div className="team-grid-bucket-header">
               <span className="team-grid-bucket-dot" aria-hidden="true" />
               <span className="team-grid-bucket-label">{b.label}</span>
               <span className="team-grid-bucket-count">{b.items.length}</span>
             </div>
             <div className="team-grid-row">
-              {b.items.map(m => (
+              {b.items.map(m => {
+                // Datum-badge per kaart (binnen bucket): exacte vrij-datum
+                // als die ingevuld is — anders niets ('nu beschikbaar' óf
+                // 'einddatum onbekend' is al via bucket/klant duidelijk).
+                const fromLabel = formatAvailableFrom(m);
+                const showDate = !!fromLabel && b.bucket !== 'now';
+                return (
                 <button
                   type="button"
                   key={m.id}
@@ -78,9 +83,21 @@ export default function TeamGrid() {
                         <span>{m.current_client}</span>
                       </div>
                     )}
+                    {showDate && (
+                      <div className="team-grid-date" title="Beschikbaar vanaf">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6"/>
+                          <line x1="8" y1="2" x2="8" y2="6"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span>vanaf {fromLabel}</span>
+                      </div>
+                    )}
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
