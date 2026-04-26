@@ -34,9 +34,9 @@ export default function TeamGrid() {
 
   return (
     <>
-      <section className="team-grid-strip" aria-label="Team-beschikbaarheid">
+      <section className="team-grid-strip" aria-label="Team">
         <div className="team-grid-header">
-          <h3 className="team-grid-title">Beschikbaarheid team</h3>
+          <h3 className="team-grid-title">Team</h3>
           <span className="team-grid-count">{members.length}</span>
         </div>
 

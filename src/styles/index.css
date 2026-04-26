@@ -2597,9 +2597,9 @@ body::before {
   border: 1px solid rgba(240,163,58,0.3);
 }
 .team-badge--later {
-  background: rgba(176,183,192,0.18);
-  color: var(--muted);
-  border: 1px solid rgba(176,183,192,0.4);
+  background: rgba(214,58,92,0.1);
+  color: #b22a47;
+  border: 1px solid rgba(214,58,92,0.3);
 }
 .team-badge--off { /* legacy — kan weg in latere refactor */
   background: rgba(237,23,75,0.08);
@@ -2871,6 +2871,11 @@ body::before {
   gap: 0.55rem;
   min-width: 0;
 }
+/* Stoplicht-kleuren per bucket: groen / oranje / rood. Toegepast op
+   dot + label + border-bottom voor consistente visuele urgentie-cue.
+   Rood is gedempte versie van de brand-accent (ED174B) — past in de
+   palette zonder te alarmeren (de mensen in deze bucket zijn niet
+   "geblokkeerd", ze zijn gewoon langer bezet). */
 .team-grid-bucket-header {
   display: flex;
   align-items: center;
@@ -2886,15 +2891,26 @@ body::before {
   flex-shrink: 0;
 }
 .team-grid-bucket--now .team-grid-bucket-dot {
-  background: #2BB36C; /* groen — direct */
+  background: #2BB36C;
   box-shadow: 0 0 0 3px rgba(43,179,108,0.18);
 }
+.team-grid-bucket--now .team-grid-bucket-label { color: #1f8c52; }
+.team-grid-bucket--now .team-grid-bucket-header { border-bottom-color: rgba(43,179,108,0.35); }
+
 .team-grid-bucket--soon .team-grid-bucket-dot {
-  background: #F0A33A; /* oranje — komende maanden */
+  background: #F0A33A;
+  box-shadow: 0 0 0 3px rgba(240,163,58,0.18);
 }
+.team-grid-bucket--soon .team-grid-bucket-label { color: #b6750e; }
+.team-grid-bucket--soon .team-grid-bucket-header { border-bottom-color: rgba(240,163,58,0.4); }
+
 .team-grid-bucket--later .team-grid-bucket-dot {
-  background: #B0B7C0; /* grijs — later / onbekend */
+  background: #D63A5C; /* gedempte versie van brand-accent (#ED174B) */
+  box-shadow: 0 0 0 3px rgba(214,58,92,0.18);
 }
+.team-grid-bucket--later .team-grid-bucket-label { color: #b22a47; }
+.team-grid-bucket--later .team-grid-bucket-header { border-bottom-color: rgba(214,58,92,0.32); }
+
 .team-grid-bucket-label {
   font-size: 0.78rem;
   font-weight: 700;
