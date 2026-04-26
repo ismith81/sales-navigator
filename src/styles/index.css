@@ -5807,30 +5807,25 @@ body::before {
     height: 100%;
   }
   .chat-panel--inline .chat-messages {
-    /* padding-bottom = input-row hoogte + keyboard-offset zodat 't laatste
-       bericht nooit onder de input of 't keyboard verdwijnt. */
-    padding: 0.85rem 0.85rem calc(7.9rem + var(--keyboard-h, 0px));
+    /* Compacte padding — input zit nu in normal-flow onder de messages,
+       geen overlap-buffer meer nodig. */
+    padding: 0.85rem 0.85rem 0.85rem;
     overscroll-behavior: contain;
   }
   .chat-panel--inline.chat-panel--empty .chat-messages {
     flex: 1 1 auto;
-    padding-top: 0.85rem;
-    padding-bottom: calc(8.7rem + var(--keyboard-h, 0px));
+    padding: 0.85rem 0.85rem 0.85rem;
   }
+  /* Chat-input-row in normal flow (NIET position:fixed). De chat-panel is
+     een flex-column met height 100dvh-topbar; chat-messages heeft flex:1 en
+     scrollt intern, chat-input-row heeft flex-shrink:0 en zit aan de bottom.
+     Wanneer 't keyboard up is op iOS Safari scrollt iOS zelf de focused
+     input in beeld — geen JS-hack nodig, geen position:fixed quirks. */
   .chat-panel--inline .chat-input-row {
-    position: fixed;
-    left: 0;
-    right: 0;
-    /* iOS Safari verschuift fixed-elementen niet bij keyboard-open; ChatPanel
-       schrijft `--keyboard-h` op <html> via visualViewport zodat de input
-       meeschuift. Geen keyboard = 0, dus desktop/Android werken ongewijzigd. */
-    bottom: var(--keyboard-h, 0px);
-    z-index: 55;
     border-top: 1px solid rgba(226,230,235,0.78);
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(16px);
+    background: #fff;
     padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    transition: bottom 0.18s ease;
+    flex-shrink: 0;
   }
   .chat-panel--inline.chat-panel--empty .chat-input-row {
     border-top: 1px solid rgba(226,230,235,0.78);

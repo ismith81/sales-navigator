@@ -325,45 +325,10 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, inline]);
 
-  // iOS Safari verschuift `position: fixed`-elementen NIET wanneer 't on-screen
-  // keyboard verschijnt — onze chat-input-row valt daardoor onder 't keyboard
-  // en is onbruikbaar. Fix: track visualViewport, schrijf de keyboard-hoogte
-  // als CSS-var `--keyboard-h` op <html>, en de mobiele input-row CSS gebruikt
-  // `bottom: var(--keyboard-h)` zodat 'ie meeschuift.
-  //
-  // Plus: iOS Safari toont z'n "mini URL-bar" boven 't keyboard en die overlapt
-  // de visual-viewport bottom (~44px). We tellen daar 'n buffer bij op zodat
-  // de input ZICHTBAAR boven die balk uitkomt en niet half wordt afgedekt.
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return;
-    const vv = window.visualViewport;
-    const root = document.documentElement;
-    // Detecteer iOS Safari (incl. iPadOS dat zich als Mac kan voordoen).
-    const ua = navigator.userAgent || '';
-    const isIOS = /iPad|iPhone|iPod/.test(ua) ||
-      (ua.includes('Mac') && 'ontouchend' in document);
-    // 'interactive-widget=resizes-content' (iOS 17+) lost dit native op via
-    // viewport-shrink. Voor oudere iOS doen we 't handmatig met deze buffer.
-    const URL_BAR_BUFFER = isIOS ? 48 : 0;
-    const update = () => {
-      // Verschil tussen layout-viewport (window.innerHeight) en visual-viewport
-      // (vv.height) = keyboard-hoogte. offsetTop dekt 't geval dat iOS de page
-      // boven 't keyboard plaatst i.p.v. eronder.
-      const raw = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      // Alleen buffer toevoegen wanneer keyboard daadwerkelijk up is (raw > 0),
-      // anders krijg je 'n ongewenste 48px gat onder de input in rusttoestand.
-      const total = raw > 0 ? raw + URL_BAR_BUFFER : 0;
-      root.style.setProperty('--keyboard-h', total + 'px');
-    };
-    update();
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-      root.style.removeProperty('--keyboard-h');
-    };
-  }, []);
+  // (Eerder hier: een visualViewport-hack om position:fixed te verschuiven met
+  // 't iOS-keyboard. Verwijderd — de chat-input-row staat nu in normal flow
+  // binnen 't flex-column chat-panel, dus iOS zelf scrollt 'm in beeld zodra
+  // 'ie focus krijgt. Eenvoudiger en betrouwbaarder dan de fixed+JS-aanpak.)
 
   // Auto-verstuur een prompt wanneer het panel geopend wordt met een initialPrompt
   // (vanuit de hero-quick-prompts). Pas na mount versturen — met een tick zodat de
