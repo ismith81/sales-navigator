@@ -583,7 +583,11 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 1.25rem 1.4rem 1.4rem;
+  /* Padding matched aan de overige Gids-cards (.context-strip--card,
+     .team-grid-strip, .cases-overview) zodat de section-title-icons
+     allemaal op dezelfde linker-uitlijning staan. Breathing-room
+     binnen de card komt uit inner margins (titel/tabs/chips). */
+  padding: 1.1rem 1.1rem 1.25rem;
 }
 .topic-card.context-strip--card > .card-section-title { margin-bottom: 1.6rem; }
 .topic-card.context-strip--card .nav-tabs-row { margin-bottom: 1.3rem; }
