@@ -325,6 +325,34 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, inline]);
 
+  // iOS Safari verschuift `position: fixed`-elementen NIET wanneer 't on-screen
+  // keyboard verschijnt — onze chat-input-row valt daardoor onder 't keyboard
+  // en is onbruikbaar. Fix: track visualViewport, schrijf de keyboard-hoogte
+  // als CSS-var `--keyboard-h` op <html>, en de mobiele input-row CSS gebruikt
+  // `bottom: var(--keyboard-h)` zodat 'ie meeschuift. Geen-op desktop (geen
+  // visualViewport-resize bij hardware-keyboard) en geen-op niet-iOS browsers
+  // die fixed wel correct verschuiven.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    const update = () => {
+      // Verschil tussen layout-viewport (window.innerHeight) en visual-viewport
+      // (vv.height) = keyboard-hoogte. offsetTop dekt 't geval dat iOS de page
+      // boven 't keyboard plaatst i.p.v. eronder.
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      root.style.setProperty('--keyboard-h', offset + 'px');
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+      root.style.removeProperty('--keyboard-h');
+    };
+  }, []);
+
   // Auto-verstuur een prompt wanneer het panel geopend wordt met een initialPrompt
   // (vanuit de hero-quick-prompts). Pas na mount versturen — met een tick zodat de
   // animatie/render af is.

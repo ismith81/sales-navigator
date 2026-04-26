@@ -567,7 +567,7 @@ export default function Navigator() {
           <div className="topbar-search">
             <input
               type="text"
-              placeholder="Zoek een case, klant of trefwoord..."
+              placeholder="Zoek een case of stel een vraag aan Nova…"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -575,12 +575,49 @@ export default function Navigator() {
                 // zodra de gebruiker vanuit Beheer/Instructies begint te typen.
                 if (view !== 'navigator') setView('navigator');
               }}
+              onKeyDown={(e) => {
+                // Enter in de zoekbalk = stuur naar Nova. De simpele case-filter
+                // werkt al live tijdens typen; Enter is voor "geef hier een rijk
+                // antwoord op" (cases + topics + personas + web via Nova).
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  e.preventDefault();
+                  setChatInitialPrompt(searchQuery.trim());
+                  changeRoute('assistent');
+                  setView('navigator');
+                  setSearchOpen(false);
+                  setSearchQuery('');
+                }
+              }}
               autoFocus={searchOpen || undefined}
             />
             {searchQuery && (
               <button className="topbar-search-clear" onClick={() => setSearchQuery('')} title="Wissen">✕</button>
             )}
           </div>
+          {/* Vraag-aan-Nova: pakt de typed query, switcht naar Assistent-route
+              en stuurt 'm als initialPrompt zodat Nova direct antwoord geeft.
+              Disabled tot er iets ingetypt is — anders is 't gewoon ruis. */}
+          <button
+            type="button"
+            className="topbar-search-ask"
+            disabled={!searchQuery.trim()}
+            onClick={() => {
+              const q = searchQuery.trim();
+              if (!q) return;
+              setChatInitialPrompt(q);
+              changeRoute('assistent');
+              setView('navigator');
+              setSearchOpen(false);
+              setSearchQuery('');
+            }}
+            title="Vraag aan Nova"
+          >
+            <span className="topbar-search-ask-label">Vraag Nova</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
         </div>
       </header>
       <div className="topbar-spacer" aria-hidden="true" />
