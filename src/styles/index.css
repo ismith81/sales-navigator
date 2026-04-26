@@ -4999,7 +4999,10 @@ body::before {
 .chat-layout {
   display: flex;
   align-items: stretch;
-  margin: 0 -1.5rem -4rem;
+  /* margin-top -1.5rem cancelt de topbar-spacer's margin-bottom zodat
+     chat-layout exact onder de topbar plakt en page-height = 100dvh blijft
+     (geen scrollbar, input-row volledig zichtbaar). */
+  margin: -1.5rem -1.5rem -4rem;
   /* Live-gemeten topbar zodat search-row openen niet overlapt. */
   height: calc(100dvh - var(--topbar-height, 165px));
   background: #fff;
@@ -5396,8 +5399,11 @@ body::before {
   transform: none !important;
   width: auto;
   max-width: none;
-  /* Negatieve margins cancellen .app-padding (2rem 1.5rem 4rem desktop) — zie mobile override beneden. */
-  margin: 0 -1.5rem -4rem;
+  /* Negatieve margins cancellen .app-padding (2rem 1.5rem 4rem desktop) en
+     trekken 't panel boven de spacer's margin-bottom (-1.5rem) zodat de
+     totale page-height exact 100dvh is — anders verschijnt een scrollbar
+     en valt de input-row onder de viewport. */
+  margin: -1.5rem -1.5rem -4rem;
   /* Viewport vullen: laat de hoogte meebewegen met de live-gemeten topbar
      (incl. subnav + eventueel open search-row). Fallback 165px voor de
      allereerste paint vóór de var gezet is. */
@@ -5785,14 +5791,16 @@ body::before {
 @media (max-width: 640px) {
   .chat-quickgroups { grid-template-columns: 1fr; }
   .chat-panel--inline {
-    /* Mobile: .app-padding is 1.25rem 1rem 3rem → match. */
-    margin: 0 -1rem -3rem;
+    /* Mobile: .app-padding is 1.25rem 1rem 3rem. Spacer margin-bottom is
+       1rem op mobiel, dus margin-top -1rem cancelt 'm zodat page-height
+       exact 100dvh blijft. */
+    margin: -1rem -1rem -3rem;
     /* Live-gemeten topbar (incl. subnav + eventueel open search-row). */
     height: calc(100dvh - var(--topbar-height, 150px));
   }
   /* Chat-layout op mobiel: alleen het panel zichtbaar; sidebar wordt overlay. */
   .chat-layout {
-    margin: 0 -1rem -3rem;
+    margin: -1rem -1rem -3rem;
     height: calc(100dvh - var(--topbar-height, 150px));
   }
   .chat-layout .chat-panel--inline {
