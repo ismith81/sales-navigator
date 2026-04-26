@@ -2948,10 +2948,20 @@ body::before {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
 }
 .team-grid-card:hover {
-  border-color: rgba(49,183,185,0.4);
   box-shadow: 0 4px 12px rgba(44,60,82,0.07);
   transform: translateY(-1px);
 }
+/* Stoplicht-tint op kaart-borders (subtiel ~0.35 opacity) — reinforcement
+   van bucket-urgentie, niet domineren. Hover bumpt naar sterkere versie
+   van dezelfde kleur ipv generic teal — visueel consistenter. */
+.team-grid-bucket--now .team-grid-card { border-color: rgba(43,179,108,0.35); }
+.team-grid-bucket--now .team-grid-card:hover { border-color: rgba(43,179,108,0.7); }
+
+.team-grid-bucket--soon .team-grid-card { border-color: rgba(240,163,58,0.4); }
+.team-grid-bucket--soon .team-grid-card:hover { border-color: rgba(240,163,58,0.75); }
+
+.team-grid-bucket--later .team-grid-card { border-color: rgba(214,58,92,0.32); }
+.team-grid-bucket--later .team-grid-card:hover { border-color: rgba(214,58,92,0.65); }
 .team-grid-avatar {
   flex: 0 0 auto;
   width: 36px;
