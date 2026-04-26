@@ -165,7 +165,9 @@ body::before {
   flex-wrap: wrap;
 }
 /* Rij die de filter-chips + klantsignalen-toggle op één lijn zet.
-   Chips vullen van links, toggle hangt rechts via margin-left:auto. */
+   Chips vullen van links, toggle sluit direct daarop aan (geen auto-
+   grow op de chips-grid — anders duwt 'ie de toggle naar de rechterrand
+   en oogt 'ie losgeslagen). */
 .filter-row {
   display: flex;
   align-items: flex-start;
@@ -174,7 +176,7 @@ body::before {
   margin-bottom: 1.75rem;
 }
 .filter-row .button-grid {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   margin-bottom: 0;
 }
 .filter-row .hints-toggle {
@@ -3906,7 +3908,7 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 0.75rem;
+  margin: 0 0 1.1rem;
   font-family: 'Nunito Sans', sans-serif;
   font-weight: 700;
   font-size: 20px;
