@@ -671,14 +671,22 @@ export default function Navigator() {
               }}
             />
           ) : (
-            /* Gids-route: persona + guided flow (tabs → filters → topic/cases) */
+            /* Gids-route: 2 conceptuele blokken — Persona (lens) + Onderwerp
+               (hoofd-flow met tabs/chips/talking-points). Plus team & cases. */
             <div className="gids-route">
-              <div className="context-strip context-strip--card">
+              {/* Card 1: Persona — optionele lens om cases op rol te filteren. */}
+              <div className="persona-card context-strip--card">
                 <PersonaKompas
                   personas={personas}
                   activePersona={activePersona}
                   onSelect={setActivePersona}
                 />
+              </div>
+
+              {/* Card 2: Onderwerp — tabs + chips + talking-points + vragen.
+                  Alles wat conceptueel "kies onderwerp → krijg content"
+                  is, zit hier samen. */}
+              <div className="topic-card context-strip--card">
                 <FilterBar
                   filters={filters}
                   topics={topics}
@@ -687,22 +695,21 @@ export default function Navigator() {
                   onTabChange={handleTabChange}
                   onFilterChange={handleFilterChange}
                 />
+                {activeFilter && currentTopic && (
+                  <TopicView
+                    topicKey={activeFilter}
+                    tab={activeTab}
+                    topicData={currentTopic}
+                    cases={cases}
+                    personas={personas}
+                    branches={branches}
+                    onUpdateTopic={handleUpdateTopic}
+                    hideReferences
+                    hideTitle
+                    activePersona={activePersona ? personas[activePersona] : null}
+                  />
+                )}
               </div>
-
-              {activeFilter && currentTopic && (
-                <TopicView
-                  topicKey={activeFilter}
-                  tab={activeTab}
-                  topicData={currentTopic}
-                  cases={cases}
-                  personas={personas}
-                  branches={branches}
-                  onUpdateTopic={handleUpdateTopic}
-                  hideReferences
-                  hideTitle
-                  activePersona={activePersona ? personas[activePersona] : null}
-                />
-              )}
 
               {/* Beschikbare collega's-strip — Gids als startpagina:
                   laat in één oogopslag zien welk team klaarstaat. Verbergt

@@ -542,19 +542,17 @@ body::before {
 .topic-description p:first-child { margin-top: 0; }
 .topic-description p:last-child { margin-bottom: 0; }
 
-/* Card-omlijning matcht .context-strip--card / .team-grid-strip /
-   .cases-overview zodat de Gids-pagina overal dezelfde card-blokken
-   gebruikt — geen "loose" content op een transparante achtergrond. */
+/* Topic-columns staan nu binnen de .topic-card (samen met FilterBar) zodat
+   onderwerp-selectie + content één visueel blok zijn. Geen eigen
+   card-chrome meer — anders krijg je nested cards. Een dunne dashed
+   divider boven de kolommen scheidt 'm visueel van de tabs/chips erboven. */
 .topic-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.75rem;
-  margin-bottom: 1.5rem;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.1rem 1.25rem 1.25rem;
-  box-shadow: 0 1px 3px rgba(44,60,82,0.04);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
 }
 .topic-col {
   min-width: 0;
@@ -566,9 +564,21 @@ body::before {
   .topic-columns {
     grid-template-columns: 1fr;
     gap: 1rem;
-    padding: 0.85rem 1rem 1rem;
-    border-radius: 12px;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
   }
+}
+/* Onderwerp-card houdt z'n inner content netjes met onderlinge spacing. */
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+/* Persona-card: standalone persona-kompas zonder context-strip flex.
+   Reset de margins die kompas krijgt via .context-strip-overrides. */
+.persona-card .kompas {
+  margin-bottom: 0;
+  width: 100%;
 }
 
 .topic-item {
