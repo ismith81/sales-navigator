@@ -126,7 +126,10 @@ export default function Navigator() {
       ro.disconnect();
       window.removeEventListener('resize', setVar);
     };
-  }, [view, beheerSection]);
+    // searchOpen meegenomen in deps zodat de hoogte direct opnieuw gemeten
+    // wordt wanneer de search-row open/dicht klapt — vangnet voor 't geval
+    // ResizeObserver bij display:none↔display:flex niet vuurt.
+  }, [view, beheerSection, searchOpen]);
 
   // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
@@ -567,7 +570,7 @@ export default function Navigator() {
           <div className="topbar-search">
             <input
               type="text"
-              placeholder="Zoek een case of stel een vraag aan Nova…"
+              placeholder="Zoek een case of vraag Nova…"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
