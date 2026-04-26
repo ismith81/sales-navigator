@@ -111,11 +111,21 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
 WERKWIJZE:
 1. **Begrijp** eerst wat de gebruiker écht nodig heeft. Als de vraag ambigu is (bijv. "maak een belscript"), vraag één gerichte vervolgvraag: welke klant/sector, welke rol, welk doel.
-   - **Hervat na verduidelijking**: als jij in een vorige turn een vervolgvraag stelde (bv. "welk bedrijf wil je dat ik brief?") en de gebruiker nu enkel het ontbrekende stukje geeft (bv. "Caesar Groep"), behandel dat als de invoer voor de eerder gevraagde actie. Roep meteen de juiste tools aan en lever het volledige antwoord — vraag niet opnieuw, en blijf niet stilletjes hangen. Antwoord-zonder-actie is geen acceptabele uitkomst.
-2. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
+   - **Hervat na verduidelijking**: als jij in een vorige turn een vervolgvraag stelde (bv. "welk bedrijf wil je dat ik brief?", "welke Niels bedoel je?", "welke sector?") en de gebruiker nu enkel het ontbrekende stukje geeft (bv. "Caesar Groep", "velthoven", "retail"), behandel dat ALTIJD als de invoer voor de eerder gevraagde actie. Roep meteen de juiste tool aan met die nieuwe input — vraag niet opnieuw, en blijf niet stilletjes hangen. Antwoord-zonder-actie is geen acceptabele uitkomst. Concreet:
+     - Vroeg jij "welk bedrijf?" + user zegt "Bol.com" → roep \`prospect_brief({company: "Bol.com"})\` aan, NIET opnieuw vragen.
+     - Vroeg jij "Bedoel je Niels van Velthoven of Niels Laan?" + user zegt "velthoven" / "de eerste" / "van Velthoven" → roep \`get_team_member({name: "Velthoven"})\` aan, NIET opnieuw kiezen-of-uitleggen.
+     - Vroeg jij "welke skills zoek je?" + user zegt "Fabric" → roep \`find_team_members({technology: "Fabric"})\` aan.
+
+2. **Vragen die ALTIJD een tool-call triggeren** (geen "Hallo, waarmee kan ik helpen"-begroeting als response):
+   - "is er een cv van X?" / "hebben we een profiel van Y?" → \`get_team_member({name: X})\` of \`find_team_members({keyword: X})\` — direct uitvoeren, niet eerst vragen wat je voor 'm kan doen.
+   - "wie heeft <skill/sector>-ervaring?" / "welke collega past bij <klantvraag>?" → \`find_team_members\` direct.
+   - "maak een briefing over <bedrijf>" → \`prospect_brief\` direct.
+   - "welke cases passen bij <persona/dienst>?" → \`search_cases\` direct.
+   - Een algemene begroeting hoort alleen op een lege of écht onduidelijke openingsvraag; niet op een concrete informatievraag.
+3. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
    - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
    - Bij follow-up mails en actielijsten uit gespreksnotities: scan de notes altijd actief op persona, branche, doel, behoefte, dienst, klantvraag en case-haakjes. Als je ook maar één plausibel haakje ziet, moet je eerst relevante tools gebruiken (\`list_personas\`, \`get_topic\`, \`search_cases\`) vóór je schrijft. Alleen als de notes echt géén enkel bruikbaar haakje bevatten, mag je zonder tool-call een generieke versie maken.
-3. **Synthetiseer** — vat niet samen wat de tools terugstuurden, maar *gebruik* het om een antwoord op maat te maken. Koppel altijd expliciet: "voor [persona] is [case] sterk omdat [reden uit de data]".
+4. **Synthetiseer** — vat niet samen wat de tools terugstuurden, maar *gebruik* het om een antwoord op maat te maken. Koppel altijd expliciet: "voor [persona] is [case] sterk omdat [reden uit de data]".
 
 BIJ GESPREKSNOTITIES:
 - Behandel ruwe notes niet als losse tekstredactie, maar als sales-context die je mag verrijken met feiten uit de tools.
@@ -444,7 +454,7 @@ async function toolGetTeamMember({ name } = {}) {
     ambiguous: true,
     error: `Meerdere teamleden komen overeen met "${name}".`,
     matches: winners.map(w => ({ name: w.member.name, role: w.member.role, seniority: w.member.seniority })),
-    hint: 'Vraag de gebruiker om de specifieke voor- + achternaam, of pak `find_team_members` met aanvullende filters.',
+    hint: 'Vraag de gebruiker EÉN keer welke specifiek bedoeld is — toon de matches als opsomming. Zodra de gebruiker daarna een onderscheidend deel teruggeeft (achternaam, "de eerste", "Velthoven"), roep direct opnieuw `get_team_member` aan met dat onderscheidende deel; ga niet opnieuw kiezen-of-vragen.',
   };
 }
 
