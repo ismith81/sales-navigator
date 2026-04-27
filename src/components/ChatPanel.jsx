@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { authedFetch } from '../lib/auth';
 import {
   listSessions,
@@ -21,27 +22,31 @@ const writeSidebarCollapsed = (v) => {
   try { localStorage.setItem(SIDEBAR_COLLAPSE_KEY, v ? 'collapsed' : 'expanded'); } catch {}
 };
 
+// Voorbeelden in 't welcome-scherm — niet-klikbaar, alleen ter inspiratie hoe
+// je 'n vraag kunt formuleren. Vervangen klikbare buttons om te voorkomen dat
+// gebruikers placeholder-templates ([bedrijfsnaam] etc.) ongepatcht naar Nova
+// sturen — concrete voorbeelden zorgen dat de eerste turn meteen specifiek is.
 const QUICK_PROMPT_GROUPS = [
   {
     label: 'Voor het gesprek',
     items: [
-      { kind: 'Briefing', text: 'Maak een briefing over [bedrijfsnaam] — gebruik het 7-bucket raamwerk', shortText: 'Briefing over bedrijf' },
-      { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie', shortText: 'CFO-gesprek over dataplatform' },
-      { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance', shortText: 'IT-manager over governance' },
+      'Maak een briefing over Bol.com',
+      'Bereid een CFO-gesprek voor over dataplatform-migratie',
+      'Speel de IT-manager van een bank en val me aan op governance',
     ],
   },
   {
     label: 'Team-match',
     items: [
-      { kind: 'Match', text: 'Welke collega past het beste bij [klantvraag]? Geef top 3 met motivatie.', shortText: 'Collega zoeken voor klantvraag' },
-      { kind: 'Pitch', text: 'Schrijf een klantgerichte pitch voor [naam] voor een [type] traject', shortText: 'Pitch voor consultant' },
+      'Welke collega past het best bij een Microsoft Fabric-traject in retail? Geef top 3 met motivatie.',
+      'Schrijf een klantgerichte pitch voor Niels van Velthoven voor een Power BI-traject',
     ],
   },
   {
     label: 'Na het gesprek',
     items: [
-      { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail', shortText: 'Mail uit gespreksnotities' },
-      { kind: 'Actielijst', text: 'Haal uit mijn notes een actielijst met eigenaar en volgende stap', shortText: 'Acties uit notes' },
+      'Maak van deze gespreksnotities een follow-up mail',
+      'Haal uit deze notes een actielijst met eigenaar en volgende stap',
     ],
   },
 ];
@@ -663,16 +668,12 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
               <div className="chat-quickgroups">
                 {QUICK_PROMPT_GROUPS.map((group) => (
                   <section key={group.label} className="chat-quickgroup">
-                    <div className="chat-quickgroup-label">{group.label}</div>
-                    <div className="chat-quickprompts">
-                      {group.items.map((item) => (
-                        <button key={item.text} type="button" className="chat-quickprompt" onClick={() => send(item.text)} disabled={busy}>
-                          <span className="chat-quickprompt-kind">{item.kind}</span>
-                          <span className="chat-quickprompt-text">{item.text}</span>
-                          <span className="chat-quickprompt-short">{item.shortText || item.text}</span>
-                        </button>
+                    <div className="chat-quickgroup-label">{group.label} — voorbeelden</div>
+                    <ul className="chat-hint-list">
+                      {group.items.map((hint) => (
+                        <li key={hint} className="chat-hint-item">{hint}</li>
                       ))}
-                    </div>
+                    </ul>
                   </section>
                 ))}
               </div>
@@ -691,7 +692,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                 <div className="chat-msg-bubble">
                   {hasContent ? (
                     isAssistant
-                      ? <ReactMarkdown components={makeMarkdownComponents(i, (m.groundingSources || []).length)}>{processCitations(m.content)}</ReactMarkdown>
+                      ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={makeMarkdownComponents(i, (m.groundingSources || []).length)}>{processCitations(m.content)}</ReactMarkdown>
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>

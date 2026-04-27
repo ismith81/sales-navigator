@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TAB_CONFIG } from '../data/filters';
 import { loadAll, saveCases, saveConfig } from '../lib/store';
 import { useAuthSession, signOut, signInWithPassword } from '../lib/auth';
@@ -100,41 +100,48 @@ export default function Navigator() {
   const [toast, setToast] = useState(null);
   const fileRef = useRef(null);
   const hydrated = useRef(false);
-  const topbarRef = useRef(null);
 
   // Meet live de hoogte van de sticky topbar (inclusief subnav) en zet 'm als
   // --topbar-height op <html>. Child-elementen die sticky onder de topbar
-  // willen plakken (zoals de case-editor topbar) gebruiken deze var.
-  useEffect(() => {
-    const el = topbarRef.current;
+  // willen plakken (zoals de case-editor topbar) gebruiken deze var; chat-layout
+  // gebruikt 'm voor z'n height-calc.
+  //
+  // CALLBACK-REF i.p.v. useRef + useEffect:
+  // Eerdere implementatie met useEffect + useRef bleek niet betrouwbaar te
+  // vuren tijdens de dev-bypass-auth-flow (Login → Navigator mount transitie).
+  // Resultaat: var werd nooit gezet, fallback 165px werd gebruikt → 30-50px
+  // gap onder de chat-layout. Callback-refs daarentegen vuren GEGARANDEERD
+  // wanneer 't element gemount/unmount wordt door React, ongeacht render-flow.
+  const topbarObserversRef = useRef(null);
+  const topbarRef = useCallback((el) => {
+    // Cleanup vorige observers (bij unmount of re-attach)
+    if (topbarObserversRef.current) {
+      topbarObserversRef.current.cleanup();
+      topbarObserversRef.current = null;
+    }
     if (!el) return;
     const setVar = () => {
-      // offsetHeight = integer incl. padding+border; +2px veiligheidsbuffer
-      // zodat de sticky-child er nooit half achter valt bij subpixel-rounding.
-      const h = el.offsetHeight + 2;
+      const h = el.offsetHeight;
       document.documentElement.style.setProperty('--topbar-height', `${h}px`);
     };
     setVar();
-    // rAF-tick om na eerste paint opnieuw te meten (subnav-row rendert vaak
-    // een frame later in preview-iframes / trage fonts).
+    // Dubbele rAF voor late paint (subnav-row, trage fonts).
     const raf1 = requestAnimationFrame(() => {
       setVar();
       requestAnimationFrame(setVar);
     });
-    // Font-load kan de hoogte ook nog veranderen.
     if (document.fonts?.ready) document.fonts.ready.then(setVar).catch(() => {});
     const ro = new ResizeObserver(setVar);
     ro.observe(el);
     window.addEventListener('resize', setVar);
-    return () => {
-      cancelAnimationFrame(raf1);
-      ro.disconnect();
-      window.removeEventListener('resize', setVar);
+    topbarObserversRef.current = {
+      cleanup: () => {
+        cancelAnimationFrame(raf1);
+        ro.disconnect();
+        window.removeEventListener('resize', setVar);
+      },
     };
-    // searchOpen meegenomen in deps zodat de hoogte direct opnieuw gemeten
-    // wordt wanneer de search-row open/dicht klapt — vangnet voor 't geval
-    // ResizeObserver bij display:none↔display:flex niet vuurt.
-  }, [view, beheerSection, searchOpen]);
+  }, []);
 
   // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
