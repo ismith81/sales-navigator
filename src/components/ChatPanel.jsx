@@ -22,29 +22,19 @@ const writeSidebarCollapsed = (v) => {
   try { localStorage.setItem(SIDEBAR_COLLAPSE_KEY, v ? 'collapsed' : 'expanded'); } catch {}
 };
 
-const QUICK_PROMPT_GROUPS = [
-  {
-    label: 'Voor het gesprek',
-    items: [
-      { kind: 'Briefing', text: 'Maak een briefing over [bedrijfsnaam] — gebruik het 7-bucket raamwerk', shortText: 'Briefing over bedrijf' },
-      { kind: 'Voorbereiding', text: 'Bereid een CFO-gesprek voor over dataplatform-migratie', shortText: 'CFO-gesprek over dataplatform' },
-      { kind: 'Rollenspel', text: 'Speel de IT-manager van een bank en val me aan op governance', shortText: 'IT-manager over governance' },
-    ],
-  },
-  {
-    label: 'Team-match',
-    items: [
-      { kind: 'Match', text: 'Welke collega past het beste bij [klantvraag]? Geef top 3 met motivatie.', shortText: 'Collega zoeken voor klantvraag' },
-      { kind: 'Pitch', text: 'Schrijf een klantgerichte pitch voor [naam] voor een [type] traject', shortText: 'Pitch voor consultant' },
-    ],
-  },
-  {
-    label: 'Na het gesprek',
-    items: [
-      { kind: 'Follow-up', text: 'Maak van deze gespreksnotities een follow-up mail', shortText: 'Mail uit gespreksnotities' },
-      { kind: 'Actielijst', text: 'Haal uit mijn notes een actielijst met eigenaar en volgende stap', shortText: 'Acties uit notes' },
-    ],
-  },
+// POC-fase (Mistral-branch): we starten Nova met alléén de briefing-skill.
+// Andere skills (team-match, follow-up mail, etc.) bouwen we stap-voor-stap
+// terug toe zodra de basis goed werkt.
+//
+// Geen klikbare quick-prompts meer — alleen voorbeelden als hint zodat de
+// gebruiker ziet HOE 'ie 't kan formuleren. Voorkomt verduidelijkings-vragen
+// door de agent ("welk bedrijf?", "wat bedoel je met...?") want de eerste
+// turn is dan al voldoende specifiek.
+const BRIEFING_HINTS = [
+  'Maak een briefing over Joulz',
+  'Geef een BANT-analyse voor Bol.com',
+  'Research over AkzoNobel',
+  'Vertel iets over Tulp Hypotheken',
 ];
 
 const TOOL_LABELS = {
@@ -657,25 +647,20 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
             <div className="chat-welcome">
               <div className="chat-welcome-intro">
                 <p>
-                  <span className="chat-welcome-copy-desktop">Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</span>
-                  <span className="chat-welcome-copy-mobile">Hoi, ik ben <strong>Nova</strong>. Ik help je vóór én na klantgesprekken met jullie cases, topics en persona’s.</span>
+                  <span className="chat-welcome-copy-desktop">Hoi, ik ben <strong>Nova</strong> — ik help je een klantgesprek voorbereiden met een prospect-briefing op basis van actuele publieke info (jaarverslagen, persberichten, vacatures, M&A).</span>
+                  <span className="chat-welcome-copy-mobile">Hoi, ik ben <strong>Nova</strong>. Vraag me om een briefing over een prospect.</span>
                 </p>
               </div>
               <div className="chat-quickgroups">
-                {QUICK_PROMPT_GROUPS.map((group) => (
-                  <section key={group.label} className="chat-quickgroup">
-                    <div className="chat-quickgroup-label">{group.label}</div>
-                    <div className="chat-quickprompts">
-                      {group.items.map((item) => (
-                        <button key={item.text} type="button" className="chat-quickprompt" onClick={() => send(item.text)} disabled={busy}>
-                          <span className="chat-quickprompt-kind">{item.kind}</span>
-                          <span className="chat-quickprompt-text">{item.text}</span>
-                          <span className="chat-quickprompt-short">{item.shortText || item.text}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                ))}
+                <section className="chat-quickgroup">
+                  <div className="chat-quickgroup-label">Voor het gesprek — voorbeelden</div>
+                  <ul className="chat-hint-list">
+                    {BRIEFING_HINTS.map(hint => (
+                      <li key={hint} className="chat-hint-item">{hint}</li>
+                    ))}
+                  </ul>
+                  <p className="chat-hint-tip">Tip: noem direct de bedrijfsnaam zodat ik niet hoef te vragen om verduidelijking.</p>
+                </section>
               </div>
             </div>
           )}

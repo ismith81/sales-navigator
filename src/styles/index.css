@@ -4753,6 +4753,36 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   color: var(--teal-dim);
 }
 .chat-quickprompt-text { line-height: 1.35; }
+
+/* Voorbeeld-hints (niet klikbaar) — voor de briefing-only welcome op de
+   Mistral-POC. Visueel: italic, grijze tint, opsomming-stijl. Geeft de
+   gebruiker een format-suggestie zonder een button-CTA. */
+.chat-hint-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.chat-hint-item {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(44,60,82,0.03);
+  border-left: 3px solid rgba(49,183,185,0.4);
+  border-radius: 0 6px 6px 0;
+  line-height: 1.35;
+}
+.chat-hint-item::before { content: '"'; }
+.chat-hint-item::after { content: '"'; }
+.chat-hint-tip {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+  font-style: italic;
+}
 .chat-quickprompt-short { display: none; line-height: 1.3; }
 .chat-welcome-copy-mobile { display: none; }
 
