@@ -481,6 +481,9 @@ export async function runMistralAgentChat({ messages, send }) {
   // blijven. Wordt aan 't eind van de stream gelogd.
   const eventTypeCounts = {};
   const chunkTypeCounts = {};
+  // Counter voor 't loggen van eerste tool.execution.delta/done-payloads
+  // (cap op 2 elk, anders dump je 11x dezelfde payload-shape in de log).
+  const toolEventLogged = {};
   try {
     for await (const event of stream) {
       const data = event?.data;
@@ -547,6 +550,19 @@ export async function runMistralAgentChat({ messages, send }) {
             sawPremiumSearch = true;
             console.log('[Mistral-Agent] tool.execution.started — Premium Search gestart');
             send({ type: 'tool', value: ['search_web'] });
+          }
+          // Diagnostiek: log de eerste 2 .delta- en .done-payloads volledig
+          // zodat we Mistral's agent-mode source-shape kunnen identificeren.
+          // In agent-mode komen tool_reference chunks NIET in message.output.delta
+          // (zoals in de niet-agent variant) — de Premium Search-resultaten
+          // moeten ergens hier zitten. Cap op 2 om Vercel-log-buffer te sparen.
+          if ((data.type === 'tool.execution.delta' || data.type === 'tool.execution.done')) {
+            const counter = data.type === 'tool.execution.delta' ? 'deltaLogged' : 'doneLogged';
+            toolEventLogged[counter] = (toolEventLogged[counter] || 0) + 1;
+            if (toolEventLogged[counter] <= 2) {
+              const truncated = JSON.stringify(data).slice(0, 1500);
+              console.log(`[Mistral-Agent] ${data.type} #${toolEventLogged[counter]} payload:`, truncated);
+            }
           }
           break;
         }
