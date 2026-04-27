@@ -109,9 +109,12 @@ export default function Navigator() {
     const el = topbarRef.current;
     if (!el) return;
     const setVar = () => {
-      // offsetHeight = integer incl. padding+border; +2px veiligheidsbuffer
-      // zodat de sticky-child er nooit half achter valt bij subpixel-rounding.
-      const h = el.offsetHeight + 2;
+      // offsetHeight = integer incl. padding+border. Géén +2px buffer hier
+      // meer — die hoort thuis in de sticky-children-CSS via `calc(var + 2px)`,
+      // niet in de var zelf. Voorheen veroorzaakte 'ie 2px gaps in chat-layout
+      // (top én bottom) die de chat-panel niet vlak op de topbar/viewport-bottom
+      // lieten aansluiten.
+      const h = el.offsetHeight;
       document.documentElement.style.setProperty('--topbar-height', `${h}px`);
     };
     setVar();

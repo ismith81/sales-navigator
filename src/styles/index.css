@@ -1390,8 +1390,11 @@ body::before {
      (incl subnav) zodat deze bar precies daaronder vastplakt tijdens scroll.
      Desktop ~100px, mobiel ~88px — zie media query onder. */
   position: sticky;
-  /* --topbar-height wordt live gezet door Navigator (ResizeObserver op .topbar). */
-  top: var(--topbar-height, 100px);
+  /* --topbar-height wordt live gezet door Navigator (ResizeObserver op .topbar).
+     +2px inline buffer zodat sticky-children niet half achter de topbar vallen
+     bij subpixel-rounding. Inline omdat de raw var (zonder buffer) gebruikt
+     wordt door spacer + chat-layout — die willen geen extra 2px. */
+  top: calc(var(--topbar-height, 100px) + 2px);
   z-index: 20;
   background: #fff;
   border-radius: 8px;
@@ -2688,7 +2691,8 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 10px;
   position: sticky;
-  top: var(--topbar-height, 100px);
+  /* +2px inline buffer voor subpixel-safety, zie comment bij case-editor-topbar. */
+  top: calc(var(--topbar-height, 100px) + 2px);
   z-index: 5;
 }
 .team-editor-back,
