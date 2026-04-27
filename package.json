@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@mistralai/mistralai": "^2.2.1",
     "@supabase/supabase-js": "^2.103.3",
     "@tiptap/pm": "^3.22.3",
     "@tiptap/react": "^3.22.3",

@@ -658,6 +658,20 @@ async function runTool(name, args) {
   }
 }
 
+// ─── Exports voor Mistral-POC ─────────────────────────────────────────────
+// llm-mistral.js importeert deze zodat we de tool-runners + system prompt +
+// auth-state kunnen delen tussen providers. Ook de web-source-buffers omdat
+// search_web (intern Gemini grounding) bronnen daarin verzamelt — Mistral-
+// loop moet die net zo per-request resetten en als grounding-event sturen.
+export {
+  SYSTEM_PROMPT,
+  tools as geminiTools,
+  runTool,
+  setSupabaseUserToken,
+  webSourcesBuffer,
+  webQueriesBuffer,
+};
+
 // ─── Handler ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -665,19 +679,13 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Auth-check — zonder geldige sessie geen Gemini-calls.
+  // Auth-check — zonder geldige sessie geen LLM-calls.
   const auth = await requireUser(req, res);
   if (!auth) return;
   const { user, token } = auth;
   // User-token mee zodat Supabase-queries vanuit tools als `authenticated`
   // draaien (verplicht voor RLS `to authenticated` op team_members etc.).
   setSupabaseUserToken(token);
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'GEMINI_API_KEY ontbreekt in env.' });
-    return;
-  }
 
   const { messages = [], context = {} } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -697,13 +705,6 @@ export default async function handler(req, res) {
     ? `${SYSTEM_PROMPT}\n\nHUIDIGE CONTEXT:\n- ${ctxLines.join('\n- ')}`
     : SYSTEM_PROMPT;
 
-  // Gemini history: rol 'user' of 'model'. Laatste message = de nieuwe user-prompt.
-  const history = messages.slice(0, -1).map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
-  const latest = messages[messages.length - 1]?.content || '';
-
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
@@ -712,6 +713,39 @@ export default async function handler(req, res) {
   const send = (obj) => {
     res.write(`data: ${JSON.stringify(obj)}\n\n`);
   };
+
+  // ─── Provider-dispatch ──────────────────────────────────────────────
+  // POC: schakel naar Mistral wanneer `LLM_PROVIDER=mistral`. Default = Gemini.
+  // search_web blijft op Gemini grounding (interne sub-call); cv-parse.js is
+  // apart endpoint en blijft ook op Gemini.
+  const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
+  if (provider === 'mistral') {
+    try {
+      const { runMistralChat } = await import('./_lib/llm-mistral.js');
+      await runMistralChat({ messages, systemInstruction, send });
+      res.end();
+    } catch (err) {
+      console.error('Mistral chat handler error:', err);
+      send({ type: 'error', value: err.message || 'Mistral chat error' });
+      res.end();
+    }
+    return;
+  }
+
+  // ─── Default: Gemini ────────────────────────────────────────────────
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    send({ type: 'error', value: 'GEMINI_API_KEY ontbreekt in env.' });
+    res.end();
+    return;
+  }
+
+  // Gemini history: rol 'user' of 'model'. Laatste message = de nieuwe user-prompt.
+  const history = messages.slice(0, -1).map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+  const latest = messages[messages.length - 1]?.content || '';
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
