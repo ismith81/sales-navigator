@@ -78,13 +78,21 @@ function buildMistralTools() {
 // ─── Message-format conversie: ChatPanel → OpenAI/Mistral ───────────────
 // Frontend stuurt {role: 'user'|'assistant', content: '...'}. Mistral wil
 // {role, content} en gebruikt 'system' voor de system-instruction.
+//
+// Mistral valideert: een assistant-message MOET ofwel content ofwel
+// tool_calls hebben — empty-string content geeft 400 "Assistant message
+// must have either content or tool_calls, but not none." (error 3240).
+// Dat gebeurt bij streaming-placeholders die niet gevuld zijn (bv. een
+// failed turn waar 't model leeg stopte). Filter die eruit — ze voegen
+// toch geen context toe.
 function buildMessages(systemInstruction, messages) {
   const out = [{ role: 'system', content: systemInstruction }];
   for (const m of messages) {
-    out.push({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content || '',
-    });
+    const role = m.role === 'assistant' ? 'assistant' : 'user';
+    const content = (m.content || '').toString();
+    if (role === 'assistant' && !content.trim()) continue; // skip lege assistant
+    if (role === 'user' && !content.trim()) continue;       // skip lege user (zelfde reden)
+    out.push({ role, content });
   }
   return out;
 }
