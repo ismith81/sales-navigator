@@ -221,17 +221,26 @@ OUTPUT-DISCIPLINE (kritiek voor sales-bruikbaarheid):
 
 // Detecteer briefing-intent in de laatste user-message. Match op
 // "briefing over X", "voorbereiding op X", "research over X", "BANT voor X",
-// etc. Returnt de bedrijfsnaam of null.
+// "research X" (zonder voorzetsel), etc. Returnt de bedrijfsnaam of null.
+//
+// Volgorde-regel: prepositional patterns staan boven de bare fallback zodat
+// "research over Bol.com" niet als bare match "over Bol.com" oppikt.
 function detectBriefingIntent(text) {
   if (!text) return null;
   const patterns = [
+    // Met voorzetsel — meest specifiek eerst.
     /briefing\s+(?:over|voor|op)\s+(.+?)(?:[.?!]|$)/i,
     /voorbereiding\s+(?:over|voor|op)\s+(.+?)(?:[.?!]|$)/i,
-    /research\s+(?:over|voor|naar)\s+(.+?)(?:[.?!]|$)/i,
+    /research\s+(?:over|voor|naar|op)\s+(.+?)(?:[.?!]|$)/i,
     /BANT[-\s]+(?:analyse\s+)?(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
     /analyse\s+(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
     /vertel\s+(?:me\s+)?(?:iets\s+)?over\s+(?:het\s+bedrijf\s+)?(.+?)(?:[.?!]|$)/i,
     /(?:wat\s+(?:doet|weet\s+je\s+over)|info\s+over)\s+(?:het\s+bedrijf\s+)?(.+?)(?:[.?!]|$)/i,
+    // Bare fallback — "research Bol.com", "briefing Coolblue", "BANT Tulp".
+    // Werkt alleen als de input begint met of een spatie heeft vóór 't keyword
+    // (woordgrens), zodat we "biografisch onderzoek" niet als briefing-intent
+    // oppakken.
+    /(?:^|\s)(?:briefing|voorbereiding|research|BANT)\s+(.+?)(?:[.?!]|$)/i,
   ];
   for (const re of patterns) {
     const m = re.exec(text);
@@ -409,9 +418,18 @@ export async function runMistralAgentChat({ messages, send }) {
   const TAIL_KEEP = 80;
   let textTail = '';
   let textStopped = false;
+  // Bufferen i.p.v. droppen: als aan 't eind van de stream sources.length===0
+  // (Mistral stuurde geen tool_reference chunks), flushen we de gestripte
+  // sectie alsnog. Anders blijft de user met niets zitten — slechter dan een
+  // dubbele weergave.
+  let strippedSection = '';
 
   const streamText = (chunk) => {
-    if (textStopped || !chunk) return;
+    if (!chunk) return;
+    if (textStopped) {
+      strippedSection += chunk;
+      return;
+    }
     sawText = true;
     const combined = textTail + chunk;
     const m = SOURCES_SECTION_RE.exec(combined);
@@ -421,9 +439,10 @@ export async function runMistralAgentChat({ messages, send }) {
       if (safeChunk.length > 0) {
         send({ type: 'text', value: stripCitationMarkers(safeChunk) });
       }
+      strippedSection = combined.slice(cutAt);
       textStopped = true;
       textTail = '';
-      console.log('[Mistral-Agent] Bronnen-sectie gedetecteerd in stream → afgekapt op index', cutAt);
+      console.log('[Mistral-Agent] Bronnen-sectie gedetecteerd in stream → buffered (sources.length zo ver:', sources.length, ')');
       return;
     }
     if (combined.length > TAIL_KEEP) {
@@ -440,6 +459,20 @@ export async function runMistralAgentChat({ messages, send }) {
       send({ type: 'text', value: stripCitationMarkers(textTail) });
       textTail = '';
     }
+  };
+
+  // Aan 't eind van de stream beslissen we wat met de gebufferde Bronnen-
+  // sectie te doen. Als er échte tool_reference-sources binnenkwamen → dropt
+  // (UI rendert eigen blok). Anders → flushen als fallback.
+  const finalizeStrippedSection = () => {
+    if (!textStopped || !strippedSection) return;
+    if (sources.length > 0) {
+      console.log('[Mistral-Agent] Bronnen-sectie definitief gedropt — chip toont sources (n=' + sources.length + ')');
+    } else {
+      console.log('[Mistral-Agent] Geen tool_reference-sources — flush gestripte Bronnen-sectie als fallback (' + strippedSection.length + ' chars)');
+      send({ type: 'text', value: stripCitationMarkers(strippedSection) });
+    }
+    strippedSection = '';
   };
 
   let unknownChunkLogCount = 0;
@@ -492,6 +525,10 @@ export async function runMistralAgentChat({ messages, send }) {
                 title: c.title || c.documentName || c.url,
                 description: null,
               });
+            } else if (c.type === 'thinking') {
+              // Mistral's internal reasoning chunks — niet door naar UI sturen.
+              // Stilletjes negeren zodat unknownChunkLogCount niet vol loopt
+              // met thinking-ruis (die kan tientallen chunks per response zijn).
             } else if (unknownChunkLogCount < 5) {
               unknownChunkLogCount++;
               console.log('[Mistral-Agent] onbekend chunk-type:', ctype, JSON.stringify(c).slice(0, 300));
@@ -508,6 +545,7 @@ export async function runMistralAgentChat({ messages, send }) {
           // renderet als "Web".
           if (data.type === 'tool.execution.started' && !sawPremiumSearch) {
             sawPremiumSearch = true;
+            console.log('[Mistral-Agent] tool.execution.started — Premium Search gestart');
             send({ type: 'tool', value: ['search_web'] });
           }
           break;
@@ -542,10 +580,26 @@ export async function runMistralAgentChat({ messages, send }) {
     }
   }
 
+  // Post-loop summary — fired ALTIJD na stream-end (in tegenstelling tot
+  // de response.done-handler die alleen draait als Mistral dat event
+  // expliciet stuurt). Geeft 't volledige diagnostische beeld zelfs als
+  // de Vercel-logs de response.done-block hebben afgekapt.
+  console.log('[Mistral-Agent] stream ended — sawText:', sawText,
+    '· sources:', sources.length,
+    '· textStopped:', textStopped,
+    '· strippedSection-len:', strippedSection.length,
+    '· sawPremiumSearch:', sawPremiumSearch);
+  console.log('[Mistral-Agent] event-counts (final):', eventTypeCounts);
+  console.log('[Mistral-Agent] chunk-counts (final, binnen message.output.delta):', chunkTypeCounts);
+
   // Flush de tail-buffer (laatste 80 chars die we vasthielden om een trigger
   // op chunk-grens te kunnen detecteren). Geen-op als textStopped al getriggerd
   // werd door een Bronnen-sectie-detectie.
   flushTextTail();
+
+  // Beslis wat te doen met een eventueel gebufferde Bronnen-sectie: dropt als
+  // er tool_reference-sources zijn (chip toont 'm), flush als fallback anders.
+  finalizeStrippedSection();
 
   if (!sawText) {
     send({ type: 'text', value: 'Agent heeft geen antwoord teruggegeven. Probeer een specifiekere vraag.' });
