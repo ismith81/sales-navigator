@@ -147,6 +147,21 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
   let safetyLoop = 0;
 
   while (safetyLoop++ < MAX_TOOL_LOOPS) {
+    // Diagnostische dump van de conversation-structuur per loop-iteratie.
+    // Zo zien we exact welke messages naar Mistral gaan en kunnen we de
+    // 400-error 'Assistant message must have either content or tool_calls'
+    // herleiden naar een specifiek bericht.
+    console.log('[Mistral] loop', safetyLoop, 'conversation-shape:',
+      conversation.map((m, i) => ({
+        i,
+        role: m.role,
+        contentType: typeof m.content,
+        contentLen: typeof m.content === 'string' ? m.content.length : (m.content === null ? 'null' : 'other'),
+        hasToolCalls: Array.isArray(m.tool_calls) && m.tool_calls.length > 0,
+        toolCallCount: Array.isArray(m.tool_calls) ? m.tool_calls.length : 0,
+      }))
+    );
+
     let stream;
     try {
       stream = await client.chat.stream({
@@ -159,6 +174,16 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
       });
     } catch (apiErr) {
       console.error('[Mistral] chat.stream API-fout:', apiErr?.message || apiErr, apiErr?.body || '');
+      // Dump volledige conversation bij API-fout zodat we de exacte payload
+      // kunnen zien (alleen rolen + lengtes, geen volledige tekst-inhoud).
+      console.error('[Mistral] conversation dump bij fout:',
+        JSON.stringify(conversation.map(m => ({
+          role: m.role,
+          content: typeof m.content === 'string' ? m.content.slice(0, 50) : m.content,
+          tool_calls: m.tool_calls?.map(tc => ({ name: tc.function?.name })) || undefined,
+          tool_call_id: m.tool_call_id,
+        })), null, 2)
+      );
       send({ type: 'error', value: `Mistral API-fout: ${apiErr?.message || 'onbekend'}` });
       return;
     }
@@ -216,15 +241,19 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
 
     // Voeg de assistant-message met tool_calls toe aan conversation,
     // execute tools, append tool-responses en loop opnieuw.
-    conversation.push({
+    // Defensief: laat content-veld weg als er geen tekst is (ipv null).
+    // Sommige Mistral-validators zien `content: null` als "none" en
+    // weigeren de message met error 3240.
+    const asstMsg = {
       role: 'assistant',
-      content: assistantContent || null,
       tool_calls: toolCalls.map(t => ({
         id: t.id || `call_${Math.random().toString(36).slice(2, 10)}`,
         type: 'function',
         function: { name: t.function.name, arguments: t.function.arguments || '{}' },
       })),
-    });
+    };
+    if (assistantContent && assistantContent.trim()) asstMsg.content = assistantContent;
+    conversation.push(asstMsg);
 
     send({ type: 'tool', value: toolCalls.map(t => t.function.name) });
     toolsRanThisRequest = true;
@@ -291,15 +320,18 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
         const toolCalls = Object.values(toolCallAcc).filter(t => t.function.name);
         if (toolCalls.length === 0) break;
 
-        conversation.push({
+        // Zelfde defensieve push als hoofd-loop: content-veld weglaten als
+        // er geen tekst is, anders kan Mistral 't als "none" interpreteren.
+        const asstMsg = {
           role: 'assistant',
-          content: assistantContent || null,
           tool_calls: toolCalls.map(t => ({
             id: t.id || `call_${Math.random().toString(36).slice(2, 10)}`,
             type: 'function',
             function: { name: t.function.name, arguments: t.function.arguments || '{}' },
           })),
-        });
+        };
+        if (assistantContent && assistantContent.trim()) asstMsg.content = assistantContent;
+        conversation.push(asstMsg);
         send({ type: 'tool', value: toolCalls.map(t => t.function.name) });
         toolsRanThisRequest = true;
         for (const tc of toolCalls) {
