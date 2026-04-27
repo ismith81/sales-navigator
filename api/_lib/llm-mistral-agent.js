@@ -32,7 +32,7 @@ import { Mistral } from '@mistralai/mistralai';
 // 'agentId' is ingesteld — Mistral API geeft dan 400. Daarom prompt-
 // engineering via de user-message i.p.v. system-instructions.
 function buildBriefingPrompt(company) {
-  return `Maak een BANT-analyse voor het bedrijf "${company}" (gebruik EXACT deze spelling — niet auto-corrigeren of fonetisch hertoluken).
+  return `Maak een diepgaande BANT-analyse voor het bedrijf "${company}" (gebruik EXACT deze spelling — niet auto-corrigeren of fonetisch wijzigen).
 
 CREATES-CONTEXT (cruciaal — dit is de lens voor je analyse):
 Creates is een Nederlandse data & analytics consultancy. We leveren:
@@ -44,41 +44,83 @@ Creates is een Nederlandse data & analytics consultancy. We leveren:
 
 Sales gebruikt deze briefing om een gesprek over **data, analytics, BI of AI** te starten — NIET om algemene sector-trends te bespreken.
 
-ZOEK PER BANT-CATEGORIE (gebruik Premium Search):
+ZOEK MET PREMIUM SEARCH naar info over ${company}: jaarverslagen, persberichten, M&A, vacatures, LinkedIn-profielen.
 
-**Budget** — middelen die ${company} kan inzetten voor data/AI/analytics
-- Omzet, recente financieringsrondes, M&A, IT-budget signalen
-- Investeringen in digitalisering/data-transformatie
+LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown):
 
-**Authority** — beslissers in data/AI/IT-bestuur
-- CDO / CTO / Head of Data / Director Analytics / Head of BI
-- Namen + functies + LinkedIn (indien publiek)
-- Open data-leiderschap-vacatures = signaal voor nieuwe rol
-- Bestuurders met publieke uitspraken over data of AI
+# **BANT-analyse: ${company}**
+*Datum: <vandaag in NL-format>*
+*Bronnen: jaarverslagen, M&A, vacatures, LinkedIn, nieuws (specifiek opnoemen wat je gebruikte)*
 
-**Need** — concrete data/analytics/AI-behoeften
-- Open vacatures voor data engineers, BI-devs, AI-specialisten = skill-gap-signaal
-- Strategische uitspraken over data-gedreven werken, AI-roadmap, BI-modernisatie
-- Productaankondigingen waar data/analytics een rol in speelt
-- Lopende of aangekondigde data-platform / lakehouse / cloud-migratie projecten
+---
 
-**Timeline** — wanneer is dit data/AI-gesprek warm?
-- Recente persberichten over data/AI/BI-initiatieven
-- Geplande project-deadlines die data-werk impliceren
-- Momentum-signalen (nieuwe CDO aangesteld, data-platform aangekondigd, AI-pilot afgerond)
+## **1. Budget**
 
-Sluit af met — STRICT data/analytics/AI-georiënteerd:
+### **Financiële gegevens & investeringen**
+- **Eigendom**: <publiek of private equity, sinds wanneer, met bedrag indien bekend>
+- **Omzet**: <recent jaar of laatst beschikbare cijfer; "geen publieke info gevonden" als niets vindbaar>
+- **Recente investeringen / financieringsrondes**: <specifieke bedragen, doelen, datum>
+- **M&A**: <recente overnames, joint ventures, met bedragen en data>
 
-**Sales-fit** (1 regel) — concrete openingshoek voor een gesprek over Creates' data/analytics/AI-diensten met ${company}. Voorbeeld: "${company} kondigde recent een [data/AI-traject] aan; Creates' [data modernisatie / governance / BI / AI]-aanbod sluit daarop aan."
-NIET: generieke uitspraken over hun sector, klantvragen ("hoe ziet u uitdagingen in...?"), of algemeen business-advies. Sales wil een **data/analytics/AI-haakje**, niet een sector-warm-up.
+### **Budgetindicatie voor data/AI/analytics-trajecten**
+- **<Hoog/Midden/Laag>**: <onderbouwing op basis van bovenstaande, gericht op investeringscapaciteit voor data-projecten>
+- **Focus**: <waar zet 't bedrijf z'n IT/digitalisering-budget voornamelijk in>
 
-**Gap-flag** (1 regel) — welk data/AI/analytics-onderwerp Creates voor ${company} NIET kan dekken (bv. specifieke industrie-software, hardware-gerelateerde data-vraagstukken, gespecialiseerde domain-expertise) — eerlijk benoemen.
+---
+
+## **2. Authority**
+
+### **Beslissingsstructuur & sleutelfiguren**
+| **Functie** | **Naam** | **Locatie** | **Rol/Relevantie voor data-gesprek** |
+|---|---|---|---|
+| CEO / Bestuursvoorzitter | <naam of "geen publieke info"> | <locatie of "?"> | <strategische rol> |
+| CDO / CIO | <naam> | <locatie> | <data/IT-leiderschap> |
+| Head of Data / Director Analytics | <naam of "vacature open" of "geen publieke info"> | <locatie> | <data-strategie eigenaar> |
+| CTO | <naam> | <locatie> | <technologie en innovatie> |
+| <andere relevante data/IT-rol indien gevonden> | ... | ... | ... |
+
+### **Inzicht**
+- <2-3 bullets met context: wie is publiek bekend over data/AI, wat zegt diens LinkedIn over priorities, vacatures als signaal voor nieuwe rollen>
+
+---
+
+## **3. Need**
+
+### **Strategische uitdagingen & prioriteiten (data/analytics/AI-georiënteerd)**
+- <bullets met concrete signalen: data-platform-projecten, BI-modernisatie, AI-pilots, digitaliserings-roadmap>
+- <waar publiek beschikbaar: directe quotes uit jaarverslag of persberichten>
+
+### **Open vacatures (data/analytics/AI-relevant)**
+- <bullet per data/AI-vacature met titel + locatie + datum als 'recent'>
+- <vacatures voor data engineers, BI-devs, analytics-leads, AI-specialisten — niet de algemene operationele rollen>
+
+---
+
+## **4. Timeline**
+
+### **Recente mijlpalen & momentum-signalen**
+- **<Datum>**: <event, bv. afronding M&A / data-platform-aankondiging / nieuwe CDO aangesteld>
+- **<Datum>**: <event>
+
+### **Aankomende deadlines / strategische horizon**
+- **Kort termijn (Q2-Q3 2026)**: <data/AI-projecten in uitrol of planning>
+- **Midden termijn (2026-2027)**: <strategische data-doelen>
+
+---
+
+## **Sales-fit & Gap-flag**
+
+### **Sales-fit**
+**Concrete openingshoek (data/analytics/AI):** *"<formuleer een vraag of statement die direct verbindt met een data-signaal uit Need/Timeline en een specifieke Creates-dienst (modernisatie / governance / BI / AI)>"*
+
+### **Gap-flag**
+**Creates kan ${company} NIET dekken op:** *<benoem 1 specifiek data/AI/analytics-onderwerp waar Creates' portfolio leeg is, of een non-data-domein dat ${company}'s kerncompetentie is — eerlijk en concreet>*
 
 REGELS:
-- Gebruik de bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
-- Verzin geen feiten. Mis je publieke info: schrijf "geen publieke info gevonden" voor dat onderdeel.
-- Houd compact. Sales heeft geen algemene sector-context nodig — ze willen concrete data/AI-handvatten.
-- Antwoord in het Nederlands, markdown-opmaak.`;
+- Bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
+- Sales-fit MOET een data/analytics/AI-haakje hebben. NIET: "hoe ziet u de uitdagingen in uw sector?" of generieke business-advies.
+- Verzin geen feiten, namen of cijfers. Mis je info: schrijf "geen publieke info gevonden" voor dat onderdeel.
+- Antwoord in het Nederlands.`;
 }
 
 // Detecteer briefing-intent in de laatste user-message. Match op
@@ -114,13 +156,20 @@ function detectBriefingIntent(text) {
 // Detecteer of de vorige assistant-turn al een BANT-rapport was. Zo ja,
 // blijft de gebruiker in een BANT-context en willen we follow-ups (waar
 // briefing-intent niet matcht) ook in BANT-vorm zien voor consistentie.
-// Cheap check: ≥3 van de 4 BANT-headers aanwezig in de prev assistant tekst.
+// Flexibele match — dekt zowel `**Budget**` als `**1. Budget**` en
+// `## **1. Budget**` (de nieuwe template gebruikt nummering in de
+// section-headers).
 function wasInBantContext(messages) {
   const prevAssistant = [...messages].reverse().find(m => m.role === 'assistant');
   if (!prevAssistant) return false;
   const text = (prevAssistant.content || '').toString();
-  const headers = ['**Budget**', '**Authority**', '**Need**', '**Timeline**'];
-  const hits = headers.filter(h => text.includes(h)).length;
+  const patterns = [
+    /\*\*[^*]*\bBudget\b[^*]*\*\*/i,
+    /\*\*[^*]*\bAuthority\b[^*]*\*\*/i,
+    /\*\*[^*]*\bNeed\b[^*]*\*\*/i,
+    /\*\*[^*]*\bTimeline\b[^*]*\*\*/i,
+  ];
+  const hits = patterns.filter(re => re.test(text)).length;
   return hits >= 3;
 }
 
