@@ -68,7 +68,78 @@ ZOEKSTRATEGIE: Doe MINSTENS 3 verschillende Premium Search-aanroepen — één p
    - "${company} vacature 'BI developer' OR 'data analyst' OR 'AI'"
    - "${company} digitaliseringsstrategie data-platform AI roadmap"
 
-LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown). Houd 't compleet maar zonder uitweidingen — sales wil scanbaar, niet eindeloos.
+FORMAT-EISEN (STRICT — niet afwijken, niet "verbeteren", niet samenvatten):
+- ELKE hoofd-sectie begint met EXACT \`## **N. <Naam>**\` (met markdown header level 2).
+- ELKE hoofd-sectie heeft één of meer sub-sections met EXACT \`### **<Sub-naam>**\` (header level 3).
+- Sectie 2 (Authority) MUST een markdown-tabel zijn met kolommen Functie/Naam/Locatie/Relevantie. NIET bullet-list.
+- Bullets gebruiken \`- **<Key>**: <waarde>\` syntax — sleutel altijd bold.
+- Tussen secties: \`---\` separator.
+
+VOORBEELD (referentie-output voor een fictief bedrijf "TestCorp" — kopieer dit format exact, vul met echte data over ${company}):
+
+# **BANT-analyse: TestCorp**
+*Datum: 27 april 2026*
+*Bronnen: jaarverslag 2024, persbericht maart 2026, vacaturepagina*
+
+---
+
+## **1. Budget**
+
+### **Financiële gegevens & investeringen**
+- **Eigendom**: Beursgenoteerd op Euronext Amsterdam sinds 2010
+- **Omzet**: €450 miljoen in 2023 (jaarverslag 2024)
+- **Recente investeringen / financieringsrondes**:
+  - €30 miljoen kapitaalinjectie voor cloud-migratie (Q1 2025)
+  - €15 miljoen voor AI-pilots (Q3 2025)
+- **M&A**:
+  - Overname DataAnalytics BV (juni 2025, ca. €40 miljoen)
+
+### **Budgetindicatie voor data/AI/analytics**
+- **Hoog** — Recente kapitaalinjecties en M&A in data/AI-domein onderstrepen beschikbaarheid van budget voor digitale transformatie.
+
+---
+
+## **2. Authority**
+
+### **Beslissingsstructuur & sleutelfiguren**
+| **Functie** | **Naam** | **Locatie** | **Relevantie voor data-gesprek** |
+|---|---|---|---|
+| CEO | Jan de Vries | Amsterdam | Strategisch leider, sprak in 2025 over data-gedreven groei |
+| CDO | Maria Jansen | Amsterdam | Verantwoordelijk voor data-strategie en AI-roadmap |
+| Head of Data | Vacature open | Utrecht | Leidt data-platform-modernisatie |
+| CTO | Geen publieke info | ? | – |
+
+### **Inzicht**
+- Maria Jansen (CDO) noemde Microsoft Fabric in een keynote (mei 2025).
+- Open Head of Data-vacature is signaal dat data-team uitbreidt.
+
+---
+
+## **3. Need**
+
+### **Strategische data/AI-prioriteiten**
+- Cloud-migratie naar Microsoft Fabric (aangekondigd Q1 2025)
+- Implementatie van real-time analytics voor klantsegmentatie
+- AI-pilots voor predictive maintenance
+
+### **Open data/analytics/AI-vacatures**
+- Data Engineer (Utrecht, april 2026)
+- BI Developer (Amsterdam, maart 2026)
+- AI/ML Specialist (Amsterdam, april 2026)
+
+---
+
+## **4. Timeline**
+
+### **Recente mijlpalen** (afgelopen 12 maanden)
+- **Maart 2026**: Persbericht over partnership met cloud-provider voor data-platform
+- **Juni 2025**: Overname DataAnalytics BV afgerond
+
+### **Aankomende horizon**
+- **Kort termijn (Q2-Q3 2026)**: Live-gang nieuwe data-platform
+- **Midden termijn (2026-2027)**: Volledige migratie legacy-systemen
+
+NU HETZELFDE FORMAT, MET ECHTE DATA OVER "${company}":
 
 # **BANT-analyse: ${company}**
 *Datum: <vandaag in NL-format>*
