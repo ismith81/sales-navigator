@@ -142,7 +142,14 @@ REGELS:
 - Bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
 - Sales-fit MOET een data/analytics/AI-haakje hebben. NIET: "hoe ziet u de uitdagingen in uw sector?" of generieke business-advies.
 - Verzin geen feiten, namen of cijfers. Mis je info: schrijf "geen publieke info gevonden" voor dat onderdeel.
-- Antwoord in het Nederlands.`;
+- Antwoord in het Nederlands.
+
+OUTPUT-DISCIPLINE (kritiek voor sales-bruikbaarheid):
+- LEVER DIRECT de volledige BANT-analyse. Vraag NIET om toestemming, NIET "wil je dat ik X of Y doe?", NIET een meta-overleg over de aanpak. Sales wil 't eindproduct in één antwoord — niet een keuze-menu.
+- Doe alle nodige Premium Search-calls in één keer en lever dan 't rapport. Als je denkt nog meer info nodig te hebben, doe gewoon de extra search en lever 't rapport, geen toestemmingsvraag.
+- Vermeld GEEN interne tool-namen ("web_search", "premium_search", etc.) in je output. Citaties verschijnen automatisch via tool_reference; jij hoeft daar in tekst niets over te zeggen.
+- Plaats GEEN source-index-lijsten of nummering ("[0,1,2,3,...]" of "bron 47" of "[1][2][3]") in je antwoord. Citaties zijn automatisch — geen handmatige referenties nodig.
+- GEEN preamble ("ik ga nu beginnen", "hier is de analyse", "op basis van mijn onderzoek...") — start direct met de markdown-header "# **BANT-analyse: ${company}**".`;
 }
 
 // Detecteer briefing-intent in de laatste user-message. Match op
