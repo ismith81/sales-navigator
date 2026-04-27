@@ -659,7 +659,6 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                       <li key={hint} className="chat-hint-item">{hint}</li>
                     ))}
                   </ul>
-                  <p className="chat-hint-tip">Tip: noem direct de bedrijfsnaam zodat ik niet hoef te vragen om verduidelijking.</p>
                 </section>
               </div>
             </div>

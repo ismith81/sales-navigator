@@ -4777,12 +4777,6 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 }
 .chat-hint-item::before { content: '"'; }
 .chat-hint-item::after { content: '"'; }
-.chat-hint-tip {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin: 0.5rem 0 0;
-  font-style: italic;
-}
 .chat-quickprompt-short { display: none; line-height: 1.3; }
 .chat-welcome-copy-mobile { display: none; }
 
