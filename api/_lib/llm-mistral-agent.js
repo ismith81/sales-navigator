@@ -58,6 +58,7 @@ function detectBriefingIntent(text) {
     /BANT[-\s]+(?:analyse\s+)?(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
     /analyse\s+(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
     /vertel\s+(?:me\s+)?(?:iets\s+)?over\s+(?:het\s+bedrijf\s+)?(.+?)(?:[.?!]|$)/i,
+    /(?:wat\s+(?:doet|weet\s+je\s+over)|info\s+over)\s+(?:het\s+bedrijf\s+)?(.+?)(?:[.?!]|$)/i,
   ];
   for (const re of patterns) {
     const m = re.exec(text);
@@ -73,6 +74,19 @@ function detectBriefingIntent(text) {
     }
   }
   return null;
+}
+
+// Detecteer of de vorige assistant-turn al een BANT-rapport was. Zo ja,
+// blijft de gebruiker in een BANT-context en willen we follow-ups (waar
+// briefing-intent niet matcht) ook in BANT-vorm zien voor consistentie.
+// Cheap check: ≥3 van de 4 BANT-headers aanwezig in de prev assistant tekst.
+function wasInBantContext(messages) {
+  const prevAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+  if (!prevAssistant) return false;
+  const text = (prevAssistant.content || '').toString();
+  const headers = ['**Budget**', '**Authority**', '**Need**', '**Timeline**'];
+  const hits = headers.filter(h => text.includes(h)).length;
+  return hits >= 3;
 }
 
 // Bouw de inputs-string die we naar de agent sturen. We includen de hele
@@ -129,17 +143,34 @@ export async function runMistralAgentChat({ messages, send }) {
     }
   }
 
-  // Bouw de inputs-string. Bij een briefing-intent: vervang de prompt door
-  // ons template. Anders: stuur volledige chat-history als rol-geprefixed
-  // string voor multi-turn context.
-  const inputs = briefingCompany
-    ? buildBriefingPrompt(briefingCompany)
-    : buildInputs(messages);
+  // Bouw de inputs-string in 1 van 3 modi:
+  //   1. Briefing-intent gedetecteerd → fresh BANT-template met bedrijfsnaam
+  //   2. Geen briefing-intent maar vorige turn was BANT → multi-turn
+  //      conversation + BANT-context-cue (zodat follow-ups in BANT blijven)
+  //   3. Anders → gewone multi-turn conversation
+  const inBantContext = !briefingCompany && wasInBantContext(messages);
+  let inputs;
+  let mode;
+  if (briefingCompany) {
+    inputs = buildBriefingPrompt(briefingCompany);
+    mode = 'fresh-briefing';
+  } else if (inBantContext) {
+    // Wrap de conversation met een korte cue zodat de agent BANT-format
+    // behoudt op follow-up vragen (concurrenten, deeper-dive op één
+    // BANT-letter, etc.). Voorkomt format-drift over multi-turn.
+    inputs = `[CONTEXT: De vorige reactie was een BANT-analyse over een prospect. Behoud de BANT-structuur (Budget / Authority / Need / Timeline) ook in je antwoord op deze vervolg-vraag — strucureer je response onder de relevante BANT-letter(s) of expand de bestaande BANT-output. Antwoord altijd in het Nederlands.]\n\n${buildInputs(messages)}`;
+    mode = 'bant-followup';
+  } else {
+    inputs = buildInputs(messages);
+    mode = 'free-form';
+  }
 
   console.log('[Mistral-Agent] start:', {
     agentId,
+    mode,
     messageCount: messages.length,
     briefingCompany: briefingCompany || '(geen briefing-intent gedetecteerd)',
+    inBantContext,
     inputsLength: inputs.length,
     inputsPreview: inputs.slice(0, 200),
   });
