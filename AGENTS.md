@@ -403,3 +403,79 @@ Alles live op `main` na merge van `fix-mobile-and-nova-issues` (commit `cb9a38d`
   - **Niet** noodzakelijk: Google Search grounding (zit alleen bij Gemini) → zou via search_web-tool met Mistral + aparte search-API moeten (Brave Search, Tavily, etc.)
 - **Team-feature Fase C/D/E** (zoals eerder genoteerd): pgvector embeddings, cases ↔ team-leden mapping, sales-enablement output-format.
 - **Cleanup**: `cv-parse.js` `loadBranches()` token-forwarden voor RLS-consistentie (nu: anon-key met DEFAULT_BRANCHES fallback). Niet kritiek maar wel netjes.
+
+## Status (Mistral POC — branch `nova-mistral-poc`)
+Live POC voor Gemini → Mistral Small 4 migratie. Niet gemerged in main, draait alleen op de Vercel preview voor deze branch.
+
+### Architectuur (3 paden via `LLM_PROVIDER` env var)
+- **`gemini`** (default) — productie-pad. `api/chat.js` direct met `@google/generative-ai` SDK. Niet gewijzigd in deze POC.
+- **`mistral`** — Mistral chat.completions endpoint via `api/_lib/llm-mistral.js`. Custom function-tools (search_cases etc.) werken; geen built-in web search. **Niet meer actief getest** — uitgesteld omdat `mistral-agent`-pad cleaner bleek voor briefings.
+- **`mistral-agent`** — Mistral Conversations API via `api/_lib/llm-mistral-agent.js`. Gebruikt user's geconfigureerde Nova-agent in AI Studio (agentId `ag_019dcda06835758ca7b2d2eaf98591f1`). **Premium Search built-in.** Custom function-tools doen NIET mee in dit pad. **Dit is waar we werken.**
+
+### Vercel env vars (Preview-only voor `nova-mistral-poc`)
+- `LLM_PROVIDER=mistral-agent`
+- `MISTRAL_API_KEY=sk-...`
+- `MISTRAL_AGENT_ID=ag_019dcda06835758ca7b2d2eaf98591f1`
+
+Productie staat op default Gemini (geen `LLM_PROVIDER` op productie-env). Tier: pay-as-you-go (Premium Search heeft op free tier ~5 calls/dag rate-limit).
+
+### Belangrijke files
+- **`api/_lib/llm-mistral-agent.js`** — hoofd-pad. `runMistralAgentChat()` functie. Belangrijk:
+  - `buildBriefingPrompt(company)` — produceert de BANT-template per request (niet via `instructions`-veld want Mistral's API verbiedt dat bij `agentId`).
+  - `detectBriefingIntent(text)` — regex om "briefing over X", "BANT voor Y", "vertel over Z" patronen te matchen.
+  - `wasInBantContext(messages)` — detecteert of vorige assistant-turn al BANT was; zo ja krijgt follow-up een CONTEXT-cue om format te behouden.
+  - `stripCitationMarkers(text)` — regex-strip op `[[16]]`, `[3,7]` patterns die Mistral toch in tekst stopt.
+- **`api/_lib/llm-mistral.js`** — chat.completions pad (parallelle implementatie, idle).
+- **`api/_lib/mistral-premium-search.js`** — helper voor `prospect_brief` tool om 3-cluster Premium Search te doen vanuit Gemini-pad. Niet gebruikt in mistral-agent-pad (die heeft Premium Search direct via agent).
+- **`src/components/ChatPanel.jsx`** — welcome-screen versimpeld op deze branch: alleen briefing-voorbeelden (niet-klikbaar), andere quick-prompts (Team-match / Na-het-gesprek) verwijderd.
+- **`AI Studio` (Mistral)** — Nova-agent met:
+  - Model: Mistral Small (`mistral-small-latest`)
+  - Capabilities: **Premium Search** aan
+  - max_tokens: **4096** (was 2048; user moet handmatig ophogen indien gereset)
+  - Reasoning effort: None
+  - Instructions: korte basis-identiteit (zie hieronder)
+
+### Recommended AI Studio Instructions tekst
+```
+Je bent Nova, sales-assistent voor Creates — een Nederlandse data & analytics consultancy.
+- Antwoord altijd in het Nederlands.
+- Bondig en zakelijk, geen marketingpraat.
+- Verzin nooit cijfers/feiten — gebruik Premium Search voor actuele info.
+- Bij prospect-vragen: structureer in BANT (Budget / Authority / Need / Timeline).
+- Bij naam-only-input na een eigen verduidelijkings-vraag → behandel direct als invoer voor de eerder gevraagde actie.
+```
+NB: Sales-fit en Gap-flag waren initieel onderdeel van 't BANT-rapport; user heeft ze eruit gehaald (zowel in code-template als AI Studio Instructions).
+
+### Belangrijke architecturele lessen (van fouten geleerd)
+1. **Mistral Conversations API verbiedt `instructions`-veld bij `agentId`** (error 3240) — agent's eigen Instructions in AI Studio zijn leidend. Per-request prompt-engineering doen we via de inputs-string ipv `instructions`-override.
+2. **Empty assistant-messages in chat-history geven 400** — chat.completions valideert "must have content or tool_calls". `buildMessages` skipt nu lege messages (zie `llm-mistral.js`).
+3. **`content: null` op assistant-message met tool_calls** kan ook 400 geven — defensief: laat content-veld weg ipv null.
+4. **Premium Search is alleen via Agents/Conversations API**, niet via chat.completions (Mistral's docs op stand sept 2025).
+5. **AI Studio agent max_tokens-cap = 4096** in current tier (niet 8192 zoals ik aanvankelijk dacht).
+6. **`remark-gfm` plugin nodig** voor markdown-tabellen in chat (Mistral genereert tabellen, ReactMarkdown default kent ze niet).
+
+### Wat al goed werkt
+- ✅ `LLM_PROVIDER=mistral-agent` dispatch in `api/chat.js`
+- ✅ Briefing-intent regex matcht alle 4 voorbeeld-prompts uit welcome screen
+- ✅ Multi-turn context: korte vervolg-input ("Joulz") na eigen "welk bedrijf?"-vraag wordt opgepakt als briefing-input
+- ✅ BANT-rapport-template met sub-headers, Authority-tabel, Need-vacatures, Timeline-mijlpalen
+- ✅ Output-discipline regels (geen "wil je X of Y?", geen tool-name-leakage, direct starten met header)
+- ✅ Markdown-tabel rendering in chat (remark-gfm)
+- ✅ Welcome-screen op briefing-only met niet-klikbare voorbeelden
+
+### Wat OPEN staat (volgende sessie)
+- ⚠️ **Bronnen-blok onderaan blijft leeg** — chip "Web" verschijnt (= Premium Search runt) maar `tool_reference` chunks komen niet naar de UI als bronnen-lijst. Laatste commit (`5f3a5ad`) loggt nu volledig per chunk + chunk-counts om te zien wat Mistral werkelijk stuurt. **Volgende stap:** Vercel functions log opvragen na een briefing-test, regels `[Mistral-Agent] tool_reference chunk: {...}` analyseren — mogelijk gebruikt Mistral andere veldnamen (referenceUrl, sourceUrl) of stuurt URL als nested object.
+- ⚠️ **`[[N]]`-markers nog zichtbaar?** User rapporteerde nog wat te zien na strip-fix — kan ofwel zijn dat deploy nog niet door was, ofwel dat regex-pattern onvolledig is. Robustere strip in commit `5f3a5ad`. Te bevestigen na volgende test.
+- ⚠️ **`mistral` (chat.completions) pad nooit afgerond** — gaf 400-validatie-fout op `Assistant message must have content or tool_calls`. Defensieve push-fix toegevoegd (commit `ec1a491`) maar niet meer getest. POC focus is verschoven naar `mistral-agent` pad.
+
+### Welke vraag bij deze POC moet worden beantwoord
+**Is Mistral Small 4 + Premium Search via Conversations API een werkbare vervanger voor Gemini 2.5 Flash + googleSearch grounding voor prospect-briefings?**
+
+Sub-vragen voor go/no-go beslissing:
+- Kwaliteit: BANT-output kwaliteit vs Gemini-equivalent
+- Bronnen: kunnen we Premium Search citations betrouwbaar tonen (huidige open punt)
+- Latency: Premium Search heeft ~3-10s extra TTFT vs Gemini; acceptabel?
+- Kosten: ~3 cent per Premium Search-call (~5× hoger dan Gemini grounding) — bij 100 briefings/maand = $3, niet schokkend
+- Multi-turn: hervat-na-clarification werkt; follow-up BANT-context ook ingebouwd
+
+Als deze POC slaagt: vervolgwerk is `find_team_members` / `search_cases` / overige tools naar Mistral porten. Custom functions werken NIET in agent-pad — moeten dan via Mistral chat.completions (parallelle implementatie in `llm-mistral.js`) draaien naast 't agent-pad voor briefings.
