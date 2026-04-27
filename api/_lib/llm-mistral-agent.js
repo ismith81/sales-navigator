@@ -32,18 +32,53 @@ import { Mistral } from '@mistralai/mistralai';
 // 'agentId' is ingesteld — Mistral API geeft dan 400. Daarom prompt-
 // engineering via de user-message i.p.v. system-instructions.
 function buildBriefingPrompt(company) {
-  return `Maak een diepgaande BANT-analyse voor ${company}.
-Gebruik de premium_search-tool om actuele financiële gegevens, nieuws, vacatures en LinkedIn-profielen op te halen.
+  return `Maak een BANT-analyse voor het bedrijf "${company}" (gebruik EXACT deze spelling — niet auto-corrigeren of fonetisch hertoluken).
 
-Focus op:
-- **Budget**: recente investeringen, omzetcijfers, M&A.
-- **Authority**: beslissers (CTO, CEO, CDO, Head of Data) — namen + functies, indien publiek bekend.
-- **Need**: vacatures, productaankondigingen, strategische uitspraken.
-- **Timeline**: deadlines, projectplanningen, recent nieuws-momentum.
+CREATES-CONTEXT (cruciaal — dit is de lens voor je analyse):
+Creates is een Nederlandse data & analytics consultancy. We leveren:
+- Data modernisatie (cloud data platforms, lakehouse, dwh)
+- Data governance & data kwaliteit
+- Business Intelligence & analytics
+- AI/ML implementatie en toepassingen
+- Training & enablement
 
-Antwoord in het Nederlands, in markdown. Sluit af met:
-- **Sales-fit** (1 regel): voorgestelde openingshoek voor een Creates-gesprek.
-- **Gap-flag** (1 regel): waar Creates' portfolio (data & analytics consultancy) dit bedrijf NIET kan dekken — eerlijk benoemen.`;
+Sales gebruikt deze briefing om een gesprek over **data, analytics, BI of AI** te starten — NIET om algemene sector-trends te bespreken.
+
+ZOEK PER BANT-CATEGORIE (gebruik Premium Search):
+
+**Budget** — middelen die ${company} kan inzetten voor data/AI/analytics
+- Omzet, recente financieringsrondes, M&A, IT-budget signalen
+- Investeringen in digitalisering/data-transformatie
+
+**Authority** — beslissers in data/AI/IT-bestuur
+- CDO / CTO / Head of Data / Director Analytics / Head of BI
+- Namen + functies + LinkedIn (indien publiek)
+- Open data-leiderschap-vacatures = signaal voor nieuwe rol
+- Bestuurders met publieke uitspraken over data of AI
+
+**Need** — concrete data/analytics/AI-behoeften
+- Open vacatures voor data engineers, BI-devs, AI-specialisten = skill-gap-signaal
+- Strategische uitspraken over data-gedreven werken, AI-roadmap, BI-modernisatie
+- Productaankondigingen waar data/analytics een rol in speelt
+- Lopende of aangekondigde data-platform / lakehouse / cloud-migratie projecten
+
+**Timeline** — wanneer is dit data/AI-gesprek warm?
+- Recente persberichten over data/AI/BI-initiatieven
+- Geplande project-deadlines die data-werk impliceren
+- Momentum-signalen (nieuwe CDO aangesteld, data-platform aangekondigd, AI-pilot afgerond)
+
+Sluit af met — STRICT data/analytics/AI-georiënteerd:
+
+**Sales-fit** (1 regel) — concrete openingshoek voor een gesprek over Creates' data/analytics/AI-diensten met ${company}. Voorbeeld: "${company} kondigde recent een [data/AI-traject] aan; Creates' [data modernisatie / governance / BI / AI]-aanbod sluit daarop aan."
+NIET: generieke uitspraken over hun sector, klantvragen ("hoe ziet u uitdagingen in...?"), of algemeen business-advies. Sales wil een **data/analytics/AI-haakje**, niet een sector-warm-up.
+
+**Gap-flag** (1 regel) — welk data/AI/analytics-onderwerp Creates voor ${company} NIET kan dekken (bv. specifieke industrie-software, hardware-gerelateerde data-vraagstukken, gespecialiseerde domain-expertise) — eerlijk benoemen.
+
+REGELS:
+- Gebruik de bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
+- Verzin geen feiten. Mis je publieke info: schrijf "geen publieke info gevonden" voor dat onderdeel.
+- Houd compact. Sales heeft geen algemene sector-context nodig — ze willen concrete data/AI-handvatten.
+- Antwoord in het Nederlands, markdown-opmaak.`;
 }
 
 // Detecteer briefing-intent in de laatste user-message. Match op
