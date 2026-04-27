@@ -74,7 +74,7 @@ FORMAT-EISEN (STRICT — niet afwijken, niet "verbeteren", niet samenvatten):
 - Sectie 2 (Authority) MUST een markdown-tabel zijn met kolommen Functie/Naam/Locatie/Relevantie. NIET bullet-list.
 - Bullets gebruiken \`- **<Key>**: <waarde>\` syntax — sleutel altijd bold.
 - Tussen secties: \`---\` separator.
-- Na sectie 4 (Timeline) volgt EXACT één afsluitende sectie: \`## **Bronnen**\` met daaronder een markdown-bullet-list van geraadpleegde Premium Search-bronnen — formaat per bullet: \`- [Korte titel of bron-naam](https://volledige-url)\`. Geen aanvullende secties ("Mogelijk gemist", "Vervolgvragen voor sales", "Aanbevelingen", reflecties etc.) — die kappen de output af door 't max_tokens-budget te overschrijden.
+- Na sectie 4 (Timeline) volgt EXACT één afsluitende sectie: \`## **Bronnen**\` met daaronder een markdown-bullet-list van geraadpleegde Premium Search-bronnen — formaat per bullet: \`- [Korte titel of bron-naam](https://volledige-url)\`. **MINSTENS 5 unieke bronnen** vermelden — vermeld ALLE Premium Search-resultaten die je hebt geraadpleegd om de BANT in te vullen, niet alleen de meest prominente. Een briefing met slechts 1-2 bronnen suggereert oppervlakkig onderzoek en is onbruikbaar voor sales. Liever 8 relevante bronnen dan 2 perfecte. Geen aanvullende secties ("Mogelijk gemist", "Vervolgvragen voor sales", "Aanbevelingen", reflecties etc.) — die kappen de output af door 't max_tokens-budget te overschrijden.
 
 OUTPUT-CAPS (om binnen 4096 tokens te passen):
 - Authority-tabel: max 4 rijen (kies de meest relevante data-rollen).
