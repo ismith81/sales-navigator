@@ -68,75 +68,55 @@ ZOEKSTRATEGIE: Doe MINSTENS 3 verschillende Premium Search-aanroepen — één p
    - "${company} vacature 'BI developer' OR 'data analyst' OR 'AI'"
    - "${company} digitaliseringsstrategie data-platform AI roadmap"
 
-LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown):
+LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown), houd compact zodat 't binnen 4096 output-tokens past:
 
 # **BANT-analyse: ${company}**
-*Datum: <vandaag in NL-format>*
-*Bronnen: jaarverslagen, M&A, vacatures, LinkedIn, nieuws (specifiek opnoemen wat je gebruikte)*
+*Datum: <vandaag in NL-format> · Bronnen: <wat je daadwerkelijk gebruikte: bv. jaarverslag 2024, persbericht maart 2026, vacaturepagina>*
 
 ---
 
 ## **1. Budget**
-
-### **Financiële gegevens & investeringen**
-- **Eigendom**: <publiek of private equity, sinds wanneer, met bedrag indien bekend>
-- **Omzet**: <recent jaar of laatst beschikbare cijfer; "geen publieke info gevonden" als niets vindbaar>
-- **Recente investeringen / financieringsrondes**: <specifieke bedragen, doelen, datum>
-- **M&A**: <recente overnames, joint ventures, met bedragen en data>
-
-### **Budgetindicatie voor data/AI/analytics-trajecten**
-- **<Hoog/Midden/Laag>**: <onderbouwing op basis van bovenstaande, gericht op investeringscapaciteit voor data-projecten>
-- **Focus**: <waar zet 't bedrijf z'n IT/digitalisering-budget voornamelijk in>
+- **Eigendom**: <publiek of PE, sinds wanneer, bedrag indien bekend>
+- **Omzet**: <recent cijfer of "geen publieke info gevonden">
+- **Investeringen / M&A**: <recente bedragen + datum, max 2-3 bullets>
+- **Budgetindicatie voor data/AI**: **<Hoog/Midden/Laag>** — <1 zin onderbouwing op investeringscapaciteit voor data-projecten>
 
 ---
 
 ## **2. Authority**
-
-### **Beslissingsstructuur & sleutelfiguren**
-| **Functie** | **Naam** | **Locatie** | **Rol/Relevantie voor data-gesprek** |
+| **Functie** | **Naam** | **Locatie** | **Relevantie voor data-gesprek** |
 |---|---|---|---|
-| CEO / Bestuursvoorzitter | <naam of "geen publieke info"> | <locatie of "?"> | <strategische rol> |
+| CEO | <naam of "geen publieke info"> | <locatie> | <strategische rol, 1 zin> |
 | CDO / CIO | <naam> | <locatie> | <data/IT-leiderschap> |
-| Head of Data / Director Analytics | <naam of "vacature open" of "geen publieke info"> | <locatie> | <data-strategie eigenaar> |
-| CTO | <naam> | <locatie> | <technologie en innovatie> |
-| <andere relevante data/IT-rol indien gevonden> | ... | ... | ... |
+| Head of Data / Director Analytics | <naam of "vacature open"> | <locatie> | <data-strategie> |
+| CTO | <naam> | <locatie> | <technologie/innovatie> |
 
-### **Inzicht**
-- <2-3 bullets met context: wie is publiek bekend over data/AI, wat zegt diens LinkedIn over priorities, vacatures als signaal voor nieuwe rollen>
+**Inzicht**: <1-2 bullets max — wie is publiek over data/AI gesproken, vacatures als signaal>
 
 ---
 
 ## **3. Need**
+**Strategische data/AI-prioriteiten**:
+- <2-3 bullets: data-platform-projecten, BI-modernisatie, AI-pilots, digitaliserings-roadmap>
 
-### **Strategische uitdagingen & prioriteiten (data/analytics/AI-georiënteerd)**
-- <bullets met concrete signalen: data-platform-projecten, BI-modernisatie, AI-pilots, digitaliserings-roadmap>
-- <waar publiek beschikbaar: directe quotes uit jaarverslag of persberichten>
-
-### **Open vacatures (data/analytics/AI-relevant)**
-- <bullet per data/AI-vacature met titel + locatie + datum als 'recent'>
-- <vacatures voor data engineers, BI-devs, analytics-leads, AI-specialisten — niet de algemene operationele rollen>
+**Open data/AI/analytics-vacatures**:
+- <bullets met titel + datum, alleen data/BI/AI-rollen — niet algemeen operationeel>
 
 ---
 
 ## **4. Timeline**
+**Recente mijlpalen** (afgelopen 12 maanden):
+- **<Datum>**: <event, bv. M&A / data-platform-aankondiging / CDO aangesteld>
 
-### **Recente mijlpalen & momentum-signalen**
-- **<Datum>**: <event, bv. afronding M&A / data-platform-aankondiging / nieuwe CDO aangesteld>
-- **<Datum>**: <event>
-
-### **Aankomende deadlines / strategische horizon**
-- **Kort termijn (Q2-Q3 2026)**: <data/AI-projecten in uitrol of planning>
-- **Midden termijn (2026-2027)**: <strategische data-doelen>
+**Aankomende horizon**: <1-2 zinnen over korte/midden-termijn data-projecten en momentum-signalen>
 
 ---
 
 ## **Sales-fit & Gap-flag**
 
-### **Sales-fit**
-**Concrete openingshoek (data/analytics/AI):** *"<formuleer een vraag of statement die direct verbindt met een data-signaal uit Need/Timeline en een specifieke Creates-dienst (modernisatie / governance / BI / AI)>"*
+**Sales-fit**: *"<concrete data/analytics/AI-openingshoek die een data-signaal uit Need/Timeline koppelt aan een Creates-dienst — modernisatie / governance / BI / AI>"*
 
-### **Gap-flag**
-**Creates kan ${company} NIET dekken op:** *<benoem 1 specifiek data/AI/analytics-onderwerp waar Creates' portfolio leeg is, of een non-data-domein dat ${company}'s kerncompetentie is — eerlijk en concreet>*
+**Gap-flag**: *<1 specifiek data/AI/analytics-onderwerp waar Creates leeg is, of non-data-domein dat ${company}'s kerncompetentie is — eerlijk>*
 
 REGELS:
 - Bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
