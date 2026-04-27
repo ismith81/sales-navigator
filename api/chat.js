@@ -746,9 +746,12 @@ export default async function handler(req, res) {
   };
 
   // ─── Provider-dispatch ──────────────────────────────────────────────
-  // POC: schakel naar Mistral wanneer `LLM_PROVIDER=mistral`. Default = Gemini.
-  // search_web blijft op Gemini grounding (interne sub-call); cv-parse.js is
-  // apart endpoint en blijft ook op Gemini.
+  // POC-modes:
+  //   `gemini` (default)     → Google Gemini chat completions + googleSearch
+  //   `mistral`              → Mistral chat completions + tools-array (function tools)
+  //   `mistral-agent`        → Mistral Conversations API met geconfigureerde
+  //                             agent uit AI Studio (Premium Search built-in,
+  //                             vereist MISTRAL_AGENT_ID env var)
   const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
   if (provider === 'mistral') {
     try {
@@ -758,6 +761,18 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('Mistral chat handler error:', err);
       send({ type: 'error', value: err.message || 'Mistral chat error' });
+      res.end();
+    }
+    return;
+  }
+  if (provider === 'mistral-agent') {
+    try {
+      const { runMistralAgentChat } = await import('./_lib/llm-mistral-agent.js');
+      await runMistralAgentChat({ messages, send });
+      res.end();
+    } catch (err) {
+      console.error('Mistral-agent chat handler error:', err);
+      send({ type: 'error', value: err.message || 'Mistral-agent chat error' });
       res.end();
     }
     return;
