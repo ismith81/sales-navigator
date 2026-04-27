@@ -4807,6 +4807,47 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-msg--assistant .chat-msg-bubble li > p { margin: 0; }
 .chat-msg--assistant .chat-msg-bubble strong { font-weight: 700; }
 .chat-msg--assistant .chat-msg-bubble em { font-style: italic; }
+
+/* Markdown-tabellen in assistant-replies (vooral voor briefing-output
+   met "Beslissers"-tabel etc.). Default ReactMarkdown rendert kale td/th
+   zonder borders — onleesbaar bij meerkoloms-data. Hier maken we 't
+   een nette mini-tabel: zachte borders, header-bg, zebra-rijen, en
+   horizontaal scrollbaar als 't te breed wordt op mobiel. */
+.chat-msg--assistant .chat-msg-bubble table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.65rem 0;
+  font-size: 0.86em;
+  display: block; /* zodat overflow-x werkt op smal scherm */
+  overflow-x: auto;
+  white-space: nowrap; /* voorkomt rij-wrap; tabel scrollt liever */
+}
+/* Tablet/desktop: laat tekst wel wrappen — dan is 't ook leesbaar
+   zonder horizontale scroll bij realistische kolombreedtes. */
+@media (min-width: 720px) {
+  .chat-msg--assistant .chat-msg-bubble table {
+    display: table;
+    white-space: normal;
+  }
+}
+.chat-msg--assistant .chat-msg-bubble thead { background: rgba(49,183,185,0.08); }
+.chat-msg--assistant .chat-msg-bubble th {
+  font-weight: 700;
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1.5px solid rgba(49,183,185,0.35);
+  color: var(--navy);
+  vertical-align: top;
+}
+.chat-msg--assistant .chat-msg-bubble td {
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid rgba(44,60,82,0.08);
+  vertical-align: top;
+}
+.chat-msg--assistant .chat-msg-bubble tbody tr:nth-child(even) {
+  background: rgba(44,60,82,0.02);
+}
+.chat-msg--assistant .chat-msg-bubble tbody tr:last-child td { border-bottom: none; }
 .chat-msg--assistant .chat-msg-bubble code {
   background: rgba(49,183,185,0.10);
   padding: 0.05em 0.35em;
