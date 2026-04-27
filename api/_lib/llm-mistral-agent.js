@@ -50,13 +50,18 @@ ZOEKSTRATEGIE: Doe MINSTENS 3 verschillende Premium Search-aanroepen — één p
    - "${company} omzet jaarverslag 2024 2025"
    - "${company} investeringen overname acquisitie M&A"
 
-2. **Authority via LinkedIn** (CRUCIAAL — vorige briefings misten beslissers door deze stap over te slaan):
-   - Doe gerichte LinkedIn-zoekopdrachten op rol-niveau:
-     - "site:linkedin.com ${company} CDO" of "Chief Data Officer ${company}"
-     - "site:linkedin.com ${company} CIO" of "Chief Information Officer ${company}"
-     - "site:linkedin.com ${company} 'Head of Data'" of "'Director Analytics' ${company}"
-     - "site:linkedin.com ${company} CTO"
-   - Als je een naam vindt, noteer 'm in de tabel met functie + locatie + 1 zin context.
+2. **Authority via meerdere bronnen** (CRUCIAAL — vorige briefings misten beslissers door alleen op LinkedIn te zoeken; LinkedIn is voor crawlers grotendeels gated):
+   - Combineer LinkedIn met andere bronnen — een naam in een persbericht of jaarverslag is even bruikbaar als een LinkedIn-profiel.
+   - Gerichte queries (gebruik er minstens 4):
+     - "${company} CEO 2025 2026" en "${company} bestuursvoorzitter"
+     - "${company} directie management team site:${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.nl" (en .com variant)
+     - "${company} CDO" / "${company} 'Chief Data Officer'" / "${company} 'Head of Data'"
+     - "${company} CIO 'Chief Information Officer'" / "${company} CTO"
+     - "${company} jaarverslag bestuur" / "${company} corporate governance"
+     - "site:linkedin.com ${company} CDO" (LinkedIn als aanvulling, niet als primaire bron)
+     - "${company} interview keynote" (vaak vermelden journalisten functietitels)
+   - Als een naam in nieuws / persbericht / jaarverslag genoemd wordt — GEBRUIK 'M. Bevestiging via LinkedIn is mooi maar geen vereiste.
+   - Vermeld in de tabel altijd de bron-context als 1 zin (bv. "Genoemd in jaarverslag 2024 als bestuursvoorzitter").
 
 3. **Need & vacatures** — query voorbeelden:
    - "${company} vacature data engineer 2025 2026"
