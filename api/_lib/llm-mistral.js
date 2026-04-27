@@ -117,6 +117,18 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
   const tools = buildMistralTools();
   const conversation = buildMessages(systemInstruction, messages);
 
+  // Diagnostiek (zichtbaar in Vercel function-logs): hoeveel tools, welke
+  // names, hoeveel berichten, model. Helpt bij debug "waarom calt 't model
+  // de tool niet?".
+  console.log('[Mistral] start chat:', {
+    model: MODEL,
+    toolCount: tools.length,
+    toolNames: tools.map(t => t.function?.name),
+    messageCount: conversation.length,
+    systemPromptLength: systemInstruction?.length || 0,
+    lastUserMsg: (messages[messages.length - 1]?.content || '').slice(0, 100),
+  });
+
   // Reset web-source-buffers (search_web tool vult ze, gedeeld met Gemini-pad).
   webSourcesBuffer.clear();
   webQueriesBuffer.clear();
@@ -127,25 +139,38 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
   let safetyLoop = 0;
 
   while (safetyLoop++ < MAX_TOOL_LOOPS) {
-    const stream = await client.chat.stream({
-      model: MODEL,
-      messages: conversation,
-      tools,
-      toolChoice: 'auto',
-      maxTokens: MAX_OUTPUT_TOKENS,
-      temperature: TEMPERATURE,
-    });
+    let stream;
+    try {
+      stream = await client.chat.stream({
+        model: MODEL,
+        messages: conversation,
+        tools,
+        toolChoice: 'auto',
+        maxTokens: MAX_OUTPUT_TOKENS,
+        temperature: TEMPERATURE,
+      });
+    } catch (apiErr) {
+      console.error('[Mistral] chat.stream API-fout:', apiErr?.message || apiErr, apiErr?.body || '');
+      send({ type: 'error', value: `Mistral API-fout: ${apiErr?.message || 'onbekend'}` });
+      return;
+    }
 
     // Accumulate text + tool-call-deltas in deze ronde.
     const toolCallAcc = {};
     let assistantContent = '';
     let sawText = false;
     let finishReason = null;
+    let chunkCount = 0;
 
     for await (const event of stream) {
+      chunkCount++;
       // Mistral SDK v2.x: event.data.choices[0].delta heeft de inhoud.
       const choice = event?.data?.choices?.[0];
-      if (!choice) continue;
+      if (!choice) {
+        // Eerste paar onbekende events loggen om SDK-shape te kunnen verifiëren.
+        if (chunkCount <= 3) console.log('[Mistral] onbekend event-shape (chunk', chunkCount, '):', JSON.stringify(event).slice(0, 300));
+        continue;
+      }
       const delta = choice.delta || {};
 
       if (delta.content) {
@@ -166,6 +191,17 @@ export async function runMistralChat({ messages, systemInstruction, send }) {
     if (finishReason) lastFinishReason = finishReason;
 
     const toolCalls = Object.values(toolCallAcc).filter(t => t.function.name);
+
+    // Diagnostiek per loop-iteratie: hoeveel chunks ontvangen, wat heeft model
+    // gedaan? Helpt bij debug "STOP zonder tools" — zien we überhaupt iets?
+    console.log('[Mistral] loop', safetyLoop, 'klaar:', {
+      chunkCount,
+      sawText,
+      assistantContentLength: assistantContent.length,
+      toolCallCount: toolCalls.length,
+      toolCallNames: toolCalls.map(t => t.function.name),
+      finishReason,
+    });
 
     // Geen tool-calls meer? → loop is klaar, model heeft (eventueel) tekst gestreamd.
     if (toolCalls.length === 0) break;
