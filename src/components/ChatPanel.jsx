@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { authedFetch } from '../lib/auth';
 import {
   listSessions,
@@ -691,7 +692,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
                 <div className="chat-msg-bubble">
                   {hasContent ? (
                     isAssistant
-                      ? <ReactMarkdown components={makeMarkdownComponents(i, (m.groundingSources || []).length)}>{processCitations(m.content)}</ReactMarkdown>
+                      ? <ReactMarkdown remarkPlugins={[remarkGfm]} components={makeMarkdownComponents(i, (m.groundingSources || []).length)}>{processCitations(m.content)}</ReactMarkdown>
                       : m.content
                   ) : (isStreaming ? <span className="chat-typing">●●●</span> : null)}
                 </div>
