@@ -44,7 +44,24 @@ Creates is een Nederlandse data & analytics consultancy. We leveren:
 
 Sales gebruikt deze briefing om een gesprek over **data, analytics, BI of AI** te starten — NIET om algemene sector-trends te bespreken.
 
-ZOEK MET PREMIUM SEARCH naar info over ${company}: jaarverslagen, persberichten, M&A, vacatures, LinkedIn-profielen.
+ZOEKSTRATEGIE: Doe MINSTENS 3 verschillende Premium Search-aanroepen — één per onderwerp — zodat je per BANT-categorie genoeg materiaal hebt:
+
+1. **Financieel & M&A** — query voorbeelden:
+   - "${company} omzet jaarverslag 2024 2025"
+   - "${company} investeringen overname acquisitie M&A"
+
+2. **Authority via LinkedIn** (CRUCIAAL — vorige briefings misten beslissers door deze stap over te slaan):
+   - Doe gerichte LinkedIn-zoekopdrachten op rol-niveau:
+     - "site:linkedin.com ${company} CDO" of "Chief Data Officer ${company}"
+     - "site:linkedin.com ${company} CIO" of "Chief Information Officer ${company}"
+     - "site:linkedin.com ${company} 'Head of Data'" of "'Director Analytics' ${company}"
+     - "site:linkedin.com ${company} CTO"
+   - Als je een naam vindt, noteer 'm in de tabel met functie + locatie + 1 zin context.
+
+3. **Need & vacatures** — query voorbeelden:
+   - "${company} vacature data engineer 2025 2026"
+   - "${company} vacature 'BI developer' OR 'data analyst' OR 'AI'"
+   - "${company} digitaliseringsstrategie data-platform AI roadmap"
 
 LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown):
 
