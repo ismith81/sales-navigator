@@ -215,6 +215,7 @@ OUTPUT-DISCIPLINE (kritiek voor sales-bruikbaarheid):
 - Doe alle nodige Premium Search-calls in één keer en lever dan 't rapport. Als je denkt nog meer info nodig te hebben, doe gewoon de extra search en lever 't rapport, geen toestemmingsvraag.
 - Vermeld GEEN interne tool-namen ("web_search", "premium_search", etc.) in je output. Citaties verschijnen automatisch via tool_reference; jij hoeft daar in tekst niets over te zeggen.
 - Plaats GEEN source-index-lijsten of nummering ("[0,1,2,3,...]" of "bron 47" of "[1][2][3]") in je antwoord. Citaties zijn automatisch — geen handmatige referenties nodig.
+- Schrijf GEEN aparte "Bronnen:"-sectie, "Sources:"-blok, "Referenties:"-lijst of bullet-list met links onderaan je antwoord. De UI toont een eigen bronnen-blok onder je bericht — daar staan de Premium Search-resultaten al klikbaar in. Eindig dus met de inhoudelijke laatste bullet, niet met een bronnenlijst.
 - GEEN preamble ("ik ga nu beginnen", "hier is de analyse", "op basis van mijn onderzoek...") — start direct met de markdown-header "# **BANT-analyse: ${company}**".`;
 }
 
@@ -337,7 +338,7 @@ export async function runMistralAgentChat({ messages, send }) {
     // Wrap de conversation met een korte cue zodat de agent BANT-format
     // behoudt op follow-up vragen (concurrenten, deeper-dive op één
     // BANT-letter, etc.). Voorkomt format-drift over multi-turn.
-    inputs = `[CONTEXT: De vorige reactie was een BANT-analyse over een prospect. Behoud de BANT-structuur (Budget / Authority / Need / Timeline) ook in je antwoord op deze vervolg-vraag — strucureer je response onder de relevante BANT-letter(s) of expand de bestaande BANT-output. Antwoord altijd in het Nederlands.]\n\n${buildInputs(messages)}`;
+    inputs = `[CONTEXT: De vorige reactie was een BANT-analyse over een prospect. Behoud de BANT-structuur (Budget / Authority / Need / Timeline) ook in je antwoord op deze vervolg-vraag — strucureer je response onder de relevante BANT-letter(s) of expand de bestaande BANT-output. Antwoord altijd in het Nederlands. Schrijf GEEN aparte "Bronnen:"-sectie, "Sources:"-blok, "Referenties:"-lijst of bullet-list met links onderaan — de UI toont een eigen bronnen-blok onder je bericht.]\n\n${buildInputs(messages)}`;
     mode = 'bant-followup';
   } else {
     inputs = buildInputs(messages);
@@ -395,6 +396,52 @@ export async function runMistralAgentChat({ messages, send }) {
       .replace(/\s+([.,;:])/g, '$1');
   };
 
+  // Streaming-stripper voor de "Bronnen:"-sectie die het model soms tóch
+  // onderaan z'n antwoord plakt — ondanks de prompt-regel daartegen. De UI
+  // toont al een eigen bronnen-blok (uit tool_reference chunks via de
+  // grounding-event), dus zo'n inline-lijst is dubbel-werk.
+  //
+  // Aanpak: tail-buffer van 80 chars zodat triggers die op een chunk-grens
+  // vallen (bv. "\n**Bron" / "nen:**") alsnog in 1 stuk geanalyseerd worden.
+  // Zodra een trigger matcht: emit alles ervóór, drop alles erna, stop met
+  // verder tekst sturen voor deze response.
+  const SOURCES_SECTION_RE = /(?:^|\n)[ \t]*(?:#{1,4}[ \t]+)?\*{0,2}[ \t]*(?:Bronnen|Sources|Referenties|Bronvermelding)[ \t]*\*{0,2}[ \t]*:?[ \t]*\*{0,2}[ \t]*\n/i;
+  const TAIL_KEEP = 80;
+  let textTail = '';
+  let textStopped = false;
+
+  const streamText = (chunk) => {
+    if (textStopped || !chunk) return;
+    sawText = true;
+    const combined = textTail + chunk;
+    const m = SOURCES_SECTION_RE.exec(combined);
+    if (m) {
+      const cutAt = m.index;
+      const safeChunk = combined.slice(0, cutAt);
+      if (safeChunk.length > 0) {
+        send({ type: 'text', value: stripCitationMarkers(safeChunk) });
+      }
+      textStopped = true;
+      textTail = '';
+      console.log('[Mistral-Agent] Bronnen-sectie gedetecteerd in stream → afgekapt op index', cutAt);
+      return;
+    }
+    if (combined.length > TAIL_KEEP) {
+      const toEmit = combined.slice(0, combined.length - TAIL_KEEP);
+      textTail = combined.slice(combined.length - TAIL_KEEP);
+      send({ type: 'text', value: stripCitationMarkers(toEmit) });
+    } else {
+      textTail = combined;
+    }
+  };
+
+  const flushTextTail = () => {
+    if (!textStopped && textTail) {
+      send({ type: 'text', value: stripCitationMarkers(textTail) });
+      textTail = '';
+    }
+  };
+
   let unknownChunkLogCount = 0;
   // Diagnostiek: tel events per type + chunks per type (binnen
   // message.output.delta) zodat we kunnen zien waarom sources leeg
@@ -412,14 +459,12 @@ export async function runMistralAgentChat({ messages, send }) {
           const c = data.content;
           if (typeof c === 'string') {
             chunkTypeCounts['<string>'] = (chunkTypeCounts['<string>'] || 0) + 1;
-            sawText = true;
-            send({ type: 'text', value: stripCitationMarkers(c) });
+            streamText(c);
           } else if (c && typeof c === 'object') {
             const ctype = c.type || '<no-type>';
             chunkTypeCounts[ctype] = (chunkTypeCounts[ctype] || 0) + 1;
             if (c.type === 'text' && typeof c.text === 'string') {
-              sawText = true;
-              send({ type: 'text', value: stripCitationMarkers(c.text) });
+              streamText(c.text);
             } else if (c.type === 'tool_reference') {
               // Log de eerste 5 tool_reference chunks volledig zodat we
               // hun exacte velden zien (URL? title? andere props?). Helpt
@@ -496,6 +541,11 @@ export async function runMistralAgentChat({ messages, send }) {
       return;
     }
   }
+
+  // Flush de tail-buffer (laatste 80 chars die we vasthielden om een trigger
+  // op chunk-grens te kunnen detecteren). Geen-op als textStopped al getriggerd
+  // werd door een Bronnen-sectie-detectie.
+  flushTextTail();
 
   if (!sawText) {
     send({ type: 'text', value: 'Agent heeft geen antwoord teruggegeven. Probeer een specifiekere vraag.' });
