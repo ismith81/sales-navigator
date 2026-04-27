@@ -74,7 +74,7 @@ FORMAT-EISEN (STRICT — niet afwijken, niet "verbeteren", niet samenvatten):
 - Sectie 2 (Authority) MUST een markdown-tabel zijn met kolommen Functie/Naam/Locatie/Relevantie. NIET bullet-list.
 - Bullets gebruiken \`- **<Key>**: <waarde>\` syntax — sleutel altijd bold.
 - Tussen secties: \`---\` separator.
-- STOP DIRECT na sectie 4 (Timeline). VOEG GEEN extra sections toe ("Mogelijk gemist", "Vervolgvragen voor sales", "Aanbevelingen", reflecties etc.) — die kappen de output af door 't max_tokens-budget te overschrijden. Eindig met de laatste bullet van Aankomende horizon.
+- Na sectie 4 (Timeline) volgt EXACT één afsluitende sectie: \`## **Bronnen**\` met daaronder een markdown-bullet-list van geraadpleegde Premium Search-bronnen — formaat per bullet: \`- [Korte titel of bron-naam](https://volledige-url)\`. Geen aanvullende secties ("Mogelijk gemist", "Vervolgvragen voor sales", "Aanbevelingen", reflecties etc.) — die kappen de output af door 't max_tokens-budget te overschrijden.
 
 OUTPUT-CAPS (om binnen 4096 tokens te passen):
 - Authority-tabel: max 4 rijen (kies de meest relevante data-rollen).
@@ -215,7 +215,7 @@ OUTPUT-DISCIPLINE (kritiek voor sales-bruikbaarheid):
 - Doe alle nodige Premium Search-calls in één keer en lever dan 't rapport. Als je denkt nog meer info nodig te hebben, doe gewoon de extra search en lever 't rapport, geen toestemmingsvraag.
 - Vermeld GEEN interne tool-namen ("web_search", "premium_search", etc.) in je output. Citaties verschijnen automatisch via tool_reference; jij hoeft daar in tekst niets over te zeggen.
 - Plaats GEEN source-index-lijsten of nummering ("[0,1,2,3,...]" of "bron 47" of "[1][2][3]") in je antwoord. Citaties zijn automatisch — geen handmatige referenties nodig.
-- Schrijf GEEN aparte "Bronnen:"-sectie, "Sources:"-blok, "Referenties:"-lijst of bullet-list met links onderaan je antwoord. De UI toont een eigen bronnen-blok onder je bericht — daar staan de Premium Search-resultaten al klikbaar in. Eindig dus met de inhoudelijke laatste bullet, niet met een bronnenlijst.
+- Eindig MET een aparte \`## **Bronnen**\`-sectie als beschreven in FORMAT-EISEN: markdown-bullet-list van \`- [Korte titel](https://volledige-url)\`-paren voor elke geraadpleegde Premium Search-bron. De UI parsed deze sectie server-side en rendert 'm als klikbare bronnen-pill onder je antwoord — schrijf 'm dus expliciet, niet weglaten.
 - GEEN preamble ("ik ga nu beginnen", "hier is de analyse", "op basis van mijn onderzoek...") — start direct met de markdown-header "# **BANT-analyse: ${company}**".`;
 }
 
@@ -460,15 +460,59 @@ export async function runMistralAgentChat({ messages, send }) {
   };
 
   // Aan 't eind van de stream beslissen we wat met de gebufferde Bronnen-
-  // sectie te doen. Als er échte tool_reference-sources binnenkwamen → dropt
-  // (UI rendert eigen blok). Anders → flushen als fallback.
+  // sectie te doen. Twee paden:
+  // 1. Er kwamen al tool_reference-sources binnen via chunks → drop de
+  //    gebufferde sectie (chunks zijn authoritatief).
+  // 2. Geen tool_reference-sources → parse de gebufferde Bronnen-sectie
+  //    naar URL+title-paren en push naar de sources-array. De grounding-
+  //    event-emit aan 't einde van de handler doet de rest, zodat de UI
+  //    altijd dezelfde uitklap-pill krijgt — nooit een inline bullet-list.
+  const parseSourcesFromMarkdown = (text) => {
+    if (!text) return [];
+    const out = [];
+    const seenUris = new Set();
+    // Pattern 1: markdown-link `[Title](url)` — meest gebruikt.
+    const mdLinkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    let m;
+    while ((m = mdLinkRe.exec(text)) !== null) {
+      const title = m[1].trim();
+      const uri = m[2].trim();
+      if (uri && !seenUris.has(uri)) {
+        seenUris.add(uri);
+        out.push({ uri, title: title || uri });
+      }
+    }
+    // Pattern 2: kale URL's die niet al via mdLinkRe gevangen zijn (bv.
+    // "- https://...", of "- Titel — https://..."). Dedupe op uri.
+    const bareUrlRe = /(?:^|[\s\(])(https?:\/\/[^\s)<>]+)/g;
+    while ((m = bareUrlRe.exec(text)) !== null) {
+      const uri = m[1].replace(/[.,;:]+$/, ''); // trailing punctuatie weg
+      if (uri && !seenUris.has(uri)) {
+        seenUris.add(uri);
+        out.push({ uri, title: uri });
+      }
+    }
+    return out;
+  };
+
   const finalizeStrippedSection = () => {
     if (!textStopped || !strippedSection) return;
     if (sources.length > 0) {
-      console.log('[Mistral-Agent] Bronnen-sectie definitief gedropt — chip toont sources (n=' + sources.length + ')');
+      console.log('[Mistral-Agent] Bronnen-sectie definitief gedropt — chunks-sources zijn authoritatief (n=' + sources.length + ')');
+      strippedSection = '';
+      return;
+    }
+    const parsed = parseSourcesFromMarkdown(strippedSection);
+    if (parsed.length > 0) {
+      console.log('[Mistral-Agent] Bronnen-sectie geparsed naar ' + parsed.length + ' URL+title paren — wordt grounding-event');
+      for (const p of parsed) {
+        if (!seenUrls.has(p.uri)) {
+          seenUrls.add(p.uri);
+          sources.push(p);
+        }
+      }
     } else {
-      console.log('[Mistral-Agent] Geen tool_reference-sources — flush gestripte Bronnen-sectie als fallback (' + strippedSection.length + ' chars)');
-      send({ type: 'text', value: stripCitationMarkers(strippedSection) });
+      console.log('[Mistral-Agent] Bronnen-sectie buffered (' + strippedSection.length + ' chars) maar geen URL\'s te extracten — sectie wordt gedropt');
     }
     strippedSection = '';
   };
