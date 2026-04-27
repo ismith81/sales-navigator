@@ -4756,6 +4756,30 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-quickprompt-short { display: none; line-height: 1.3; }
 .chat-welcome-copy-mobile { display: none; }
 
+/* Voorbeeld-hints (niet klikbaar) — vervangen de klikbare quick-prompt-buttons.
+   Visueel: italic, grijze tint, opsomming met subtiele teal border-left. Geeft
+   de gebruiker een format-suggestie zonder een button-CTA. */
+.chat-hint-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.chat-hint-item {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 0.88rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(44,60,82,0.03);
+  border-left: 3px solid rgba(49,183,185,0.4);
+  border-radius: 0 6px 6px 0;
+  line-height: 1.35;
+}
+.chat-hint-item::before { content: '"'; }
+.chat-hint-item::after { content: '"'; }
+
 .chat-msg { display: flex; flex-direction: column; align-items: flex-start; }
 .chat-msg--user { align-items: flex-end; }
 .chat-msg-bubble {
@@ -4777,6 +4801,45 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-msg--assistant .chat-msg-bubble li > p { margin: 0; }
 .chat-msg--assistant .chat-msg-bubble strong { font-weight: 700; }
 .chat-msg--assistant .chat-msg-bubble em { font-style: italic; }
+
+/* Markdown-tabellen in assistant-replies (briefing-output, BANT-rijen, etc.).
+   Default ReactMarkdown rendert kale td/th zonder borders — onleesbaar bij
+   meerkoloms-data. Hier maken we 't een nette mini-tabel: zachte borders,
+   header-bg, zebra-rijen, en horizontaal scrollbaar als 't te breed wordt. */
+.chat-msg--assistant .chat-msg-bubble table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.65rem 0;
+  font-size: 0.86em;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+@media (min-width: 720px) {
+  .chat-msg--assistant .chat-msg-bubble table {
+    display: table;
+    white-space: normal;
+  }
+}
+.chat-msg--assistant .chat-msg-bubble thead { background: rgba(49,183,185,0.08); }
+.chat-msg--assistant .chat-msg-bubble th {
+  font-weight: 700;
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1.5px solid rgba(49,183,185,0.35);
+  color: var(--navy);
+  vertical-align: top;
+}
+.chat-msg--assistant .chat-msg-bubble td {
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid rgba(44,60,82,0.08);
+  vertical-align: top;
+}
+.chat-msg--assistant .chat-msg-bubble tbody tr:nth-child(even) {
+  background: rgba(44,60,82,0.02);
+}
+.chat-msg--assistant .chat-msg-bubble tbody tr:last-child td { border-bottom: none; }
+
 .chat-msg--assistant .chat-msg-bubble code {
   background: rgba(49,183,185,0.10);
   padding: 0.05em 0.35em;
