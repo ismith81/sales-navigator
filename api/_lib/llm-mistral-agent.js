@@ -305,8 +305,14 @@ export async function runMistralAgentChat({ messages, send }) {
   const stripCitationMarkers = (text) => {
     if (!text) return text;
     return text
-      .replace(/\[\[\d+(?:\s*,\s*\d+)*\]\]/g, '') // [[16]] of [[16, 10]]
-      .replace(/\[\d+(?:\s*,\s*\d+)*\](?!\()/g, ''); // [16] of [16, 10] (niet markdown-links [n](url))
+      // [[16]] / [[16, 10]] / [[ 16 , 10 ]]
+      .replace(/\[\[\s*\d+(?:\s*,\s*\d+)*\s*\]\]/g, '')
+      // [16] / [16, 10] (niet markdown-links [n](url))
+      .replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\](?!\()/g, '')
+      // dubbele spaties opruimen die kunnen ontstaan na strippen
+      .replace(/[ \t]{2,}/g, ' ')
+      // restanten van punten/komma's na lege strip ("zin .,") naar simpele "zin."
+      .replace(/\s+([.,;:])/g, '$1');
   };
 
   let unknownChunkLogCount = 0;
@@ -335,6 +341,12 @@ export async function runMistralAgentChat({ messages, send }) {
               sawText = true;
               send({ type: 'text', value: stripCitationMarkers(c.text) });
             } else if (c.type === 'tool_reference') {
+              // Log de eerste 5 tool_reference chunks volledig zodat we
+              // hun exacte velden zien (URL? title? andere props?). Helpt
+              // om te debuggen waarom sources soms leeg zijn.
+              if (sources.length < 5) {
+                console.log('[Mistral-Agent] tool_reference chunk:', JSON.stringify(c));
+              }
               // Versoepeld: niet alle tool_reference chunks hebben een url
               // (sommige hebben alleen title). Liever een title-only source
               // tonen dan helemaal niks. Dedupe op url als die er is, anders
