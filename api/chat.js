@@ -470,11 +470,17 @@ const webSourcesBuffer = new Map(); // uri → title, per-request (reset in hand
 const webQueriesBuffer = new Set();
 
 // ─── prospect_brief — gestructureerd onderzoek over een prospect ─────────
-// Wrapper rond search_web die deterministisch 3 onderzoeks-clusters parallel
-// uitvoert. Dat geeft Nova consistent materiaal voor de 7 vaste briefing-buckets,
-// onafhankelijk van model-creatie. Bronnen komen automatisch in webSourcesBuffer
-// terecht (search_web doet dat zelf), dus de grounding-event aan 't eind bevat
-// alle 3 cluster-bronnen samen.
+// Wrapper die deterministisch 3 onderzoeks-clusters parallel uitvoert. Dat
+// geeft Nova consistent materiaal voor de 7 vaste briefing-buckets,
+// onafhankelijk van model-creatie. Bronnen komen automatisch in
+// webSourcesBuffer terecht zodat de grounding-event aan 't eind alle 3
+// cluster-bronnen bundelt voor de UI.
+//
+// Provider-dispatch: bij LLM_PROVIDER=mistral gebruikt de tool Mistral's
+// Premium Search via beta.conversations.start (web_search_premium tool —
+// inclusief news-provider verification). Default = Gemini grounding via
+// toolSearchWeb. Beide branches retourneren identiek shape, dus de aanroeper
+// (Nova-loop) merkt 't verschil niet.
 async function toolProspectBrief({ company }) {
   const trimmed = (company || '').trim();
   if (!trimmed) return { error: 'company is verplicht.' };
@@ -494,10 +500,35 @@ async function toolProspectBrief({ company }) {
     },
   ];
 
-  const results = await Promise.all(clusters.map(c => toolSearchWeb({ query: c.query })));
+  const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
+  let results;
+  let groundingLabel;
+
+  if (provider === 'mistral') {
+    // Premium Search per cluster. Bronnen worden hier (niet in toolSearchWeb)
+    // in webSourcesBuffer gestopt zodat de UI ze als grounding-event ziet.
+    const { mistralPremiumSearch } = await import('./_lib/mistral-premium-search.js');
+    results = await Promise.all(clusters.map(c => mistralPremiumSearch({ query: c.query })));
+    for (let i = 0; i < clusters.length; i++) {
+      const r = results[i];
+      if (!r || r.error) continue;
+      webQueriesBuffer.add(clusters[i].query);
+      for (const s of (r.sources || [])) {
+        if (!webSourcesBuffer.has(s.uri)) {
+          webSourcesBuffer.set(s.uri, s.title || s.uri);
+        }
+      }
+    }
+    groundingLabel = 'Mistral Premium Search';
+  } else {
+    // Default: Gemini grounding (bronnen vult toolSearchWeb zelf in webSourcesBuffer).
+    results = await Promise.all(clusters.map(c => toolSearchWeb({ query: c.query })));
+    groundingLabel = 'Google Search (via Gemini grounding)';
+  }
 
   return {
     company: trimmed,
+    grounding: groundingLabel,
     clusters: clusters.map((c, i) => ({
       focus: c.focus,
       query: c.query,
