@@ -30,7 +30,7 @@ const QUICK_PROMPT_GROUPS = [
   {
     label: 'Voor het gesprek',
     items: [
-      'Maak een briefing over Bol.com — gebruik het 7-bucket raamwerk',
+      'Maak een briefing over Bol.com',
       'Bereid een CFO-gesprek voor over dataplatform-migratie',
       'Speel de IT-manager van een bank en val me aan op governance',
     ],
