@@ -124,16 +124,6 @@ LEVER HET ANTWOORD IN EXACT DEZE STRUCTUUR (markdown). Houd 't compleet maar zon
 - **Kort termijn (Q2-Q3 2026)**: <data/AI-projecten in uitrol of planning>
 - **Midden termijn (2026-2027)**: <strategische data-doelen>
 
----
-
-## **Sales-fit & Gap-flag**
-
-### **Sales-fit**
-*"<concrete data/analytics/AI-openingshoek die een data-signaal uit Need/Timeline koppelt aan een specifieke Creates-dienst — modernisatie / governance / BI / AI — 1-2 zinnen>"*
-
-### **Gap-flag**
-*<1-2 zinnen: een data/AI/analytics-onderwerp waar Creates' portfolio leeg is, of een non-data-kerncompetentie van ${company} dat Creates niet raakt — eerlijk en concreet>*
-
 REGELS:
 - Bedrijfsnaam exact zoals gegeven: "${company}". Niet auto-corrigeren of fonetisch wijzigen.
 - Sales-fit MOET een data/analytics/AI-haakje hebben. NIET: "hoe ziet u de uitdagingen in uw sector?" of generieke business-advies.
@@ -320,31 +310,45 @@ export async function runMistralAgentChat({ messages, send }) {
   };
 
   let unknownChunkLogCount = 0;
+  // Diagnostiek: tel events per type + chunks per type (binnen
+  // message.output.delta) zodat we kunnen zien waarom sources leeg
+  // blijven. Wordt aan 't eind van de stream gelogd.
+  const eventTypeCounts = {};
+  const chunkTypeCounts = {};
   try {
     for await (const event of stream) {
       const data = event?.data;
       if (!data || !data.type) continue;
+      eventTypeCounts[data.type] = (eventTypeCounts[data.type] || 0) + 1;
 
       switch (data.type) {
         case 'message.output.delta': {
           const c = data.content;
           if (typeof c === 'string') {
+            chunkTypeCounts['<string>'] = (chunkTypeCounts['<string>'] || 0) + 1;
             sawText = true;
             send({ type: 'text', value: stripCitationMarkers(c) });
           } else if (c && typeof c === 'object') {
+            const ctype = c.type || '<no-type>';
+            chunkTypeCounts[ctype] = (chunkTypeCounts[ctype] || 0) + 1;
             if (c.type === 'text' && typeof c.text === 'string') {
               sawText = true;
               send({ type: 'text', value: stripCitationMarkers(c.text) });
-            } else if (c.type === 'tool_reference' && c.url && !seenUrls.has(c.url)) {
-              seenUrls.add(c.url);
-              sources.push({
-                uri: c.url,
-                title: c.title || c.url,
-                description: c.description || null,
-              });
-            } else if (c.type === 'document_url' && c.url && !seenUrls.has(c.url)) {
-              // Premium Search returnt soms ook DocumentURL-chunks ipv
-              // tool_reference (bv. voor PDF-bronnen of officiële documenten).
+            } else if (c.type === 'tool_reference') {
+              // Versoepeld: niet alle tool_reference chunks hebben een url
+              // (sommige hebben alleen title). Liever een title-only source
+              // tonen dan helemaal niks. Dedupe op url als die er is, anders
+              // op title.
+              const dedupeKey = c.url || c.title;
+              if (dedupeKey && !seenUrls.has(dedupeKey)) {
+                seenUrls.add(dedupeKey);
+                sources.push({
+                  uri: c.url || '',
+                  title: c.title || c.url || '(geen titel)',
+                  description: c.description || null,
+                });
+              }
+            } else if ((c.type === 'document_url' || c.type === 'image_url') && c.url && !seenUrls.has(c.url)) {
               seenUrls.add(c.url);
               sources.push({
                 uri: c.url,
@@ -352,11 +356,8 @@ export async function runMistralAgentChat({ messages, send }) {
                 description: null,
               });
             } else if (unknownChunkLogCount < 5) {
-              // Log de eerste 5 onbekende chunk-types zodat we de SDK-shape
-              // kunnen verifiëren (verwacht: text, tool_reference, mogelijk
-              // document_url / image_url / think). Helpt bij debug.
               unknownChunkLogCount++;
-              console.log('[Mistral-Agent] onbekend chunk-type:', c.type, JSON.stringify(c).slice(0, 200));
+              console.log('[Mistral-Agent] onbekend chunk-type:', ctype, JSON.stringify(c).slice(0, 300));
             }
           }
           break;
@@ -382,6 +383,13 @@ export async function runMistralAgentChat({ messages, send }) {
         case 'response.done': {
           // Stream eindigt verderop; deze event is informatief (usage etc.).
           console.log('[Mistral-Agent] response.done — sawText:', sawText, 'sources:', sources.length);
+          console.log('[Mistral-Agent] event-counts:', eventTypeCounts);
+          console.log('[Mistral-Agent] chunk-counts (binnen message.output.delta):', chunkTypeCounts);
+          if (sources.length > 0) {
+            console.log('[Mistral-Agent] sources sample:',
+              sources.slice(0, 3).map(s => ({ title: s.title, uri: s.uri ? s.uri.slice(0, 60) : '(no-url)' }))
+            );
+          }
           break;
         }
         // response.started, agent_handoff_*, function.call → niet relevant voor onze use-case
