@@ -5247,27 +5247,15 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-layout {
   display: flex;
   align-items: stretch;
-  /* Bottom-anchored layout via position: fixed. Top haakt aan
-     var(--topbar-height) (live gemeten in Navigator.jsx), bottom haakt aan
-     viewport-bottom. Zo reikt de layout altijd tot beneden, ook als de
-     topbar-meting iets afwijkt — voorheen liet `height: calc(100dvh - var)`
-     soms een gap onderaan zien wanneer de var iets te groot was. */
-  position: fixed;
-  top: var(--topbar-height, 165px);
-  bottom: 0;
-  /* Gecentreerd binnen .app's max-width (1200px) zodat brede monitors
-     niet ineens full-bleed chat krijgen — match met de Gids-route. */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1200px;
-  margin: 0;
+  /* margin-top -1.5rem cancelt de topbar-spacer's margin-bottom zodat
+     chat-layout exact onder de topbar plakt en page-height = 100dvh blijft
+     (geen scrollbar, input-row volledig zichtbaar). */
+  margin: -1.5rem -1.5rem -4rem;
+  /* Live-gemeten topbar zodat search-row openen niet overlapt. */
+  height: calc(100dvh - var(--topbar-height, 165px));
   background: #fff;
   border-top: 1px solid var(--border);
   overflow: hidden;
-  /* z-index onder de topbar (z=100) zodat de topbar er altijd over plakt
-     bij subpixel-overlap. */
-  z-index: 50;
 }
 /* Wanneer .chat-layout direct het panel wrapt moet 't panel niet zelf
    nog eens negatieve margins toepassen — anders krijg je dubbele bleed. */
@@ -6051,18 +6039,17 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 @media (max-width: 640px) {
   .chat-quickgroups { grid-template-columns: 1fr; }
   .chat-panel--inline {
-    /* Inside chat-layout (fixed) — panel doesn't need eigen margin/height,
-       die wordt door chat-layout afgedwongen. Margins en height-calc waren
-       voorheen nodig toen chat-layout in flow stond; nu fixed. */
-    margin: 0;
-    height: auto;
+    /* Mobile: .app-padding is 1.25rem 1rem 3rem. Spacer margin-bottom is
+       1rem op mobiel, dus margin-top -1rem cancelt 'm zodat page-height
+       exact 100dvh blijft. */
+    margin: -1rem -1rem -3rem;
+    /* Live-gemeten topbar (incl. subnav + eventueel open search-row). */
+    height: calc(100dvh - var(--topbar-height, 150px));
   }
-  /* Chat-layout op mobiel: erft fixed-positioning van desktop. Alleen
-     mobile-fallback voor topbar-height in calc (150px ipv 165px), maar
-     omdat we top: var() gebruiken en de fallback alleen bij first-paint
-     telt, geen aparte mobile-override nodig. */
+  /* Chat-layout op mobiel: alleen het panel zichtbaar; sidebar wordt overlay. */
   .chat-layout {
-    top: var(--topbar-height, 150px);
+    margin: -1rem -1rem -3rem;
+    height: calc(100dvh - var(--topbar-height, 150px));
   }
   .chat-layout .chat-panel--inline {
     height: 100%;
