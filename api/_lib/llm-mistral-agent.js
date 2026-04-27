@@ -74,6 +74,15 @@ FORMAT-EISEN (STRICT — niet afwijken, niet "verbeteren", niet samenvatten):
 - Sectie 2 (Authority) MUST een markdown-tabel zijn met kolommen Functie/Naam/Locatie/Relevantie. NIET bullet-list.
 - Bullets gebruiken \`- **<Key>**: <waarde>\` syntax — sleutel altijd bold.
 - Tussen secties: \`---\` separator.
+- STOP DIRECT na sectie 4 (Timeline). VOEG GEEN extra sections toe ("Mogelijk gemist", "Vervolgvragen voor sales", "Aanbevelingen", reflecties etc.) — die kappen de output af door 't max_tokens-budget te overschrijden. Eindig met de laatste bullet van Aankomende horizon.
+
+OUTPUT-CAPS (om binnen 4096 tokens te passen):
+- Authority-tabel: max 4 rijen (kies de meest relevante data-rollen).
+- Inzicht onder Authority: max 2 bullets.
+- Strategische data/AI-prioriteiten: max 3 bullets.
+- Open data/analytics/AI-vacatures: max 4 bullets.
+- Recente mijlpalen: max 3 bullets.
+- Sub-section bullet-lengtes: 1 zin per bullet, geen multi-paragraph uitweidingen.
 
 VOORBEELD (referentie-output voor een fictief bedrijf "TestCorp" — kopieer dit format exact, vul met echte data over ${company}):
 
