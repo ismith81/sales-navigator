@@ -5252,9 +5252,16 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   display: flex;
   align-items: stretch;
   /* margin-top -1.5rem cancelt de topbar-spacer's margin-bottom zodat
-     chat-layout exact onder de topbar plakt en page-height = 100dvh blijft
-     (geen scrollbar, input-row volledig zichtbaar). */
-  margin: -1.5rem -1.5rem -4rem;
+     chat-layout exact onder de topbar plakt en page-height = 100dvh blijft. */
+  margin-top: -1.5rem;
+  margin-bottom: -4rem;
+  /* Full-bleed naar viewport-edges (Claude.ai-stijl): scrollbar zit dan flush
+     rechts in de viewport, niet binnen .app's 1200px max-width. De calc geeft
+     de negatieve offset van .app's content-area-edge naar viewport-edge.
+     Body overflow-x: hidden vangt evt. overflow op. Content (chat-column)
+     blijft via z'n eigen max-width 1000px gecentreerd leesbaar. */
+  margin-left: calc((100% - 100vw) / 2);
+  margin-right: calc((100% - 100vw) / 2);
   /* Live-gemeten topbar zodat search-row openen niet overlapt. */
   height: calc(100dvh - var(--topbar-height, 165px));
   background: #fff;
