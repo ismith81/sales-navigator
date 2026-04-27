@@ -797,18 +797,16 @@ export default async function handler(req, res) {
       // ook in de Gemini-history maar zo voorkomen we dat we de geschiedenis
       // opnieuw moeten ophalen.
       const lastUserMsg = (messages[messages.length - 1]?.content || '').trim();
-      try {
-        const nudge = toolsRanThisRequest
-          ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
-          : `De gebruiker zei: "${lastUserMsg}". Op basis van de conversatie-context hierboven: roep DIRECT de meest passende tool aan om deze input te verwerken. Een korte verduidelijking ("Bol.com", "velthoven", "Niels van Velthoven", "retail") na jouw eigen "welke?"- of clarificatie-vraag = ALTIJD tool-call met die input — niet opnieuw vragen, niet bevestigen, niet alleen tekst geven. Specifiek: vroeg jij in een vorige turn welk teamlid bedoeld werd? → roep \`get_team_member({name: "${lastUserMsg}"})\` aan. Vroeg je welk bedrijf? → roep \`prospect_brief({company: "${lastUserMsg}"})\` aan. Begin je response met de tool-call.`;
-        const result = await chat.sendMessageStream(nudge);
-        // Tweede tool-loop: na de nudge mag het model alsnog tools aanroepen
-        // (scenario b: model deed niks de eerste keer, gaat nu pas prospect_brief
-        // doen). Beperk tot 3 rondes om budget te bewaren.
-        let nudgeLoop = 0;
-        let nextNudgeInput = result;
-        while (nudgeLoop++ < 3) {
-          const stream = nudgeLoop === 1 ? result : await chat.sendMessageStream(nextNudgeInput);
+
+      // Helper: mini-tool-loop op een sendMessageStream-result. Max 3 rondes
+      // zodat 't model alsnog een tool kan aanroepen na een retry. Returnt
+      // niets — het updatet `totalSawText`/`lastFinishReason`/`toolsRanThisRequest`
+      // in de buitenste scope (closure).
+      const runMiniLoop = async (firstResult) => {
+        let loopCount = 0;
+        let nextInput = firstResult;
+        while (loopCount++ < 3) {
+          const stream = loopCount === 1 ? firstResult : await chat.sendMessageStream(nextInput);
           const calls = [];
           for await (const chunk of stream.stream) {
             const fc = chunk.functionCalls?.() || [];
@@ -824,20 +822,53 @@ export default async function handler(req, res) {
           if (calls.length === 0) break;
           send({ type: 'tool', value: calls.map(c => c.name) });
           toolsRanThisRequest = true;
-          nextNudgeInput = await Promise.all(
+          nextInput = await Promise.all(
             calls.map(async (c) => ({
               functionResponse: { name: c.name, response: { result: await runTool(c.name, c.args) } },
             }))
           );
         }
+      };
+
+      // Detecteer korte verduidelijking ("Bol.com", "velthoven", "retail")
+      // versus een volledige vraag. De zware tool-call-nudge werkt voor 't
+      // eerste, maar verstikt Gemini bij een volledige vraag na een lange
+      // briefing (chat-history al groot, zware nudge maakt 't erger →
+      // Gemini geeft STOP zonder tekst). Daar past een lichte nudge beter.
+      const isShortClarification = lastUserMsg.length < 30
+        && !/[?]|\bhoe\b|\bwat\b|\bwaarom\b|\bwie\b|\bwanneer\b|\bwelke\b|\bkan\b|\bzou\b/i.test(lastUserMsg);
+
+      try {
+        const nudge = toolsRanThisRequest
+          ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
+          : isShortClarification
+            ? `De gebruiker zei: "${lastUserMsg}". Op basis van de conversatie-context hierboven: roep DIRECT de meest passende tool aan om deze input te verwerken. Een korte verduidelijking ("Bol.com", "velthoven", "Niels van Velthoven", "retail") na jouw eigen "welke?"- of clarificatie-vraag = ALTIJD tool-call met die input — niet opnieuw vragen, niet bevestigen, niet alleen tekst geven. Specifiek: vroeg jij in een vorige turn welk teamlid bedoeld werd? → roep \`get_team_member({name: "${lastUserMsg}"})\` aan. Vroeg je welk bedrijf? → roep \`prospect_brief({company: "${lastUserMsg}"})\` aan. Begin je response met de tool-call.`
+            : `Beantwoord de vraag van de gebruiker hierboven. Gebruik \`search_web\` als je publieke info nodig hebt over een bedrijf, persoon of evenement. Begin direct met het antwoord — geen meta-opmerkingen.`;
+        await runMiniLoop(await chat.sendMessageStream(nudge));
       } catch (nudgeErr) {
         console.warn('Retry-nudge mislukt:', nudgeErr?.message || nudgeErr);
       }
+
+      // Als de nudge ook geen tekst opleverde: één raw resend van de originele
+      // user-message als laatste poging. Dit is wat de gebruiker handmatig
+      // doet als 'ie de melding ziet — soms heeft Gemini een schone retry
+      // nodig zonder nudge-context-pollution. Lost de meeste "eerste keer
+      // STOP, tweede keer werkt"-gevallen op.
+      if (!totalSawText && lastUserMsg) {
+        console.warn('Retry-nudge zonder tekst — raw resend van user-message als finale poging');
+        try {
+          await runMiniLoop(await chat.sendMessageStream(lastUserMsg));
+        } catch (retryErr) {
+          console.warn('Raw resend mislukt:', retryErr?.message || retryErr);
+        }
+      }
     }
 
-    // Fallback: tool-loop (én eventuele nudge) heeft geen tekst opgeleverd.
+    // Fallback: tool-loop (én nudge én raw-retry) hebben geen tekst opgeleverd.
     // Geef de gebruiker een leesbare melding i.p.v. een leeg bericht. Bericht
-    // is context-aware: niet beweren dat tools liepen als dat niet zo is.
+    // is context-aware: niet beweren dat tools liepen als dat niet zo is, en
+    // niet zelf-verwijtend formuleren ("explicieter") want vaak ligt 't bij
+    // Gemini's inconsistentie, niet bij de vraagstelling.
     if (!totalSawText) {
       console.warn('Chat loop ended without text. finishReason:', lastFinishReason, 'loops:', safetyLoop, 'toolsRan:', toolsRanThisRequest);
       const hint = lastFinishReason === 'MAX_TOKENS'
@@ -845,8 +876,8 @@ export default async function handler(req, res) {
         : lastFinishReason === 'SAFETY'
           ? 'Het model heeft z\'n antwoord ingetrokken op basis van safety-filters.'
           : toolsRanThisRequest
-            ? `Ik heb mijn tools kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Kun je de vraag iets specifieker stellen of opsplitsen? (debug: finishReason=${lastFinishReason || 'onbekend'})`
-            : `Ik kon geen actie ondernemen op deze vraag — herhaal hem alsjeblieft iets explicieter. (debug: finishReason=${lastFinishReason || 'onbekend'})`;
+            ? `Ik heb mijn tools kunnen raadplegen maar kwam niet tot een samenhangend antwoord. Stuur je vraag gerust nog een keer — of splits hem op. (debug: finishReason=${lastFinishReason || 'onbekend'})`
+            : `Sorry, korte hapering bij Gemini — stuur je vraag gewoon nog een keer. (debug: finishReason=${lastFinishReason || 'onbekend'})`;
       send({ type: 'text', value: hint });
     }
 
