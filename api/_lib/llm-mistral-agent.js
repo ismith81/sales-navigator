@@ -381,6 +381,15 @@ export async function runMistralAgentChat({ messages, send }) {
       // De agent's eigen Instructions-veld in AI Studio is leidend; per-
       // request prompt-engineering doen we via de inputs-string.
       store: false,
+      // Voor briefings: forceer Premium Search (anders niet-deterministisch
+      // — soms hallucineerde Mistral een briefing zonder web-research).
+      // 'required' = MOET een tool aanroepen; in onze agent is Premium Search
+      // de enige beschikbare tool, dus dat wordt het ook. Voor bant-followup
+      // en free-form blijft 't default ('auto') — daar is 't model's eigen
+      // beslissing prima ("wie was hun CFO?" hoeft geen 11 web-zoekopdrachten).
+      ...(mode === 'fresh-briefing' && {
+        completionArgs: { toolChoice: 'required' },
+      }),
     });
   } catch (apiErr) {
     console.error('[Mistral-Agent] startStream API-fout:', apiErr?.message || apiErr, apiErr?.body || '');
