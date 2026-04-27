@@ -334,24 +334,20 @@ export async function runMistralAgentChat({ messages, send }) {
 
   // Bouw de inputs-string in 1 van 3 modi:
   //   1. Briefing-intent gedetecteerd → fresh BANT-template met bedrijfsnaam
-  //   2. Geen briefing-intent maar vorige turn was BANT → multi-turn
-  //      conversation + BANT-context-cue (zodat follow-ups in BANT blijven)
+  //   2. Geen briefing-intent maar vorige turn was BANT → plain conversation
+  //      (cue weggehaald — sturing komt uit AI Studio Instructions)
   //   3. Anders → gewone multi-turn conversation
+  // Modi 2 en 3 sturen dezelfde inputs; 'mode'-label blijft alleen voor
+  // diagnostiek in logs.
   const inBantContext = !briefingCompany && wasInBantContext(messages);
   let inputs;
   let mode;
   if (briefingCompany) {
     inputs = buildBriefingPrompt(briefingCompany);
     mode = 'fresh-briefing';
-  } else if (inBantContext) {
-    // Wrap de conversation met een korte cue zodat de agent BANT-format
-    // behoudt op follow-up vragen (concurrenten, deeper-dive op één
-    // BANT-letter, etc.). Voorkomt format-drift over multi-turn.
-    inputs = `[CONTEXT: De vorige reactie was een BANT-analyse over een prospect. Behoud de BANT-structuur (Budget / Authority / Need / Timeline) ook in je antwoord op deze vervolg-vraag — strucureer je response onder de relevante BANT-letter(s) of expand de bestaande BANT-output. Antwoord altijd in het Nederlands. Schrijf GEEN aparte "Bronnen:"-sectie, "Sources:"-blok, "Referenties:"-lijst of bullet-list met links onderaan — de UI toont een eigen bronnen-blok onder je bericht.]\n\n${buildInputs(messages)}`;
-    mode = 'bant-followup';
   } else {
     inputs = buildInputs(messages);
-    mode = 'free-form';
+    mode = inBantContext ? 'bant-followup' : 'free-form';
   }
 
   console.log('[Mistral-Agent] start:', {
