@@ -23,50 +23,57 @@
 
 import { Mistral } from '@mistralai/mistralai';
 
-// Compacte instructions voor de Mistral-agent. Wordt per-request meegestuurd
-// via `instructions`-veld en overschrijft de Instructions-tekst in AI Studio.
-// Bevat alleen het briefing-format + NL-eis — geen tool-call-regels (de
-// agent kan onze custom tools toch niet uitvoeren) en geen marketing-blok
-// (om tokens te sparen).
-const AGENT_INSTRUCTIONS = `Je bent Nova, sales-assistent voor Creates (een Nederlandse data & analytics consultancy).
+// Briefing-template: wanneer de user-message een briefing-vraag is over
+// een bedrijf, vervangen we die door deze gerichte prompt. De agent's
+// basis-instructies (in AI Studio Instructions-veld) gelden altijd; deze
+// per-request prompt geeft de specifieke BANT-focus mee.
+//
+// We kunnen GEEN `instructions`-veld doorgeven aan startStream() wanneer
+// 'agentId' is ingesteld — Mistral API geeft dan 400. Daarom prompt-
+// engineering via de user-message i.p.v. system-instructions.
+function buildBriefingPrompt(company) {
+  return `Maak een diepgaande BANT-analyse voor ${company}.
+Gebruik de premium_search-tool om actuele financiële gegevens, nieuws, vacatures en LinkedIn-profielen op te halen.
 
-REGELS:
-- Antwoord ALTIJD in het Nederlands. Geen Engelse fallback bij ambiguïteit; vraag in 't Nederlands om verduidelijking als nodig.
-- Bondig, zakelijk, geen marketingpraat. Korte zinnen, concrete cijfers waar mogelijk.
-- Gebruik Premium Search om actuele info op te halen (jaarverslagen, persberichten, vacatures, M&A, LinkedIn).
-- Verzin nooit cijfers/namen/feiten. Mis je publieke info voor een onderdeel: schrijf expliciet "geen publieke info gevonden".
-- Citaties komen automatisch in de tool_reference-output — geen handmatige [n]-markers nodig.
+Focus op:
+- **Budget**: recente investeringen, omzetcijfers, M&A.
+- **Authority**: beslissers (CTO, CEO, CDO, Head of Data) — namen + functies, indien publiek bekend.
+- **Need**: vacatures, productaankondigingen, strategische uitspraken.
+- **Timeline**: deadlines, projectplanningen, recent nieuws-momentum.
 
-VOOR PROSPECT-BRIEFINGS (als de gebruiker om briefing/research/voorbereiding over een bedrijf vraagt):
-Lever een compact BANT-rapport in deze structuur (markdown):
+Antwoord in het Nederlands, in markdown. Sluit af met:
+- **Sales-fit** (1 regel): voorgestelde openingshoek voor een Creates-gesprek.
+- **Gap-flag** (1 regel): waar Creates' portfolio (data & analytics consultancy) dit bedrijf NIET kan dekken — eerlijk benoemen.`;
+}
 
-## <Bedrijfsnaam>
-<1 zin over wat het bedrijf doet — sector + kerntaak>
-
-**Budget** — recente investeringen, omzet, M&A
-- 2–3 bullets met cijfers (omzet, financieringsrondes, overnames). Bron-haakjes door tool_reference.
-
-**Authority** — beslissers
-- Namen + functies van CDO / CTO / CEO / Head of Data (indien publiek bekend)
-- Vacatures die wijzen op een nieuwe rol of besluit-mandaat
-
-**Need** — wat zoekt het bedrijf
-- Strategische uitspraken (jaarverslag, keynotes), productaankondigingen
-- Vacatures als signaal voor concrete projecten/skills die ze missen
-
-**Timeline** — wanneer beweegt 't
-- Deadlines, projectplanningen, recent persbericht-momentum
-- Concreet: wanneer is dit "warm"?
-
----
-**Sales-fit** (1 regel) — voorgestelde openingshoek voor het Creates-gesprek.
-
-**Gap-flag** (1 regel) — waar Creates' portfolio dit bedrijf niet kan dekken. Eerlijk benoemen, geen verkooppraatje.
-
-MULTI-TURN:
-Hieronder staat de hele conversatie tot nu toe. Lees 'm zodat je context behoudt:
-- Als jij eerder vroeg "welk bedrijf?" en de gebruiker antwoordt nu met een naam → behandel dat direct als de invoer voor de eerder gevraagde briefing. Niet opnieuw vragen.
-- Antwoord nooit met een verduidelijkings-vraag in een andere taal dan Nederlands.`;
+// Detecteer briefing-intent in de laatste user-message. Match op
+// "briefing over X", "voorbereiding op X", "research over X", "BANT voor X",
+// etc. Returnt de bedrijfsnaam of null.
+function detectBriefingIntent(text) {
+  if (!text) return null;
+  const patterns = [
+    /briefing\s+(?:over|voor|op)\s+(.+?)(?:[.?!]|$)/i,
+    /voorbereiding\s+(?:over|voor|op)\s+(.+?)(?:[.?!]|$)/i,
+    /research\s+(?:over|voor|naar)\s+(.+?)(?:[.?!]|$)/i,
+    /BANT[-\s]+(?:analyse\s+)?(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
+    /analyse\s+(?:voor|over|van)\s+(.+?)(?:[.?!]|$)/i,
+    /vertel\s+(?:me\s+)?(?:iets\s+)?over\s+(?:het\s+bedrijf\s+)?(.+?)(?:[.?!]|$)/i,
+  ];
+  for (const re of patterns) {
+    const m = re.exec(text);
+    if (m && m[1]) {
+      const company = m[1].trim()
+        .replace(/^(het bedrijf|bedrijf|de organisatie)\s+/i, '')
+        .replace(/\s+(en gebruik|met behulp).*$/i, '')
+        .trim();
+      // Skip placeholders zoals "[bedrijfsnaam]" die nog niet vervangen zijn.
+      if (/^\[.*\]$/.test(company)) return null;
+      if (company.length < 2 || company.length > 80) return null;
+      return company;
+    }
+  }
+  return null;
+}
 
 // Bouw de inputs-string die we naar de agent sturen. We includen de hele
 // chat-history als rol-geprefixed conversatie zodat de agent context heeft
@@ -98,15 +105,41 @@ export async function runMistralAgentChat({ messages, send }) {
   }
 
   const client = new Mistral({ apiKey });
-  // Multi-turn context: send hele chat-history als rol-geprefixed string.
-  // Daarmee weet de agent dat een korte vervolg-input ("Joulz") hoort bij
-  // een eerdere briefing-vraag — voorkomt language-fallback en herhaal-
-  // vragen. Zelfde patroon als ons "hervat na verduidelijking" bij Gemini.
-  const inputs = buildInputs(messages);
+
+  // Briefing-intent detectie: als de laatste user-msg een briefing-vraag is
+  // (of een verduidelijking met alleen een bedrijfsnaam na een eerder
+  // briefing-verzoek), vervangen we die met een gerichte BANT-prompt.
+  // Resultaat: agent krijgt een duidelijke focus zonder dat we 't via
+  // `instructions` hoeven door te geven (API verbiedt dat bij agentId).
+  const lastUser = [...messages].reverse().find(m => m.role !== 'assistant');
+  const lastUserText = (lastUser?.content || '').toString();
+  let briefingCompany = detectBriefingIntent(lastUserText);
+
+  // Als de laatste user-msg een korte naam is en de turn ervoor een
+  // assistant-vraag om "welk bedrijf?", behandelen we 't als follow-up
+  // op een eerder briefing-verzoek. We pakken de companynaam uit de
+  // korte user-input en sturen een fresh BANT-prompt.
+  if (!briefingCompany && messages.length >= 2) {
+    const prevAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+    const prevAssistantText = (prevAssistant?.content || '').toString().toLowerCase();
+    const askedForCompany = /welk(\s+\w+)?\s+bedrijf|bedrijfsnaam|over welk/.test(prevAssistantText);
+    if (askedForCompany && lastUserText && lastUserText.trim().length < 80 && lastUserText.trim().length >= 2) {
+      const candidate = lastUserText.trim().replace(/^[^\w]+|[^\w\s.&-]+$/g, '');
+      if (candidate.length >= 2) briefingCompany = candidate;
+    }
+  }
+
+  // Bouw de inputs-string. Bij een briefing-intent: vervang de prompt door
+  // ons template. Anders: stuur volledige chat-history als rol-geprefixed
+  // string voor multi-turn context.
+  const inputs = briefingCompany
+    ? buildBriefingPrompt(briefingCompany)
+    : buildInputs(messages);
 
   console.log('[Mistral-Agent] start:', {
     agentId,
     messageCount: messages.length,
+    briefingCompany: briefingCompany || '(geen briefing-intent gedetecteerd)',
     inputsLength: inputs.length,
     inputsPreview: inputs.slice(0, 200),
   });
@@ -123,10 +156,10 @@ export async function runMistralAgentChat({ messages, send }) {
     stream = await client.beta.conversations.startStream({
       agentId,
       inputs,
-      // Override agent's eigen instructions in AI Studio met onze briefing-
-      // gerichte regels. Geeft 7-bucket-format + NL-eis + multi-turn-besef
-      // zonder dat je in AI Studio iets hoeft te configureren.
-      instructions: AGENT_INSTRUCTIONS,
+      // GEEN `instructions`-veld: Mistral API geeft 400 zodra agentId is
+      // ingesteld ("Conversation with an 'agent' can't contain instructions").
+      // De agent's eigen Instructions-veld in AI Studio is leidend; per-
+      // request prompt-engineering doen we via de inputs-string.
       store: false,
     });
   } catch (apiErr) {
