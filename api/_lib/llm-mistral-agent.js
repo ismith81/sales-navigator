@@ -308,6 +308,18 @@ export async function runMistralAgentChat({ messages, send }) {
     return;
   }
 
+  // Strip de internal source-index-markers ([[16]], [3], etc.) die 't model
+  // soms toch in de text-output stopt ondanks onze prompt-regel daartegen.
+  // Onze sources-blok onderaan komt uit tool_reference chunks, niet uit
+  // deze inline-nummers — dus de [N]-markers zijn alleen ruis.
+  const stripCitationMarkers = (text) => {
+    if (!text) return text;
+    return text
+      .replace(/\[\[\d+(?:\s*,\s*\d+)*\]\]/g, '') // [[16]] of [[16, 10]]
+      .replace(/\[\d+(?:\s*,\s*\d+)*\](?!\()/g, ''); // [16] of [16, 10] (niet markdown-links [n](url))
+  };
+
+  let unknownChunkLogCount = 0;
   try {
     for await (const event of stream) {
       const data = event?.data;
@@ -318,11 +330,11 @@ export async function runMistralAgentChat({ messages, send }) {
           const c = data.content;
           if (typeof c === 'string') {
             sawText = true;
-            send({ type: 'text', value: c });
+            send({ type: 'text', value: stripCitationMarkers(c) });
           } else if (c && typeof c === 'object') {
             if (c.type === 'text' && typeof c.text === 'string') {
               sawText = true;
-              send({ type: 'text', value: c.text });
+              send({ type: 'text', value: stripCitationMarkers(c.text) });
             } else if (c.type === 'tool_reference' && c.url && !seenUrls.has(c.url)) {
               seenUrls.add(c.url);
               sources.push({
@@ -330,8 +342,22 @@ export async function runMistralAgentChat({ messages, send }) {
                 title: c.title || c.url,
                 description: c.description || null,
               });
+            } else if (c.type === 'document_url' && c.url && !seenUrls.has(c.url)) {
+              // Premium Search returnt soms ook DocumentURL-chunks ipv
+              // tool_reference (bv. voor PDF-bronnen of officiële documenten).
+              seenUrls.add(c.url);
+              sources.push({
+                uri: c.url,
+                title: c.title || c.documentName || c.url,
+                description: null,
+              });
+            } else if (unknownChunkLogCount < 5) {
+              // Log de eerste 5 onbekende chunk-types zodat we de SDK-shape
+              // kunnen verifiëren (verwacht: text, tool_reference, mogelijk
+              // document_url / image_url / think). Helpt bij debug.
+              unknownChunkLogCount++;
+              console.log('[Mistral-Agent] onbekend chunk-type:', c.type, JSON.stringify(c).slice(0, 200));
             }
-            // Andere chunk-types (think, image, document) negeren we voor de POC.
           }
           break;
         }
