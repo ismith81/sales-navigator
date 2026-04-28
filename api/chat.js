@@ -83,11 +83,13 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   - Toon de matches als korte opsomming en vraag welke bedoeld is. Niet zelf raden.
 
   **(c) Team-lid gevonden, geen cases** (\`member: \<obj\>\` + \`cases: []\`):
-  - "\<Naam\> heeft (nog) geen formele case-koppelingen, en geen vermeldingen op CV die match maken met onze case-database." Bied aan om in Beheer → Cases een koppeling toe te voegen, of om met \`get_team_member\` het volledige profiel op te halen voor een bredere blik op skills/projecten buiten de Creates-case-database.
+  - Begin met een korte intro over de consultant (1-2 zinnen) op basis van \`member.summary\` + \`member.kernskills\` + \`member.technologies\` + \`member.role\`/\`member.seniority\` + \`member.availability_status\`. Voorbeeld: "**Mourad Lagsir** (Young Professional · Data Engineer) — \<summary\>. Beschikbaar vanaf 1 mei 2026."
+  - Daarna eerlijk over het case-gat: "Er zijn (nog) geen formele case-koppelingen voor Mourad, en geen vermeldingen op CV die match maken met onze case-database." Bied aan om in Beheer → Cases een koppeling toe te voegen, of om met \`get_team_member\` het volledige profiel + alle project_experience-entries (ook niet-Creates) op te halen.
 
   **(d) Team-lid gevonden + cases gevonden** (\`member: \<obj\>\` + \`cases: [...]\`):
-  - Groepeer per bron-sterkte: eerst de bevestigde (junction), dan op-CV-vermeld (project_experience), dan cv_text-only.
-  - Format suggestie: "**\<Naam\>** heeft op de volgende Creates-cases gewerkt: \n\n**Bevestigd:** • CITO (Lead Data Engineer, Q2-Q4 2024) • AkzoNobel \n**Op CV vermeld (niet bevestigd):** • Bol.com — bied aan om als formele koppeling te registreren."
+  - Begin ALTIJD met een korte intro over de consultant (1-2 zinnen) — gebruik \`member.summary\` als basis, plus \`kernskills\`/\`technologies\` voor positionering. Voorbeeld: "**Ralph van Woudenberg** (Professional · Power BI Specialist) is gespecialiseerd in \<summary\>, met sterke kennis van \<top-3 kernskills\>." Vermeld kort \`availability_status\` als 't relevant is voor sales-context.
+  - Daarna de cases gegroepeerd per bron-sterkte: bevestigd (junction) eerst, dan op-CV-vermeld (project_experience), dan cv_text-only.
+  - Format suggestie: na de intro → "**Bevestigde Creates-cases:** • CITO (Lead Data Engineer, Q2-Q4 2024) • AkzoNobel \n**Op CV vermeld (niet als koppeling geregistreerd):** • Bol.com — wil je dat als formele koppeling registreren?"
   - Verzin nooit rol of periode die niet uit de junction-source komt.
 
 - **Klantgerichte profielpitch**: als de gebruiker vraagt "schrijf een pitch voor <naam>" of "maak een paragraaf voor een offerte over <naam>", roep \`get_team_member({name})\`. Gebruik de \`summary\` als basis + relevante \`project_experience\` + matching skills/technologies bij de specifieke klantvraag (als die genoemd is). Format: 3–4 zinnen, derde persoon, professioneel-zelfverzekerd, geen marketing-jargon. Eindig met één regel waarom 'ie commercieel sterk is voor het beoogde traject. Géén citatie-markers ([n]) — die zijn alleen voor web-bronnen.
@@ -686,12 +688,13 @@ async function toolFindCasesForConsultant({ name, member_id } = {}) {
   const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const lc = (s) => (s || '').toLowerCase();
 
-  // 1. Resolve naar één team-lid
+  // 1. Resolve naar één team-lid (incl. profiel-velden voor de respons-intro)
+  const SELECT_COLS = 'id, name, role, seniority, summary, kernskills, technologies, sectors, certifications, current_client, available_from, project_experience, cv_text';
   let theMember = null;
   if (member_id) {
     const { data, error } = await supabase
       .from('team_members')
-      .select('id, name, role, seniority, project_experience, cv_text')
+      .select(SELECT_COLS)
       .eq('id', member_id)
       .maybeSingle();
     if (error) throw error;
@@ -699,7 +702,7 @@ async function toolFindCasesForConsultant({ name, member_id } = {}) {
   } else {
     const { data: allMembers, error } = await supabase
       .from('team_members')
-      .select('id, name, role, seniority, project_experience, cv_text');
+      .select(SELECT_COLS);
     if (error) throw error;
     const queryNorm = norm(name);
     const matches = (allMembers || []).filter(m => norm(m.name).includes(queryNorm));
@@ -824,12 +827,34 @@ async function toolFindCasesForConsultant({ name, member_id } = {}) {
   };
   const cases = [...byId.values()].sort((a, b) => strength(b) - strength(a));
 
+  // Beschikbaarheids-status afleiden zodat Nova in de respons-intro de
+  // bucket kan benoemen (zelfde logica als toolFindTeamMembers).
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const hasClient = !!(theMember.current_client && theMember.current_client.trim());
+  let availabilityStatus;
+  if (!hasClient) {
+    availabilityStatus = 'beschikbaar_nu';
+  } else if (theMember.available_from) {
+    const d = new Date(theMember.available_from); d.setHours(0, 0, 0, 0);
+    availabilityStatus = (d <= today) ? 'beschikbaar_nu' : `vrij_vanaf_${theMember.available_from}`;
+  } else {
+    availabilityStatus = 'bezet_einddatum_onbekend';
+  }
+
   return {
     member: {
       id: theMember.id,
       name: theMember.name,
       role: theMember.role,
       seniority: theMember.seniority,
+      summary: theMember.summary || '',
+      kernskills: theMember.kernskills || [],
+      technologies: theMember.technologies || [],
+      sectors: theMember.sectors || [],
+      certifications: theMember.certifications || [],
+      current_client: theMember.current_client,
+      available_from: theMember.available_from,
+      availability_status: availabilityStatus,
     },
     cases,
     counts: {
@@ -1034,7 +1059,7 @@ const tools = [
       },
       {
         name: 'find_cases_for_consultant',
-        description: 'Zoek welke Creates-cases een specifieke consultant heeft gedaan — multi-source met provenance. Bidirectionele tegenhanger van find_consultants_on_case. Combineert (a) bevestigde koppelingen uit case_team_members (junction), (b) cases waarvan de naam matcht met een project_experience-entry op het CV, (c) cases waarvan de naam in cv_text voorkomt. Per case zit een `match_sources`-array met source=junction|project_experience|cv_text. GEBRUIK dit bij vragen als "welke cases heeft <X> gedaan?", "wat staat er aan klantenwerk op zijn CV?", "is X betrokken geweest bij Creates-projecten?", "welke referenties heeft <X>?". Resultaat is gesorteerd: bevestigde junction-matches eerst, dan CV-vermeldingen, dan cv_text-hits.',
+        description: 'Zoek welke Creates-cases een specifieke consultant heeft gedaan — multi-source met provenance. Bidirectionele tegenhanger van find_consultants_on_case. Combineert (a) bevestigde koppelingen uit case_team_members (junction), (b) cases waarvan de naam matcht met een project_experience-entry op het CV, (c) cases waarvan de naam in cv_text voorkomt. Per case zit een `match_sources`-array met source=junction|project_experience|cv_text. GEBRUIK dit bij vragen als "welke cases heeft <X> gedaan?", "wat staat er aan klantenwerk op zijn CV?", "is X betrokken geweest bij Creates-projecten?", "welke referenties heeft <X>?". Resultaat is gesorteerd: bevestigde junction-matches eerst, dan CV-vermeldingen, dan cv_text-hits. Het member-object bevat OOK profielcontext (summary, kernskills, technologies, sectors, certifications, current_client, availability_status) zodat de respons niet alleen een caselijst is maar ook positionering ("X is een Senior Power BI-specialist met ervaring in retail; hier zijn de cases waar hij aan werkte:").',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
