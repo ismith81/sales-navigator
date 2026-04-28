@@ -72,6 +72,24 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   - Bij een cv_text-only-match: bied proactief aan om de junction-koppeling te registreren ("Steve wordt genoemd in zijn CV — wil je dat als koppeling registreren?").
   - Verzin nooit een rol of periode als die niet uit de junction komt. Bij CV-bronnen: alleen project_name/project_role gebruiken als die in match_sources staan.
 
+- **Welke cases heeft deze consultant gedaan? (multi-source met provenance)**: spiegel-tool van find_consultants_on_case. Roep \`find_cases_for_consultant({name})\` bij vragen over de Creates-cases die op het CV van een consultant staan. Zelfde provenance-regels (junction = bevestigd, project_experience = op CV vermeld, cv_text = losse vermelding) — behandel ze NIET als gelijkwaardig.
+
+  Format-aanwijzingen — afhankelijk van de tool-respons:
+
+  **(a) Geen team-lid gevonden** (\`member: null\` + \`available_members\` aanwezig):
+  - "Geen consultant met die naam in ons team. We hebben \<N\> profielen — bedoelde je een van: \<eerste 3-5 namen\>?" Dump de lijst niet helemaal als 'ie lang is.
+
+  **(b) Meerdere team-leden match de naam** (\`member: null\` + \`matches\` aanwezig):
+  - Toon de matches als korte opsomming en vraag welke bedoeld is. Niet zelf raden.
+
+  **(c) Team-lid gevonden, geen cases** (\`member: \<obj\>\` + \`cases: []\`):
+  - "\<Naam\> heeft (nog) geen formele case-koppelingen, en geen vermeldingen op CV die match maken met onze case-database." Bied aan om in Beheer → Cases een koppeling toe te voegen, of om met \`get_team_member\` het volledige profiel op te halen voor een bredere blik op skills/projecten buiten de Creates-case-database.
+
+  **(d) Team-lid gevonden + cases gevonden** (\`member: \<obj\>\` + \`cases: [...]\`):
+  - Groepeer per bron-sterkte: eerst de bevestigde (junction), dan op-CV-vermeld (project_experience), dan cv_text-only.
+  - Format suggestie: "**\<Naam\>** heeft op de volgende Creates-cases gewerkt: \n\n**Bevestigd:** • CITO (Lead Data Engineer, Q2-Q4 2024) • AkzoNobel \n**Op CV vermeld (niet bevestigd):** • Bol.com — bied aan om als formele koppeling te registreren."
+  - Verzin nooit rol of periode die niet uit de junction-source komt.
+
 - **Klantgerichte profielpitch**: als de gebruiker vraagt "schrijf een pitch voor <naam>" of "maak een paragraaf voor een offerte over <naam>", roep \`get_team_member({name})\`. Gebruik de \`summary\` als basis + relevante \`project_experience\` + matching skills/technologies bij de specifieke klantvraag (als die genoemd is). Format: 3–4 zinnen, derde persoon, professioneel-zelfverzekerd, geen marketing-jargon. Eindig met één regel waarom 'ie commercieel sterk is voor het beoogde traject. Géén citatie-markers ([n]) — die zijn alleen voor web-bronnen.
 
 - **Bij geen-match op een naam (\`get_team_member\` faalt)**: als de tool een fout-payload teruggeeft met \`beschikbare_namen\`, toon die ALTIJD aan de gebruiker — niet vragen "bedoel je iemand anders?" zonder context. Format: "Geen teamlid met die naam gevonden. We hebben momenteel deze N profielen: <komma-gescheiden lijst>. Misschien een andere spelling of een collega die je voor ogen hebt?". Als \`database_aantal\` 0 is, zeg dat ook eerlijk: "De team-database is op dit moment leeg / niet bereikbaar — laat 't even checken bij Beheer → Team."
@@ -147,6 +165,7 @@ WERKWIJZE:
    - "maak een briefing over <bedrijf>" / "vertel me iets over <bedrijf>" / "wie is <bedrijf>?" → \`prospect_brief\` direct.
    - "welke cases passen bij <persona/dienst>?" / "vergelijkbare case voor <X>" → \`search_cases\` direct.
    - "wie werkte op de <X>-case?" / "wie heeft <X> gedaan?" / "welke consultant kan ik over <X> laten praten?" / "wie zat op het <X>-traject?" → \`find_consultants_on_case({case_name: X})\` direct. Onderscheid met \`prospect_brief\`: het woord "case" of "traject" in de vraag, of een bedrijfsnaam die in de Creates-case-database staat (AkzoNobel, CITO, …) → is een vraag over de bestáánde case, niet een verzoek om publieke briefing. Bij twijfel: \`find_consultants_on_case\` eerst — als die "case=null" returnt met available_cases, weet je dat 't een prospect is en kun je daarna \`prospect_brief\` overwegen.
+   - "welke cases heeft <X> gedaan?" / "aan welke projecten heeft <X> gewerkt?" / "wat staat er aan klantenwerk op het CV van <X>?" / "is <X> betrokken geweest bij Creates-projecten?" / "welke referenties heeft <X>?" → \`find_cases_for_consultant({name: X})\` direct. Dit is de bidirectionele tegenhanger van find_consultants_on_case en geeft per case een match_sources-array terug. Onderscheid met \`get_team_member\`: get_team_member geeft het hele profiel (skills/tech/summary); find_cases_for_consultant geeft specifiek de cases-lijst gemerged met de junction-tabel + provenance.
    - **Vuistregel**: bevat de user-message een eigennaam (persoon/bedrijf), een skill-term, een sector of een dienst-term? → eerst tool-call, dan antwoorden. Een algemene begroeting ("Hallo, ik ben Nova...") hoort alleen op een lege of écht onduidelijke openingsvraag — nooit op iets met inhoud. **NOOIT** een vraag met inhoudelijke termen beantwoorden zonder tool-call door te raden of te hallucineren — als je niet weet welk tool past, kies de meest waarschijnlijke; verzin geen antwoord.
 3. **Haal op** met je tools — doe gerust *meerdere* tool-calls na elkaar als dat nodig is. Bijvoorbeeld: eerst \`list_personas\` om de juiste persona te vinden, dan \`search_cases\` met \`persona\` als filter (zodat je alléén cases krijgt die expliciet aan die rol zijn gekoppeld), dan \`get_topic\` voor de talking points. Verzamel alle bouwstenen vóór je het antwoord schrijft.
    - Let op: \`search_cases\` geeft bij een persona-filter ook \`persona_match_reasons\` terug — gebruik die expliciet in je antwoord ("**CITO** past bij een CFO omdat: [reden uit de data]").
@@ -640,6 +659,175 @@ async function toolFindConsultantsOnCase({ case_id, case_name } = {}) {
   };
 }
 
+// ─── find_cases_for_consultant — multi-source consultant ↔ cases ────────
+// Bidirectionele tegenhanger van find_consultants_on_case. Zelfde drie
+// bronnen, andere richting:
+//   - case_team_members (junction)        : 🟢 expliciete koppeling
+//   - team_members.project_experience     : 🟡 case-naam vermeld op CV
+//   - team_members.cv_text                : 🟠 case-naam in CV-tekst
+// Mergen op case_id; sorteren op sterkste bron.
+async function toolFindCasesForConsultant({ name, member_id } = {}) {
+  if (!name && !member_id) {
+    return { error: 'name of member_id is verplicht.' };
+  }
+  const supabase = getSupabase();
+  const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const lc = (s) => (s || '').toLowerCase();
+
+  // 1. Resolve naar één team-lid
+  let theMember = null;
+  if (member_id) {
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('id, name, role, seniority, project_experience, cv_text')
+      .eq('id', member_id)
+      .maybeSingle();
+    if (error) throw error;
+    theMember = data;
+  } else {
+    const { data: allMembers, error } = await supabase
+      .from('team_members')
+      .select('id, name, role, seniority, project_experience, cv_text');
+    if (error) throw error;
+    const queryNorm = norm(name);
+    const matches = (allMembers || []).filter(m => norm(m.name).includes(queryNorm));
+    if (matches.length === 0) {
+      return {
+        member: null,
+        cases: [],
+        message: `Geen team-lid gevonden voor "${name}".`,
+        available_members: (allMembers || []).map(m => m.name),
+      };
+    }
+    if (matches.length > 1) {
+      return {
+        member: null,
+        cases: [],
+        message: `Meerdere team-leden match "${name}". Welke bedoel je?`,
+        matches: matches.map(m => ({ id: m.id, name: m.name, role: m.role, seniority: m.seniority })),
+      };
+    }
+    theMember = matches[0];
+  }
+  if (!theMember) {
+    return { member: null, cases: [], message: 'Team-lid niet gevonden.' };
+  }
+
+  // 2. Drie queries parallel: alle cases, junction-rijen voor deze consultant.
+  //    cv_text + project_experience zitten al in theMember.
+  const [allCasesRes, junctionRes] = await Promise.all([
+    supabase.from('cases').select('id, name, subtitle, sectors, technologies'),
+    supabase
+      .from('case_team_members')
+      .select('case_id, role_on_case, period_text, cases(id, name, subtitle, sectors, technologies)')
+      .eq('team_member_id', theMember.id),
+  ]);
+  if (allCasesRes.error) throw allCasesRes.error;
+  if (junctionRes.error) throw junctionRes.error;
+
+  const allCases = allCasesRes.data || [];
+  const projectExp = theMember.project_experience || [];
+  const cvTextLc = lc(theMember.cv_text || '');
+
+  // 3. Voor elke case: probeer 'm te matchen op project_experience en cv_text
+  const projectMatchesByCaseId = new Map(); // case_id -> [project entry, ...]
+  const cvTextMatchedCaseIds = new Set();
+  for (const c of allCases) {
+    if (!c.name) continue;
+    const caseNameNorm = norm(c.name);
+    if (!caseNameNorm) continue;
+
+    // project_experience: case-naam moet substring zijn van een project.name
+    // (CV-entries zijn typisch beschrijvend "Refinish+ bij AkzoNobel" en case
+    // is kort "AkzoNobel"). Genormaliseerd zodat spatiëring/punctuatie niks
+    // uitmaakt.
+    const matchedProjects = projectExp.filter(p => p && p.name && norm(p.name).includes(caseNameNorm));
+    if (matchedProjects.length) {
+      projectMatchesByCaseId.set(c.id, matchedProjects);
+    }
+
+    // cv_text: simpele substring (case-insensitive). Zonder normalisatie
+    // omdat we de raw CV-tekst niet willen verbouwen — substring is robuust
+    // genoeg voor unieke klantnamen ("AkzoNobel", "CITO").
+    if (cvTextLc.includes(lc(c.name))) {
+      cvTextMatchedCaseIds.add(c.id);
+    }
+  }
+
+  // 4. Mergen per case_id + match_sources verzamelen
+  const byId = new Map();
+  const ensure = (caseObj) => {
+    if (!byId.has(caseObj.id)) {
+      byId.set(caseObj.id, {
+        id: caseObj.id,
+        name: caseObj.name,
+        subtitle: caseObj.subtitle || '',
+        sectors: caseObj.sectors || [],
+        technologies: caseObj.technologies || [],
+        match_sources: [],
+      });
+    }
+    return byId.get(caseObj.id);
+  };
+
+  for (const row of junctionRes.data || []) {
+    const c = row.cases;
+    if (!c) continue;
+    ensure(c).match_sources.push({
+      source: 'junction',
+      role_on_case: row.role_on_case || null,
+      period_text: row.period_text || null,
+    });
+  }
+  // Voor projectMatches en cv_text moeten we de case-objecten uit allCases
+  // halen (geen extra query nodig).
+  const caseById = new Map(allCases.map(c => [c.id, c]));
+  for (const [caseId, projects] of projectMatchesByCaseId.entries()) {
+    const c = caseById.get(caseId);
+    if (!c) continue;
+    const entry = ensure(c);
+    for (const p of projects) {
+      entry.match_sources.push({
+        source: 'project_experience',
+        project_name: p.name || null,
+        project_role: p.role || null,
+      });
+    }
+  }
+  for (const caseId of cvTextMatchedCaseIds) {
+    const c = caseById.get(caseId);
+    if (!c) continue;
+    const entry = ensure(c);
+    if (!entry.match_sources.some(s => s.source === 'cv_text')) {
+      entry.match_sources.push({ source: 'cv_text' });
+    }
+  }
+
+  // 5. Sorteren op sterkste bron
+  const strength = (e) => {
+    const s = e.match_sources.map(x => x.source);
+    if (s.includes('junction')) return 3;
+    if (s.includes('project_experience')) return 2;
+    return 1;
+  };
+  const cases = [...byId.values()].sort((a, b) => strength(b) - strength(a));
+
+  return {
+    member: {
+      id: theMember.id,
+      name: theMember.name,
+      role: theMember.role,
+      seniority: theMember.seniority,
+    },
+    cases,
+    counts: {
+      total: cases.length,
+      with_junction: cases.filter(c => c.match_sources.some(s => s.source === 'junction')).length,
+      cv_only: cases.filter(c => c.match_sources.every(s => s.source === 'cv_text')).length,
+    },
+  };
+}
+
 // ─── search_web — Google Search grounding als sub-call ───────────────────
 // Gemini 2.5 Flash staat `googleSearch` en functionDeclarations NIET tegelijk toe
 // in één request (400 "Built-in tools and Function Calling cannot be combined").
@@ -832,6 +1020,17 @@ const tools = [
           },
         },
       },
+      {
+        name: 'find_cases_for_consultant',
+        description: 'Zoek welke Creates-cases een specifieke consultant heeft gedaan — multi-source met provenance. Bidirectionele tegenhanger van find_consultants_on_case. Combineert (a) bevestigde koppelingen uit case_team_members (junction), (b) cases waarvan de naam matcht met een project_experience-entry op het CV, (c) cases waarvan de naam in cv_text voorkomt. Per case zit een `match_sources`-array met source=junction|project_experience|cv_text. GEBRUIK dit bij vragen als "welke cases heeft <X> gedaan?", "wat staat er aan klantenwerk op zijn CV?", "is X betrokken geweest bij Creates-projecten?", "welke referenties heeft <X>?". Resultaat is gesorteerd: bevestigde junction-matches eerst, dan CV-vermeldingen, dan cv_text-hits.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            name: { type: SchemaType.STRING, description: 'Naam van de consultant — fuzzy substring-match op naam (bv. "Niels", "Velthoven", "annelijn"). Bij meerdere matches: ambiguity-respons met matches[].' },
+            member_id: { type: SchemaType.STRING, description: 'Exacte team-member-id (uuid). Heeft voorrang als ook name is meegegeven.' },
+          },
+        },
+      },
     ],
   },
 ];
@@ -846,6 +1045,7 @@ async function runTool(name, args) {
     if (name === 'find_team_members') return await toolFindTeamMembers(args || {});
     if (name === 'get_team_member') return await toolGetTeamMember(args || {});
     if (name === 'find_consultants_on_case') return await toolFindConsultantsOnCase(args || {});
+    if (name === 'find_cases_for_consultant') return await toolFindCasesForConsultant(args || {});
     return { error: `Onbekende tool: ${name}` };
   } catch (e) {
     return { error: e.message || 'Tool execution failed' };
