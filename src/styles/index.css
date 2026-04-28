@@ -1109,7 +1109,14 @@ body::before {
   max-height: 4rem;
   opacity: 1;
   overflow: hidden;
-  transition: max-height 0.18s ease, opacity 0.14s ease, margin 0.18s ease, padding 0.18s ease;
+  /* Geen layout-property animaties — die forceren full page-reflow per
+     frame, wat op throttled CPUs (laptop op zwakke lader, mobiel batterij-
+     besparing) zichtbare stutter geeft. Alleen opacity transitionert, want
+     dat is een compositor-only property die de GPU afhandelt. Height/margin/
+     padding snappen instant naar 0 in .is-hidden — de opacity-fade verbergt
+     die snap zodat het 't oog niet opvalt. */
+  will-change: opacity;
+  transition: opacity 0.18s ease;
 }
 .topbar-subnav-row.is-hidden {
   min-height: 0;
