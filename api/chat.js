@@ -485,6 +485,12 @@ async function toolFindConsultantsOnCase({ case_id, case_name } = {}) {
   const supabase = getSupabase();
 
   // 1. Resolve naar één case (id heeft voorrang; anders fuzzy op naam)
+  // Normaliseer voor robuuste case-naam-match: lowercase + strip alle
+  // non-alfanumerieke chars. Daarmee matcht "Akzo Nobel" / "akzo-nobel" /
+  // "AkzoNobel" allemaal op DB-naam "AkzoNobel". Substring-search blijft
+  // werken ("akzo" matcht "AkzoNobel" want "akzo" zit in "akzonobel").
+  const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
   let theCase = null;
   if (case_id) {
     const { data, error } = await supabase
@@ -495,24 +501,38 @@ async function toolFindConsultantsOnCase({ case_id, case_name } = {}) {
     if (error) throw error;
     theCase = data;
   } else {
-    const { data, error } = await supabase
+    // Haal alle cases op en match in JS op genormaliseerde naam — bij ~6
+    // cases is dit goedkoop én veel toleranter dan ILIKE met spaties.
+    const { data: allCases, error } = await supabase
       .from('cases')
-      .select('id, name')
-      .ilike('name', `%${case_name}%`)
-      .limit(3);
+      .select('id, name');
     if (error) throw error;
-    if (!data || data.length === 0) {
-      return { error: `Geen case gevonden voor "${case_name}".` };
-    }
-    if (data.length > 1) {
+    const queryNorm = norm(case_name);
+    const matches = (allCases || []).filter(c => norm(c.name).includes(queryNorm));
+
+    if (matches.length === 0) {
+      // Geef ALLE case-namen terug zodat Nova kan suggereren ("bedoel je …?")
+      // ipv een naked error die finishReason=STOP triggert.
       return {
-        error: `Meerdere cases match "${case_name}": ${data.map(c => c.name).join(', ')}. Wees specifieker of gebruik case_id.`,
-        matches: data,
+        case: null,
+        consultants: [],
+        message: `Geen case gevonden voor "${case_name}".`,
+        available_cases: (allCases || []).map(c => c.name),
       };
     }
-    theCase = data[0];
+    if (matches.length > 1) {
+      return {
+        case: null,
+        consultants: [],
+        message: `Meerdere cases match "${case_name}". Welke bedoel je?`,
+        matches: matches.map(c => ({ id: c.id, name: c.name })),
+      };
+    }
+    theCase = matches[0];
   }
-  if (!theCase) return { error: 'Case niet gevonden.' };
+  if (!theCase) {
+    return { case: null, consultants: [], message: 'Case niet gevonden.' };
+  }
 
   const caseName = theCase.name;
   const lc = (s) => (s || '').toLowerCase();
