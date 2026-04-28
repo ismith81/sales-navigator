@@ -1109,7 +1109,13 @@ body::before {
   max-height: 4rem;
   opacity: 1;
   overflow: hidden;
-  transition: max-height 0.18s ease, opacity 0.14s ease, margin 0.18s ease, padding 0.18s ease;
+  /* Eerder transitionde margin en padding óók (4 properties tegelijk) — dat
+     forceerde een full layout-reflow elk frame en gaf scroll-stutter. Nu
+     alleen max-height (size) + opacity (compositor-friendly). Margin en
+     padding snappen instant naar 0 in .is-hidden, maar dat valt niet op
+     omdat de fade dat verbergt. */
+  will-change: max-height, opacity;
+  transition: max-height 0.18s ease, opacity 0.14s ease;
 }
 .topbar-subnav-row.is-hidden {
   min-height: 0;
