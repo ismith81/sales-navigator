@@ -74,7 +74,9 @@ body::before {
   top: 0;
   left: 0;
   width: 100vw;
-  z-index: 100;
+  /* Hoger dan .chat-panel (1000, voor drawer-mode) zodat de topbar ook bij
+     wheel-overscroll of inline-mode altijd dominant blijft. */
+  z-index: 1100;
   padding: 0.8rem var(--topbar-gutter) 0; /* subnav-strook heeft z'n eigen padding */
   background: var(--navy, #2C3C52);
   box-shadow: 0 1px 0 rgba(0,0,0,0.08);
@@ -4678,6 +4680,10 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  /* Voorkomt dat wheel-overscroll bij scroll-end naar body bubbelt — anders
+     "bouncet" de chat-content over de fixed topbar heen. Geldt op desktop
+     én mobiel; mobile-only hieronder is een dubbele dekking. */
+  overscroll-behavior: contain;
   padding: 1rem;
   background: #f6f8fa;
   display: flex;
