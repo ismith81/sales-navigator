@@ -1109,13 +1109,14 @@ body::before {
   max-height: 4rem;
   opacity: 1;
   overflow: hidden;
-  /* Eerder transitionde margin en padding óók (4 properties tegelijk) — dat
-     forceerde een full layout-reflow elk frame en gaf scroll-stutter. Nu
-     alleen max-height (size) + opacity (compositor-friendly). Margin en
-     padding snappen instant naar 0 in .is-hidden, maar dat valt niet op
-     omdat de fade dat verbergt. */
-  will-change: max-height, opacity;
-  transition: max-height 0.18s ease, opacity 0.14s ease;
+  /* Geen layout-property animaties — die forceren full page-reflow per
+     frame, wat op throttled CPUs (laptop op zwakke lader, mobiel batterij-
+     besparing) zichtbare stutter geeft. Alleen opacity transitionert, want
+     dat is een compositor-only property die de GPU afhandelt. Height/margin/
+     padding snappen instant naar 0 in .is-hidden — de opacity-fade verbergt
+     die snap zodat het 't oog niet opvalt. */
+  will-change: opacity;
+  transition: opacity 0.18s ease;
 }
 .topbar-subnav-row.is-hidden {
   min-height: 0;
