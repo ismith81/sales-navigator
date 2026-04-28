@@ -40,7 +40,12 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
+  /* `clip` ipv `hidden` zodat body GEEN scroll-container wordt — anders
+     proberen alle position:sticky-children aan body's viewport te plakken
+     in plaats van aan de window-viewport, en engageren ze nooit (zoals de
+     sticky .ce-topbar in de case-editor). `clip` geeft hetzelfde visuele
+     clip-effect zonder de side-effect. */
+  overflow-x: clip;
 }
 
 body::before {
