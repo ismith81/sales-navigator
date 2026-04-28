@@ -20,6 +20,9 @@ function rowToCase(r) {
     oplossing: r.oplossing || '',
     resultaat: r.resultaat || '',
     keywords: r.keywords || [],
+    technologies: r.technologies || [],
+    expertiseAreas: r.expertise_areas || [],
+    sectors: r.sectors || [],
     businessImpact: r.business_impact || '',
     // mapping.personas + matchReasons.personas zijn nieuw — defaulten naar leeg
     // voor bestaande cases zonder deze key (backwards-compatible met jsonb).
@@ -42,6 +45,13 @@ function rowToCase(r) {
 }
 
 function caseToRow(c) {
+  // sectors is een top-level matching-kolom voor snelle array-overlap-queries
+  // met team_members.sectors. We laten 'm derivén uit mapping.branches zodat
+  // er één bron van waarheid blijft (de bestaande Branches-UI). Zo hoeft de
+  // editor geen tweede plek te hebben om hetzelfde te taggen.
+  const sectors = Array.isArray(c.mapping?.branches) && c.mapping.branches.length
+    ? c.mapping.branches
+    : (c.sectors || []);
   return {
     id: c.id,
     name: c.name,
@@ -53,6 +63,9 @@ function caseToRow(c) {
     oplossing: c.oplossing || '',
     resultaat: c.resultaat || '',
     keywords: c.keywords || [],
+    technologies: c.technologies || [],
+    expertise_areas: c.expertiseAreas || [],
+    sectors,
     business_impact: c.businessImpact || '',
     mapping: c.mapping || {},
     talking_points: c.talkingPoints || [],

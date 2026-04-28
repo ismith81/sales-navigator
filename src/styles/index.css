@@ -6334,6 +6334,76 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .ce-persona-chip-icon svg { display: block; }
 .ce-persona-chip-label { line-height: 1.1; }
 
+/* Consultants-koppeling (CaseEditor → case_team_members junction).
+   Lijst van team-leden als toggle-rijen; geactiveerd → role + period inline. */
+.ce-consultants {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ce-consultant-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.ce-consultant-row.active {
+  border-color: var(--navy);
+  background: #F8FAFC;
+}
+.ce-consultant-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+.ce-consultant-toggle:hover:not(.active) {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #F3F5F8;
+}
+.ce-consultant-toggle.active {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+.ce-consultant-name {
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ce-consultant-meta {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  line-height: 1.2;
+}
+.ce-consultant-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+.ce-consultant-fields input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+@media (max-width: 600px) {
+  .ce-consultant-fields { grid-template-columns: 1fr; }
+}
+
 /* Kleine persona-strip: ronde badges in lijst-views (CaseManager + CasesOverview) */
 .cm-persona-strip,
 .co-persona-strip {
