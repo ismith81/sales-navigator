@@ -88,6 +88,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
   **(d) Team-lid gevonden + cases gevonden** (\`member: \<obj\>\` + \`cases: [...]\`):
   - Begin ALTIJD met een korte intro over de consultant (1-2 zinnen) — gebruik \`member.summary\` als basis, plus \`kernskills\`/\`technologies\` voor positionering. Voorbeeld: "**Ralph van Woudenberg** (Professional · Power BI Specialist) is gespecialiseerd in \<summary\>, met sterke kennis van \<top-3 kernskills\>." Vermeld kort \`availability_status\` als 't relevant is voor sales-context.
+  - **Als \`member.cv_pdf_path\` aanwezig is** (niet null), eindig de intro met een markdown-link naar het CV: \` · [CV bekijken](#cv-pdf-<URL-encoded-path>)\`. URL-encode het pad (bv. \`uuid/12345-cv.pdf\` → \`uuid%2F12345-cv.pdf\`). De UI vangt de \`#cv-pdf-\`-anchor af en opent het PDF in een nieuwe tab via een verse signed URL — geen URL-expiratie-issue. Bij \`cv_pdf_path: null\`: NIET de link schrijven (geen CV beschikbaar).
   - Daarna de cases gegroepeerd per bron-sterkte: bevestigd (junction) eerst, dan op-CV-vermeld (project_experience), dan cv_text-only.
   - Format suggestie: na de intro → "**Bevestigde Creates-cases:** • CITO (Lead Data Engineer, Q2-Q4 2024) • AkzoNobel \n**Op CV vermeld (niet als koppeling geregistreerd):** • Bol.com — wil je dat als formele koppeling registreren?"
   - Verzin nooit rol of periode die niet uit de junction-source komt.
@@ -689,7 +690,7 @@ async function toolFindCasesForConsultant({ name, member_id } = {}) {
   const lc = (s) => (s || '').toLowerCase();
 
   // 1. Resolve naar één team-lid (incl. profiel-velden voor de respons-intro)
-  const SELECT_COLS = 'id, name, role, seniority, summary, kernskills, technologies, sectors, certifications, current_client, available_from, project_experience, cv_text';
+  const SELECT_COLS = 'id, name, role, seniority, summary, kernskills, technologies, sectors, certifications, current_client, available_from, project_experience, cv_text, cv_pdf_path';
   let theMember = null;
   if (member_id) {
     const { data, error } = await supabase
@@ -855,6 +856,7 @@ async function toolFindCasesForConsultant({ name, member_id } = {}) {
       current_client: theMember.current_client,
       available_from: theMember.available_from,
       availability_status: availabilityStatus,
+      cv_pdf_path: theMember.cv_pdf_path || null,
     },
     cases,
     counts: {

@@ -12,6 +12,7 @@ import {
   getActiveSessionId,
   setActiveSessionId,
 } from '../lib/chatHistory';
+import { getCvPdfUrl } from '../lib/teamMembers';
 import ChatSidebar from './ChatSidebar';
 
 const SIDEBAR_COLLAPSE_KEY = 'sn.chatSidebar';
@@ -130,7 +131,8 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
       }
       return <strong>{children}</strong>;
     },
-    // <a> override: #cite-N-href = citatie-marker (superscript), andere href = gewone link.
+    // <a> override: #cite-N = citatie-marker (superscript), #cv-pdf-<path> =
+    // CV-link die on-click een verse signed URL ophaalt, andere href = gewone link.
     a: ({ href, children }) => {
       if (typeof href === 'string' && href.startsWith('#cite-')) {
         const n = parseInt(href.slice(6), 10);
@@ -151,6 +153,35 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
         }
         // Out-of-range: plain text zonder superscript (gewoon "[5]" terug-renderen).
         return <span>[{n}]</span>;
+      }
+      // CV-PDF-link: Nova schrijft `#cv-pdf-<URL-encoded-path>`. We genereren
+      // pas op klik een verse signed URL via getCvPdfUrl — voorkomt expiratie
+      // in chat-history (signed URL's zijn maximaal ~uur geldig).
+      if (typeof href === 'string' && href.startsWith('#cv-pdf-')) {
+        const encodedPath = href.slice('#cv-pdf-'.length);
+        let path;
+        try {
+          path = decodeURIComponent(encodedPath);
+        } catch {
+          path = encodedPath;
+        }
+        const onCvClick = async (e) => {
+          e.preventDefault();
+          const url = await getCvPdfUrl(path, 60);
+          if (url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          } else {
+            console.warn('Kon geen signed URL voor CV genereren:', path);
+          }
+        };
+        return (
+          <a
+            href="#"
+            className="chat-cv-link"
+            onClick={onCvClick}
+            title="CV in nieuwe tab openen"
+          >{children}</a>
+        );
       }
       return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
     },
