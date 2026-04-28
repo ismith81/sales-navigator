@@ -160,6 +160,13 @@ WERKWIJZE:
      - Vroeg jij "welke skills zoek je?" + user zegt "Fabric" → roep \`find_team_members({technology: "Fabric"})\` aan.
 
 2. **Vragen die ALTIJD een tool-call triggeren** (geen "Hallo, waarmee kan ik helpen"-begroeting als response, ook NIET op de allereerste turn van een gesprek als de vraag concreet is):
+
+   **🔴 PRIORITEITSREGEL voor persoonsnamen** — overrult alle andere routing-regels:
+   Een persoonsnaam, voornaam of naamfragment in een vraag ("Ralph", "Niels", "annelijn", "velthoven", "wat doet Daniël?") is in deze app ALTIJD een Creates-team-lid — niet een externe persoon, niet een publiek figuur, niet een prospect-contact. Het Creates-team heeft 12 personen; behandel élke voornaam-vraag als een team-lookup totdat het tegendeel bewezen is.
+   - Eerste tool-call MOET een interne lookup zijn: \`find_cases_for_consultant\` (als de vraag over cases/projecten/klantenwerk gaat), \`get_team_member\` (als de vraag over profiel/skills gaat), of \`find_team_members\` (als de vraag over zoeken/matchen gaat).
+   - **NOOIT \`search_web\` of \`prospect_brief\` als eerste reactie op een persoonsnaam.** Web-search is voor bedrijven en publieke info, niet voor namen die een collega zouden kunnen zijn.
+   - Als de interne lookup geen match geeft (member: null) → DAN pas voorzichtig vragen aan de gebruiker of de naam misschien extern is. Niet zelf naar het web zoeken.
+
    - Een vraag of opmerking met een persoonsnaam erin ("is er een cv van X?", "hebben we een profiel van Y?", "ik zoek het cv van X", "ik wil iets weten over Y", "<naam>'s profiel", "X-cv", typo's daargelaten) → \`get_team_member({name: X})\` direct. Bij meerdere kandidaten doet de tool zelf disambiguation.
    - "wie heeft <skill/sector>-ervaring?" / "welke collega past bij <klantvraag>?" / "ik zoek iemand met <skill>" → \`find_team_members\` direct.
    - "maak een briefing over <bedrijf>" / "vertel me iets over <bedrijf>" / "wie is <bedrijf>?" → \`prospect_brief\` direct.
@@ -198,7 +205,12 @@ REGELS:
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
 - **Doen, niet aankondigen**: als je een tool-call wilt doen, doe 'm in dezelfde turn en presenteer het resultaat. Antwoord nooit met alleen "Jazeker, ik kan…" / "Goed, ik ga zoeken naar…" / "Ja, hier zoek ik naar op…" zonder dat je in die turn ook daadwerkelijk de tool gebruikt en 't resultaat deelt. Dergelijke zinnen voelen als gestotter — de gebruiker ziet liever meteen het antwoord dan een intentie-verklaring.
 - **Eerlijk over fit**: je hoeft niet altijd een Creates-haakje te vinden. Als de prospect iets doet waar Creates géén sterke case of dienst voor heeft, zeg dat. Benoem het als gat of ontwikkelkans ("hier hebben we nog geen referentie voor — interessant om op te bouwen" / "onze portfolio is sterker op X dan op Y, dus voor dit specifieke onderwerp hebben we minder bewijs"). Een sales-assistent die overal een verband forceert is bij ervaren sales én bij senior klantcontacten juist minder geloofwaardig. Liever één échte match benoemen en één gat eerlijk markeren dan drie gezochte haakjes.
-- Web-lookups: gebruik \`search_web\` alleen voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Gebruik het **niet** om cases, talking points, persona's of Creates-interne info op te halen — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`. Als een web-resultaat tegen de interne case-data in gaat, volgt de interne data.
+- Web-lookups: gebruik \`search_web\` ALLEEN voor externe bedrijfsinfo (prospect-briefing, recent nieuws, sector-context). Strikte regels:
+  - **Niet** voor cases, talking points, persona's of Creates-interne info — die komen uit \`search_cases\`, \`get_topic\`, \`list_personas\`.
+  - **Niet** voor team-leden of voornamen — die komen uit \`get_team_member\`, \`find_cases_for_consultant\`, \`find_team_members\`. Zie de PRIORITEITSREGEL hierboven.
+  - **Niet** als "fallback" wanneer een interne tool leeg returnt — vraag de gebruiker om verduidelijking in plaats van naar buiten te zoeken.
+  - Toegestaan: na een briefing voor follow-up over hetzelfde bedrijf, of als de gebruiker letterlijk om publieke info vraagt ("wat staat er online over X?", "recente persberichten van Y", "wie is de CDO van Z?").
+  - Als een web-resultaat tegen de interne data in gaat, volgt de interne data.
 
 TYPISCHE VRAGEN:
 - "Ik heb zo een CFO-gesprek over data-platform migratie — wat vertel ik?"
@@ -1237,7 +1249,7 @@ export default async function handler(req, res) {
           ? 'Schrijf nu het antwoord op basis van de tool-resultaten hierboven. Volg het format uit de systeemprompt (voor briefings: 7-bucket structuur met BANT, Sales-fit en Gap-flag). Begin direct met de inhoud — geen opening-zinnen zoals "Hier is...".'
           : isShortClarification
             ? `De gebruiker zei: "${lastUserMsg}". Op basis van de conversatie-context hierboven: roep DIRECT de meest passende tool aan om deze input te verwerken. Een korte verduidelijking ("Bol.com", "velthoven", "Niels van Velthoven", "retail") na jouw eigen "welke?"- of clarificatie-vraag = ALTIJD tool-call met die input — niet opnieuw vragen, niet bevestigen, niet alleen tekst geven. Specifiek: vroeg jij in een vorige turn welk teamlid bedoeld werd? → roep \`get_team_member({name: "${lastUserMsg}"})\` aan. Vroeg je welk bedrijf? → roep \`prospect_brief({company: "${lastUserMsg}"})\` aan. Begin je response met de tool-call.`
-            : `Beantwoord de vraag van de gebruiker hierboven. Gebruik \`search_web\` als je publieke info nodig hebt over een bedrijf, persoon of evenement. Begin direct met het antwoord — geen meta-opmerkingen.`;
+            : `Beantwoord de vraag van de gebruiker hierboven. Bij twijfel over routing: voor een persoonsnaam altijd EERST een interne tool (\`get_team_member\`, \`find_cases_for_consultant\` of \`find_team_members\`); \`search_web\` is alleen voor publieke bedrijfsinfo. Begin direct met het antwoord — geen meta-opmerkingen.`;
         await runMiniLoop(await chat.sendMessageStream(nudge));
       } catch (nudgeErr) {
         console.warn('Retry-nudge mislukt:', nudgeErr?.message || nudgeErr);
