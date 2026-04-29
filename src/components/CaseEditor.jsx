@@ -114,17 +114,6 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
     });
   };
 
-  // --- Match reasons ---
-  const updateMatchReason = (category, tag, value) => {
-    setForm(prev => ({
-      ...prev,
-      matchReasons: {
-        ...prev.matchReasons,
-        [category]: { ...prev.matchReasons[category], [tag]: value },
-      },
-    }));
-  };
-
   // --- Keywords ---
   const addKeyword = (value) => {
     const kw = value.trim();
@@ -434,48 +423,12 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
         )}
       </div>
 
-      {/* Match reasons */}
-      <div className="ce-section">
-        <h3>Match redenen</h3>
-        <p className="ce-hint">Leg per gekoppelde tag uit waarom deze case relevant is.</p>
-        {['doelen', 'behoeften', 'diensten'].map(category =>
-          form.mapping[category].map(tag => (
-            <div key={`${category}-${tag}`} className="ce-field">
-              <label className="ce-label">{TAG_CLASS[category]} — {tag}</label>
-              <textarea
-                value={form.matchReasons[category]?.[tag] ?? ''}
-                onChange={(e) => updateMatchReason(category, tag, e.target.value)}
-                placeholder={`Waarom past deze case bij "${tag}"?`}
-                rows={2}
-              />
-            </div>
-          ))
-        )}
-        {/* Match-reasons per gekoppelde persona */}
-        {form.mapping.personas.map(pid => {
-          const p = personas[pid];
-          if (!p) return null;
-          return (
-            <div key={`persona-${pid}`} className="ce-field">
-              <label className="ce-label">
-                <span aria-hidden="true" style={{ marginRight: '0.35rem', display: 'inline-flex', verticalAlign: 'middle' }}>
-                  <PersonaIcon name={p.icon} size={14} />
-                </span>
-                persona — {p.label}
-              </label>
-              <textarea
-                value={form.matchReasons.personas?.[pid] ?? ''}
-                onChange={(e) => updateMatchReason('personas', pid, e.target.value)}
-                placeholder={`Waarom resoneert deze case bij een ${p.label}?`}
-                rows={2}
-              />
-            </div>
-          );
-        })}
-        {form.mapping.doelen.length + form.mapping.behoeften.length + form.mapping.diensten.length + form.mapping.personas.length === 0 && (
-          <p className="ce-hint">Selecteer eerst tags of persona's in de mapping hierboven.</p>
-        )}
-      </div>
+      {/* Match-redenen-UI is bewust verwijderd — té veel werk per case voor
+          marginale Nova-verbetering (Nova valt bij lege match_reasons gewoon
+          terug op de mapping-tags zelf). De `match_reasons` jsonb-kolom in
+          de DB blijft staan (en form.matchReasons wordt nog steeds geladen
+          + opgeslagen) zodat bestaande data niet weg wordt geschreven en we
+          'm later weer kunnen ontsluiten als 't toch nodig blijkt. */}
 
       {/* Geen bottom-actions: alle acties (Terug / Exporteer / Opslaan) zitten
           in de sticky topbar, die altijd zichtbaar is dankzij position:sticky. */}
