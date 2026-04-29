@@ -403,3 +403,62 @@ Alles live op `main` na merge van `fix-mobile-and-nova-issues` (commit `cb9a38d`
   - **Niet** noodzakelijk: Google Search grounding (zit alleen bij Gemini) → zou via search_web-tool met Mistral + aparte search-API moeten (Brave Search, Tavily, etc.)
 - **Team-feature Fase C/D/E** (zoals eerder genoteerd): pgvector embeddings, cases ↔ team-leden mapping, sales-enablement output-format.
 - **Cleanup**: `cv-parse.js` `loadBranches()` token-forwarden voor RLS-consistentie (nu: anon-key met DEFAULT_BRANCHES fallback). Niet kritiek maar wel netjes.
+
+## Status (sessie 2026-04-28/29 — Team-match Fase D + UX polish)
+Acht PRs gemerged in main; werktree `sleepy-kare-d50a4b` was de werkbank, hoofd-worktree volgt nu altijd `main`. Develop-branch is opgeruimd (lokaal + remote weg) — solo-dev workflow met directe feature-branches off main. Team-match Fase D is **klaar** met multi-source bidirectionele tools; Fase C (pgvector) bewust niet gedaan met onderbouwing (zie verderop).
+
+### Schema-migratie (gedraaid op productie Supabase)
+`supabase/case-team-mapping.sql` (idempotent, met BEGIN/COMMIT-rollback-veiligheid):
+- Junction-tabel `case_team_members(case_id, team_member_id, role_on_case, period_text, created_at)` + RLS authenticated-all + index op `team_member_id` voor reverse-lookup
+- Nieuwe kolommen op `cases`: `technologies text[]`, `expertise_areas text[]`, `sectors text[]`, `created_at timestamptz` — allemaal met GIN-indexen voor array-overlap matching
+- Migratie `cases.keywords` van `jsonb` → `text[]` (was inconsistent met `team_members.kernskills`/`technologies`); coalesce-strategie voorkomt data-verlies bij niet-array-rijen
+- User heeft junction-data manueel ingevuld via UI
+
+### Nieuwe Nova-tools (Fase D)
+**`find_consultants_on_case({case_id?, case_name?})`** — "Wie werkte op AkzoNobel?". Multi-source merge:
+1. 🟢 `case_team_members` junction → bevestigde koppeling met rol + periode
+2. 🟡 `team_members.project_experience` jsonb → case-naam matcht een project op CV
+3. 🟠 `team_members.cv_text` substring → losse vermelding in CV-tekst
+
+Per consultant een `match_sources`-array; sorteren op sterkste bron. Bij geen-match: `case: null` + `available_cases` (typo-check, geen dump). Bij ambiguity: `matches[]`. Robuuste case-naam-normalisatie (lowercase + strip non-alfanumeriek), zodat "Akzo Nobel" / "akzonobel" / "AKZO-NOBEL" allemaal matchen.
+
+**`find_cases_for_consultant({name?, member_id?})`** — bidirectionele tegenhanger ("Welke cases heeft Ralph gedaan?"). Zelfde drie bronnen, andere richting. Member-object bevat profiel-context (summary, kernskills, technologies, sectors, certifications, current_client, availability_status) zodat respons niet alleen een caselijst is, maar opent met *"Ralph is gespecialiseerd in datamodellering, ..."*. CV-link via `[CV bekijken](#cv-pdf-<URL-encoded-path>)` — ChatPanel `<a>`-override resolved on-click naar verse signed URL (geen TTL-issue in chat-history). System-prompt bij gevallen (a) geen-team-lid / (b) ambiguity / (c) team-lid zonder cases / (d) team-lid met cases — eerlijke gap-handling per case.
+
+### System-prompt routing-priority-regels
+**Voornaam-prioriteitsregel**: persoonsnaam in vraag → ALTIJD eerst interne tool (`get_team_member` / `find_cases_for_consultant` / `find_team_members`). NOOIT `search_web` of `prospect_brief` als eerste reactie op een persoonsnaam. Sloot routing-failure af waarbij Gemini "Ralph" interpreteerde als externe persoon en in plaats daarvan een Caesar-Groep web-search deed.
+
+**Bedrijfsnaam-prioriteitsregel** (parallel): bedrijfsnaam in *"wie werkte op X"*-zin → ALTIJD eerst `find_consultants_on_case`. Tool's `case=null+available_cases` payload vertelt Gemini zelf of 't een prospect is — dan pas `prospect_brief` overwegen. Triggers verbreed naar bare "wie werkte op CITO?" (zonder "case"/"traject"-vereiste).
+
+**search_web-restrictie**: alleen voor publieke bedrijfsinfo. NIET voor team-leden, NIET voor cases, NIET als fallback wanneer interne tool leeg returnt — vraag dan verduidelijking i.p.v. naar buiten zoeken.
+
+### UX-polish (allemaal in main)
+- **Case-editor sticky topbar werkt nu écht**: `body { overflow-x: hidden }` maakte body een scroll-container, brak `position: sticky` in alle children. Fix: `overflow-x: clip` (Chrome 90+/FF 81+/Safari 16+). Sticky werkt nu — `.ce-topbar` plakt onder de globale topbar bij scrollen.
+- **Topbar z-index dominantie**: `.chat-panel` had z-index 1000 voor drawer-mode, topbar was 100 → chat-content bleeft over topbar bij wheel-overscroll. Topbar naar 1100 + `overscroll-behavior: contain` op `.chat-messages` (was alleen mobile, nu globaal).
+- **Subnav scroll-animatie zonder layout-thrashing**: `.topbar-subnav-row` animeerde max-height + margin + padding + opacity tegelijk → page-reflow per frame → stutter op throttled CPUs (laptop op zwakke lader). Nu alleen `opacity` (compositor-only). Height/margin/padding snappen instant — fade verbergt de snap.
+- **Case-editor consolidatie (Fase A)**: Exporteer + Opslaan staan nu in de sticky topbar (geen `.ce-bottom-actions` meer). Annuleren weg (was identiek aan Terug). Subtle bordered knoppen aligned met TeamMemberEditor; save met teal-accent. Mobiel: Exporteer icon-only.
+- **Match-redenen UI verwijderd**: te veel werk per case voor marginale Nova-winst. DB-kolom `match_reasons` blijft (form-state laadt en saved 'm nog) — terugzetten is een 5-min refactor als 't toch nodig blijkt. Nova's prompt-rule blijft staan; werkt voor seed-cases die rich match_reasons hebben, no-op voor lege cases.
+- **Uniforme Beheer-toolbars**: Cases / Team / Persona's hadden inconsistente alignment + spacing (Persona's had 2.5rem extra top-margin). Nu alle drie identiek: links-uitlijnen + 0.85rem bottom-gap. `.pm-container { margin-top: 0 }` (was 2.5rem).
+
+### Design-besluit: pgvector NIET (nu)
+Bewust niet gegaan voor pgvector embeddings, ook met multi-source-aanpak in beeld. Redenen:
+1. **Provenance > recall** voor Nova's "eerlijk over fit"-regel. Multi-source met expliciete `match_sources` (junction/project_experience/cv_text) laat Nova onderscheid maken; vector mengt alles in één similarity-ranking en verliest die laag.
+2. **Schaal**: 12 CV's + 6 cases = ~40k tokens totaal — past in Gemini's context-window. Vector wordt pas écht waardevol bij 50+ CVs of als soft-search dominant wordt.
+3. **Marginale winst**: vector-search verbetert alleen de zwakste bucket (cv_text-substring). Junction en project_experience zijn al exact-match werk.
+
+Triggers voor heroverwegen: meer dan ~50 CV's, CV-tekst wordt primaire bron i.p.v. soft-fallback, vragen worden echt fuzzy ("iemand die goed met klanten omgaat"). Tussenstation als 't komt: `tsvector` (Postgres built-in full-text search met stemming) — geeft ~70% van vector's voordeel zonder embedding-pipeline.
+
+### Open / volgende werk
+- **Tool 3** — `find_team_members` uitbreiden met `match_source` per resultaat. Nu retourneert `find_team_members` bij `skill: "Power BI"` een lijst maar zonder uitleg WAAROM iemand match (kernskills? technologies? cv_text?). Toevoegen: per resultaat een `match_sources`-array parallel aan Tools 1+2. Plus system-prompt format-aanwijzing.
+- **Tool 4** — `search_cases` doorzoeken op nieuwe `cases.technologies[]` kolom + extra `technology`-param. Wordt zinvol naarmate jij "Kennis & vaardigheden" tags op cases gaat invullen.
+- **Tag-UI: technologies/expertise-gebieden vocabulaire** — nu free-text chip-input (geen canonical lijst). User koos Model A: alleen `technologies` (= "Kennis & vaardigheden"-label in UI), geen aparte expertise-gebieden in UI. `expertise_areas` DB-kolom blijft staan voor latere keuze.
+- **Pending PR**: `drop-match-reasons-ui` branch — Match-redenen UI verwijderd; nog niet gemerged op moment van schrijven.
+
+### Sessie-resultaat (PR-overzicht)
+| PR | Onderwerp |
+|---|---|
+| #4 | Cases junction-tabel + Tools 1+2 multi-source matching + CV-link |
+| #5 | Routing-polish (bredere triggers + bedrijfsnaam-priority) + scroll-overlap-fix |
+| #6 | Subnav scroll-animatie zonder layout-thrashing |
+| #7 | Case-editor sticky topbar werkt nu (overflow-x: hidden → clip) |
+| #8 | Case-editor style consistency + uniforme Beheer-toolbars |
+| (open) | Match-redenen UI verwijderd |
