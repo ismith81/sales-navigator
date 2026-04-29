@@ -174,11 +174,13 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
 
   return (
     <div className="ce-panel">
-      {/* Top bar — sticky zodat Terug + Opslaan altijd in beeld blijven */}
+      {/* Top bar — sticky zodat alle acties altijd in beeld blijven. Stijl
+          aligned met TeamMemberEditor (.team-editor-topbar): card-look met
+          subtle border, kleine bordered knoppen i.p.v. chunky btn-primary. */}
       <div className="ce-topbar">
         <button
           type="button"
-          className="btn btn-secondary ce-topbar-btn ce-topbar-back"
+          className="ce-topbar-btn ce-topbar-back"
           onClick={onCancel}
           aria-label="Terug naar overzicht"
         >
@@ -191,15 +193,26 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
             {form.name || caseData.name || 'Nieuwe case'}
           </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary ce-topbar-btn ce-topbar-save"
-          onClick={handleSave}
-          aria-label="Opslaan"
-        >
-          <span aria-hidden="true">✓</span>
-          <span className="ce-topbar-btn-label">Opslaan</span>
-        </button>
+        <div className="ce-topbar-actions">
+          <button
+            type="button"
+            className="ce-topbar-btn ce-topbar-export"
+            onClick={() => exportCaseToDocx({ ...caseData, ...form })}
+            aria-label="Exporteer als .docx"
+          >
+            <span aria-hidden="true">📄</span>
+            <span className="ce-topbar-btn-label">Exporteer .docx</span>
+          </button>
+          <button
+            type="button"
+            className="ce-topbar-btn ce-topbar-save"
+            onClick={handleSave}
+            aria-label="Opslaan"
+          >
+            <span aria-hidden="true">✓</span>
+            <span className="ce-topbar-btn-label">Opslaan</span>
+          </button>
+        </div>
       </div>
 
       {/* Case identity */}
@@ -464,12 +477,8 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
         )}
       </div>
 
-      {/* Bottom save */}
-      <div className="ce-bottom-actions">
-        <button className="btn btn-primary" onClick={handleSave}>✓ Opslaan</button>
-        <button className="btn btn-secondary" onClick={() => exportCaseToDocx({ ...caseData, ...form })}>📄 Exporteer .docx</button>
-        <button className="btn btn-danger" onClick={onCancel}>✕ Annuleren</button>
-      </div>
+      {/* Geen bottom-actions: alle acties (Terug / Exporteer / Opslaan) zitten
+          in de sticky topbar, die altijd zichtbaar is dankzij position:sticky. */}
     </div>
   );
 }
