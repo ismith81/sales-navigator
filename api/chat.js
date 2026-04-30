@@ -48,7 +48,12 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   4. Voor één specifieke naam → \`get_team_member({name})\`.
   5. **Tellen + wegen vóór ranken** (bij ranking-vragen, vóór je je antwoord schrijft):
 
-     Verzamel per kandidaat de signalen waar het criterium voorkomt:
+     **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
+     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`technologies\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`summary\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen.
+     - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
+     - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
+
+     Verzamel per kandidaat de signalen waar het criterium voorkomt (gebruik \`match_strength\` als pre-computed bron):
      - in \`kernskills\` — sterkste signaal, kerncompetentie
      - in \`technologies\`
      - in \`sectors\` (alleen bij sector-vraag)
@@ -387,17 +392,86 @@ function stripHtml(s) {
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Bepaal de primaire zoek-term waar match_strength + excerpts tegen worden
+// berekend. Bij meerdere filters wint de meest-specifieke (keyword is breedst,
+// sector is binair). Geeft null terug als er geen inhoudelijk criterium is —
+// in dat geval slaan we match_strength + excerpts over (alleen availability-
+// filtering bv. heeft geen ranking-relevantie).
+function pickPrimaryCriterion({ keyword, skill, technology, sector } = {}) {
+  return keyword || skill || technology || sector || null;
+}
+
+// Tel hoe vaak `criterion` (case-insensitive substring) voorkomt per profiel-
+// veld. Geeft Nova een pre-computed signaal i.p.v. zelf moeten tellen — vooral
+// nuttig bij ranking-vragen ("wie heeft het meest met X gewerkt").
+function computeMatchStrength(m, criterion) {
+  if (!criterion) return null;
+  const q = criterion.toLowerCase();
+  const re = new RegExp(escapeRegex(q), 'gi');
+  const countInArr = (arr) => (arr || []).filter(x => (x || '').toLowerCase().includes(q)).length;
+  const countInStr = (s) => ((s || '').match(re) || []).length;
+
+  const projects = (m.project_experience || []);
+  const projectHits = projects.filter(p =>
+    [p.name, p.role, p.description].some(s => (s || '').toLowerCase().includes(q))
+  ).length;
+
+  const out = {
+    kernskills: countInArr(m.kernskills),
+    technologies: countInArr(m.technologies),
+    sectors: countInArr(m.sectors),
+    project_experience: projectHits,
+    certifications: countInArr(m.certifications),
+    summary: countInStr(m.summary),
+  };
+  out.total = Object.values(out).reduce((a, b) => a + b, 0);
+  return out;
+}
+
+// Trek max `maxCount` snippets van ±contextChars rond hits in cv_text. Bedoeld
+// als quote-bewijs in Nova's antwoord ("uit z'n CV: '…specialist Power BI op
+// het Caesar-traject…'"). cv_text zelf gaat NIET terug naar de tool-response —
+// alleen deze fragmenten. Privacy/token-budget is bewust afgewogen: intern
+// teamdata, geen klant-PII, en een handvol fragmenten weegt licht.
+function extractCvExcerpts(cvText, criterion, maxCount = 3, contextChars = 200) {
+  if (!cvText || !criterion) return [];
+  const lcText = cvText.toLowerCase();
+  const lcQ = criterion.toLowerCase();
+  const half = Math.floor(contextChars / 2);
+  const excerpts = [];
+  let from = 0;
+  while (excerpts.length < maxCount) {
+    const idx = lcText.indexOf(lcQ, from);
+    if (idx === -1) break;
+    const start = Math.max(0, idx - half);
+    const end = Math.min(cvText.length, idx + criterion.length + half);
+    let snippet = cvText.slice(start, end).replace(/\s+/g, ' ').trim();
+    if (start > 0) snippet = '…' + snippet;
+    if (end < cvText.length) snippet = snippet + '…';
+    excerpts.push(snippet);
+    from = idx + criterion.length;
+  }
+  return excerpts;
+}
+
 // ─── team_members tools ──────────────────────────────────────────────────
 // Zoekt consultants in 't Creates-team. Filter-velden mappen 1-op-1 op de
 // team_members-kolommen. Substring-match (case-insensitive) op skills/tech;
 // exacte match op sector (uit canonical lijst); free-text keyword zoekt
-// breder. cv_text wordt NIET teruggestuurd — privacy + token-budget. Vector-
-// search op cv_text staat op de roadmap (Fase C).
+// breder. Raw cv_text gaat NIET terug — alleen ±200-char excerpts rond hits
+// van het primaire criterium (zie extractCvExcerpts). Vector/semantic search
+// op cv_text staat op de roadmap (Fase C — pgvector).
 async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
   const supabase = getSupabase();
+  // cv_text wordt opgehaald om er ±200-char fragmenten uit te trekken (zie
+  // extractCvExcerpts) — de raw cv_text gaat NIET terug naar de tool-response.
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from, cv_text');
   if (error) throw error;
 
   const lc = (s) => (s || '').toLowerCase();
@@ -450,11 +524,15 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
   // Beperkte payload — top 8, projectervaring afgeknipt op 5 stuks van 200 chars.
   // Inclusief afgeleide availability_status zodat Nova in haar antwoord direct
   // de bucket kan benoemen ("Niels is nu beschikbaar", "Sara komt vrij in juni").
+  // Bij een inhoudelijke zoek-term (keyword/skill/technology/sector): per match
+  // ook match_strength (telling per profielveld) en excerpts (CV-fragmenten met
+  // hits) — geeft Nova pre-computed signalen voor ranking + quote-bewijs.
+  const criterion = pickPrimaryCriterion({ keyword, skill, technology, sector });
   return filtered.slice(0, 8).map(m => {
     const status = isAvailableNow(m)
       ? 'beschikbaar_nu'
       : (m.available_from ? `vrij_vanaf_${m.available_from}` : 'bezet_einddatum_onbekend');
-    return {
+    const result = {
       id: m.id,
       name: m.name,
       role: m.role,
@@ -473,6 +551,12 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
         description: (p.description || '').slice(0, 220),
       })),
     };
+    if (criterion) {
+      result.match_strength = computeMatchStrength(m, criterion);
+      result.excerpts = extractCvExcerpts(m.cv_text, criterion);
+      result.criterion = criterion;
+    }
+    return result;
   });
 }
 
