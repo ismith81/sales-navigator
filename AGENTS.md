@@ -462,3 +462,87 @@ Triggers voor heroverwegen: meer dan ~50 CV's, CV-tekst wordt primaire bron i.p.
 | #7 | Case-editor sticky topbar werkt nu (overflow-x: hidden → clip) |
 | #8 | Case-editor style consistency + uniforme Beheer-toolbars |
 | (open) | Match-redenen UI verwijderd |
+
+## Status (sessie 2026-05-01 — Nova ranking + UI-modals + audit + Fase C pgvector)
+
+Lange sessie — 13 PR's gemerged op main. Twee grote tracks: Nova's team-match-output betrouwbaar maken (#10-#12 + #18-#22) en een audit-cleanup-cyclus (#13-#17), gevolgd door de pgvector-implementatie (#19-#22).
+
+### Nova team-match: prompt + tool-data verrijking
+- **Ranking sub-types BREEDTE/DIEPTE met seniority-weging**: prompt onderscheidt nu *"wie heeft het meest met X gewerkt?"* (project-telling dominant) van *"wie is dé specialist op X?"* (seniority + kernskill + cross-reference cases dominant). Een YP kan op een DIEPTE-vraag NIET de specialist zijn boven een Senior met dezelfde kernskill. CV-bias-waarschuwing toegevoegd (YP-CV's zijn vaak rijker dan Senior-CV's).
+- **`match_strength` in `find_team_members`-response**: pre-computed counts per profiel (alleen `certifications` + `project_experience`; summary/technologies/kernskills/sectors weggelaten als parafrase / inconsistent / binair). Plus `criterion`-veld zodat Nova weet waarop is geteld.
+- **Cross-reference verplicht bij DIEPTE-vragen**: Nova roept `find_cases_for_consultant` voor de top-3 aan vóór ze haar antwoord schrijft. Plus harde terminologie-regel: *"bevestigd op X"* mag alléén na find_cases_for_consultant met `source: junction` — anders *"op CV vermeld"* of *"uit project-historie"*. Voorkomt waarheidsclaim-hallucinatie.
+- **Algemene typografie-conventies in REGELS-sectie**: bullets voor compacte meta, blockquote (`>`) voor letterlijke citaten, witregel tussen kandidaten, `\` · \`` als scheidingsteken. Plus team-match output-format met genummerde lijst (`1. **<Naam>** — Senioriteit · Functietitel`) i.p.v. H3 — zodat de strong-override matchen kan.
+- **CV-excerpts-feature geprobeerd en geschrapt**: zes iteraties (prompt-aanscherping, hard-rules, vooraf-check, bron-verduidelijking, envelope met _warning) leverden geen betrouwbaar gedrag op. Nova bleef non-deterministisch — soms quotes, soms fallback-zin. Geschrapt; helpers (`extractCvExcerpts`, `escapeRegex`) en cv_text-SELECT teruggedraaid (#12). Lessons-learned: format-blokken volgt Gemini sterker dan losse instructies, en sommige features verdienen geen permanent prompt-onderhoud als de baseline-output al goed genoeg is.
+
+### UI-modals voor Nova-output
+- **Klikbare team-lid-namen** in chat-output → opent bestaande `TeamMemberDetail`-modal. Strong-override in ChatPanel matcht nu tegen `caseNames` én `teamMemberNames` (langste-eerst-sortering voor "Niels Laan - van der Drift" ↔ "Niels Laan").
+- **Klikbare case-namen** → opent nieuwe `CaseDetailModal` in chat-context (was: route-switch naar Gids-route met search-query — brak de chat-flow). Modal toont logo, mapping-tags, situatie/doel/oplossing/resultaat als HTML (RichTextEditor-content gerendered via `dangerouslySetInnerHTML` zoals CaseCard's match_reason-pattern).
+- **`.modal-overlay` z-index**: 100 → 1200 (boven topbar 1100 en chat-panel 1000). Eerder symptoom: bij modal-trigger zag de gebruiker alleen "twee grijze balken aan de zijkant" — modal-overlay was wel zichtbaar maar de modal-box zat verstopt achter chat-content.
+- **Chat-input scrollbar**: dunne 6px custom scrollbar (WebKit + Firefox) binnen extra right-padding — voorkomt dat de scrollbar de afgeronde teal focus-border breekt.
+
+### Code-audit + cleanup-cyclus (general-purpose review)
+Senior-review-agent vond ~20 bevindingen; 7 quick wins gemerged in deze sessie:
+- `available_only` → `available_now` mismatch in systeemprompt + AGENTS.md (was bug — filter werd stilletjes genegeerd door schema-mismatch).
+- `available_before` invalid-date validatie: regex YYYY-MM-DD + `isNaN(new Date())`, error-object i.p.v. lege resultaten bij rommel als 'Q3'.
+- `exportCase.js` gebruikte hardcoded `FILTERS`-alias i.p.v. dynamic filters uit Supabase — bij user-rename via Beheer toonde de docx-export nog de oude lijst. Fixed; FILTERS-alias gesloopt; `exportCaseToDocx(caseData, filters?)`.
+- exportCase filename-bug: gebruikte `caseData.id` met voorrang, maar nieuwe (ongesaved) cases hebben placeholder-id `nieuwe-case-${Date.now()}`. Nu `slugify(caseData.name)` als primaire bron.
+- Diacritics-regex naar explicit `̀-ͯ` Unicode escapes (was `[̀-ͯ]` met combining-marks gepasted in source — fragiel als editor/transpiler de range "fixt").
+- Silent CV-PDF cleanup in `teamMembers.js` krijgt `console.warn` zodat weespdf's zichtbaar zijn voor debug.
+- Talking-points/follow-ups op cases volledig opgeruimd: `talking_points`/`follow_ups` DB-kolommen gedropt (`supabase/drop-cases-talking-points.sql`), code uit store.js / parseTemplate.js / ImportCase.jsx / CaseManager.jsx / CaseDetailModal.jsx / cases.json. Conceptueel horen ze bij Onderwerpen, niet bij Cases. Topic-context in Navigator/FilterManager/TopicView blijft ongemoeid.
+
+### Fase C — pgvector semantic search live (#19-#22)
+**Architectuur**:
+- pgvector extension + `embedding vector(768)`-kolom + HNSW cosine-index op `team_members`. RPC `match_team_members(query_embedding, match_count)` voor top-K semantic search.
+- Embeddings via Gemini's `gemini-embedding-001` met `outputDimensionality: 768` (default 3072 dim, gereduceerd om met onze vector(768)-kolom te matchen). Eerdere model-namen `text-embedding-004` en `embedding-001` gaven beide 404 — beide deprecated in 2026.
+- **Embed-document** per profiel: `role + summary + kernskills + technologies + sectors + project descriptions + cv_text` als één leesbare tekst. cv_text als laatste zodat 't bij truncatie als eerste afgeknipt wordt.
+
+**Endpoints**:
+- `/api/embed-team-member` — POST `{memberId}`, embedt 1 lid. Fire-and-forget aangeroepen na elke save in TeamMemberEditor via `triggerEmbedTeamMember`. Tolerant-bij-fail: save blijft staan, profiel verschijnt alleen niet in semantic-search tot een succesvolle re-embed.
+- `/api/embed-team-backfill` — POST `{force?}`. Default: alleen profielen met `embedding=null`. Met `force=true`: herberekent alles. Sequentieel om Gemini's free-tier rate-limit (60 RPM) te respecteren.
+- `/api/list-models?filter=embed` — diagnostic endpoint dat Gemini's ListModels API aanroept. Voor toekomstige model-naam-debugging zonder te raden.
+
+**`find_team_members` uitbreiding**:
+- Nieuwe `semantic_query`-param (string) naast bestaande filters. Bij aanwezigheid: embed query + RPC + merge met structurele filter via union.
+- `match_sources`-array per resultaat: `'structural'` (filter-match), `'semantic'` (vector-similarity), of beide. Bij `'semantic'` ook `score` (cosine, 0-1).
+- Sortering: beide-bronnen > structureel-only > semantisch-only, binnen-rang op semantic-score desc. Top 8 zoals voorheen. Bestaande gedrag onveranderd als geen `semantic_query` is meegegeven.
+
+**UI**:
+- Beheer → Team krijgt collapsed sectie *"🧠 Semantic embeddings (geavanceerd)"* met *Embed ontbrekende profielen* + *Herbouw alle embeddings* knoppen + status-feedback. Sporadische actie — collapsed by default. Eerste backfill na deze sessie: 11/11 succesvol.
+
+**Prompt-update**: nieuwe sub-type "Soft/abstract-vraag" naast match/breedte/diepte — wanneer-uitleg + match_sources-interpretatie zodat Nova bij `['semantic']`-only met score < 0.5 voorzichtig is.
+
+**Welcome-screen-refresh** (#18, #22): kortere intro (`Stel een vraag of kies een starter:` — naam Nova staat al in header). Team-match-groep van 2 → 5 starters, één per hoofd-modus:
+- Wie heeft Power BI? *(skill — structureel)*
+- Wie kan goed met stakeholders omgaan? *(soft — semantic)*
+- Wie is dé specialist op datamodellering? *(DIEPTE-ranking)*
+- Wie is beschikbaar per juli 2026? *(availability + datum-validatie)*
+- Welke cases heeft Niels gedaan? *(bidirectional)*
+
+**Deploy-stappen voor pgvector** (gedraaid in deze sessie):
+1. `supabase/team-embeddings.sql` op productie Supabase → pgvector + kolom + HNSW-index + RPC.
+2. Vercel deploy van #19 → endpoints live.
+3. Backfill via Beheer → Team → 11/11 profielen embedded.
+4. Auto-embed werkt voortaan bij elke save.
+
+### Sessie-resultaat (PR-overzicht, deze sessie)
+| PR | Onderwerp |
+|---|---|
+| #10 | Nova ranking-vragen — multi-pass + tel-instructie + seniority-weging |
+| #11 | match_strength + cv-excerpts in find_team_members + UI-polish + cleanup talking_points |
+| #12 | cv-excerpts geschrapt — niet betrouwbaar te krijgen |
+| #13 | Cleanup: available_only bug-fix + 2 dode-code targets |
+| #14 | exportCase: dynamic filters i.p.v. hardcoded |
+| #15 | exportCase: filename-bug + diacritics-regex stabiel |
+| #16 | available_before invalid-date validatie |
+| #17 | teamMembers: silent CV-PDF cleanup krijgt console.warn |
+| #18 | Welcome-screen: kortere intro + pragmatische starters |
+| #19 | **Fase C: pgvector semantic search als 4e match-source** |
+| #20 | embeddings: text-embedding-004 → embedding-001 (404-fix poging 1) |
+| #21 | embeddings: gemini-embedding-001 + outputDimensionality 768 (404-fix poging 2 — succes) |
+| #22 | Welcome-screen: soft-vraag-starter voor semantic-search demo |
+
+### Bekende beperkingen / vervolgwerk
+- **Audit-backlog die nog open ligt** (vereisen testdekking om veilig op te ruimen): availability-duplicatie tussen `api/chat.js:480-498` (isAvailableNow/isAvailableBefore) en `src/lib/teamMembers.js:65` (getAvailabilityBucket); case-mapping refactor in store.js (5+ velden waarvan onduidelijk welke nog UI-relevant zijn).
+- **Embedding-kwaliteit voor NL**: gemini-embedding-001 is multilingual maar EN-getraind; als sales merkt dat NL-soft-vragen ruizige matches geven, switch naar OpenAI's `text-embedding-3-small` (zie memory-note `project_pgvector_embedding_choice.md`).
+- **`/api/list-models` diagnostic endpoint** mag op termijn weg als we niet meer aan model-namen sleutelen. Niet kritiek.
+- **Mistral POC** blijft op `nova-mistral-poc`-branch geparkeerd — sinds Fase C werkt op Gemini geen reden om de Mistral-route nu te activeren.
