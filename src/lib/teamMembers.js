@@ -166,10 +166,12 @@ export async function updateTeamMember(id, patch) {
 export async function deleteTeamMember(id) {
   if (!id) return false;
   // Eerst de PDF in Storage opruimen (best effort — als 'ie er niet meer is,
-  // gewoon doorgaan met de DB-delete).
+  // gewoon doorgaan met de DB-delete). Faalt de remove? Loggen zodat we het
+  // bij debug zien — anders krijgen we weespdf's in storage zonder spoor.
   const m = await getTeamMember(id);
   if (m?.cv_pdf_path) {
-    await supabase.storage.from(STORAGE_BUCKET).remove([m.cv_pdf_path]).catch(() => {});
+    await supabase.storage.from(STORAGE_BUCKET).remove([m.cv_pdf_path])
+      .catch(err => console.warn(`[teamMembers.deleteTeamMember] CV-PDF cleanup faalde voor ${m.cv_pdf_path}:`, err?.message || err));
   }
   const { error } = await supabase
     .from('team_members')
@@ -267,10 +269,12 @@ export async function uploadCvPdf(memberId, file) {
   }
 
   // Oude PDF van deze member opruimen (best effort) zodat we niet eindeloos
-  // versies opstapelen — Fase A houdt 1 PDF per member.
+  // versies opstapelen — Fase A houdt 1 PDF per member. Failure loggen
+  // zodat weespdf's zichtbaar zijn voor debug.
   const m = await getTeamMember(memberId);
   if (m?.cv_pdf_path && m.cv_pdf_path !== path) {
-    await supabase.storage.from(STORAGE_BUCKET).remove([m.cv_pdf_path]).catch(() => {});
+    await supabase.storage.from(STORAGE_BUCKET).remove([m.cv_pdf_path])
+      .catch(err => console.warn(`[teamMembers.uploadCvPdf] oude CV-PDF cleanup faalde voor ${m.cv_pdf_path}:`, err?.message || err));
   }
 
   return { path };
