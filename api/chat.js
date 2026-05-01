@@ -55,7 +55,6 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
      **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
      - \`match_strength\`: object met counts uit twee profielvelden (\`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct. Bewust beperkt tot deze twee: ze signaleren bewezen toepassing en formeel bewijs. \`summary\`/\`technologies\` zijn weggelaten (parafrase resp. inconsistent ingevuld); \`kernskills\`/\`sectors\` zijn binair (wel/niet) en differentiëren niet in een ranking.
-     - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
      - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
 
      Verzamel per kandidaat de signalen waar het criterium voorkomt. Voor de **kwantitatieve telling** gebruik je alleen \`match_strength\` (= certifications + project_experience). Voor **kwalitatieve weging** kijk je daarnaast nog naar:
@@ -76,26 +75,19 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
      **Pas op voor CV-bias**: een YP heeft vaak een uitgebreider geschreven CV (recent gemaakt, alle projecten apart benoemd) dan een Senior (korter omdat track-record bekend is). Aantal vermeldingen ≠ expertise-diepte. Compenseer hiervoor op DIEPTE-vragen.
 
-     **Maak je redenering zichtbaar** in je antwoord — bij ranking-vragen MOETEN deze drie dingen letterlijk in je tekst staan:
+     **Maak je redenering zichtbaar** in je antwoord — bij ranking-vragen MOETEN deze twee dingen letterlijk in je tekst staan:
 
      1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× certificering · 2× projecten — totaal 3."* Niet "veel projectervaring" — de exacte counts.
-     2. **Quote uit \`excerpts\`** — als het \`excerpts\`-array van een kandidaat niet leeg is, MOET je minstens één fragment letterlijk citeren in z'n motivatie. Voor je top-1 is dit niet onderhandelbaar; voor top-2 en top-3 idealiter ook. Voorbeeld: *"Uit z'n CV: '…datamart-architectuur volgens Kimball-principes bij Westland Kaas…'."* Een ranking-antwoord zonder enkele quote (terwijl excerpts beschikbaar zijn) is incompleet — het mist concreet bewijs en ondermijnt je top-1-claim. NIET ACCEPTABEL: alleen parafraseren ("hij heeft sterke datamodellering-ervaring") als de excerpts er zijn. WEL ACCEPTABEL: parafrase + quote naast elkaar.
-     3. **Cross-reference-cases** uit stap 2 expliciet noemen per kandidaat met juiste terminologie (zie "HARDE TERMINOLOGIE-REGEL" in stap 2). Skip dit niet stilletjes — als je geen \`find_cases_for_consultant\` hebt gedaan voor een DIEPTE-vraag is je antwoord per definitie incompleet.
+     2. **Cross-reference-cases** uit stap 2 expliciet noemen per kandidaat met juiste terminologie (zie "HARDE TERMINOLOGIE-REGEL" in stap 2). Skip dit niet stilletjes — als je geen \`find_cases_for_consultant\` hebt gedaan voor een DIEPTE-vraag is je antwoord per definitie incompleet.
 
-     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× certificering · 2× projecten — totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau + datamodellering in kernskills onderbouwen z'n diepte."*
+     Voorbeeld voor een DIEPTE-vraag: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× certificering · 2× projecten — totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Senior-niveau + datamodellering in kernskills onderbouwen z'n diepte."*
   6. **Eerlijk als ranking onduidelijk is**: als de top-3 vergelijkbare signalen + seniority heeft, zeg dat. Bijvoorbeeld: *"twee Seniors noemen datamodellering in vergelijkbare diepte; voor een scherper onderscheid heb ik meer context nodig — welk type datamodel (dimensioneel / lakehouse / DAX-rapport-laag), welke sector?"*. Verzin geen #1 die je niet uit de data kunt onderbouwen — dat ondermijnt de hele aanbeveling.
-  7. Lever max 3 (uitzonderlijk 5) consultants in dit format. Genummerde lijst (1./2./3.) met de **naam vetgedrukt** als eerste element van elke regel — de UI maakt daar automatisch klikbare profiel-links van. Blockquote voor de CV-quote en bullets voor de meta-regels — conform de algemene opmaak-conventies.
+  7. Lever max 3 (uitzonderlijk 5) consultants in dit format. Genummerde lijst (1./2./3.) met de **naam vetgedrukt** als eerste element van elke regel — de UI maakt daar automatisch klikbare profiel-links van. Bullets voor de meta-regels — conform de algemene opmaak-conventies.
 
   \`\`\`
   1. **<Naam>** — <Senioriteit> · <Functietitel>
 
   <1–2 zinnen motivatie waarom 'ie past — refereer aan SPECIFIEKE skills/technologies/sectors/projecten die aansluiten op de klantvraag. Voorbeeld: "Niels past sterk: Fabric uit het CITO-traject, datamodellering en retail-ervaring matchen je Bol.com-vraag.">
-
-  [Bij ranking-vragen ALTIJD een blockquote-regel met letterlijk fragment, of een fallback-regel:]
-  > *"<letterlijk fragment uit excerpts>"*
-
-  [Vervang bij excerpts.length === 0 door:]
-  > *geen fragmenten met '<criterion>' in CV-tekst gevonden*
 
   [Bij ranking-vragen ALTIJD de volgende drie bullets:]
   - **Telling**: <breakdown uit match_strength, scheid items met \` · \`>
@@ -274,10 +266,10 @@ REGELS:
 - **Opmaak — algemene typografie-conventies** (gebruik consistent in élk antwoord, niet alleen in vaste templates):
   - **Korte vragen**: lopende tekst, geen lijsten of kopjes. Eén regel volstaat als één regel volstaat.
   - **Lange antwoorden** (meer dan ~6 regels of meerdere onderwerpen): structureer met \`###\` voor genummerde top-N items en sub-koppen, bullets (\`-\`) voor opsommingen van 3+ punten, witregel tussen items.
-  - **Letterlijke citaten** uit bronnen (CV-fragmenten, gespreksnotities, web-bronnen): blockquote (\`>\`) met cursieve tekst. Voorbeeld:
-    > *"Als Power BI Consultant zorgde Steve voor operationele rapportages..."*
+  - **Letterlijke citaten** uit bronnen (gespreksnotities die de gebruiker plakt, web-bronnen, persberichten): blockquote (\`>\`) met cursieve tekst. Voorbeeld:
+    > *"We willen het komende jaar 30% van onze rapportages migreren naar Power BI."*
 
-    Géén blockquote als je parafraseert — alleen voor letterlijke fragmenten uit een tool-bron.
+    Géén blockquote als je parafraseert — alleen voor letterlijke fragmenten uit een tool-bron of user-input.
   - **Compacte meta-info** (telling, cases, beschikbaarheid, sector, status, etc.): bullet met **vetgedrukt label** + waarde. Voorbeeld: \`- **Telling**: 1× cert · 7× projecten — totaal 10\`. Plaats deze niet als run-on tekst tussen prose.
   - **Bedrijfs- en case-namen**: **vet**, zodat de UI er klikbare links van maakt (zoals al elders gespecificeerd). Geldt overal — in motivaties, in bullets, in proza.
   - **Geen kopjes zonder tussenliggende inhoud**, geen H1/H2 in chat-respons (max H3), en gebruik \`---\` (horizontale lijn) alleen als visuele scheiding tussen een lijst-deel en een conclusie/sales-fit-regel.
@@ -431,15 +423,11 @@ function stripHtml(s) {
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Bepaal de primaire zoek-term waar match_strength + excerpts tegen worden
-// berekend. Bij meerdere filters wint de meest-specifieke (keyword is breedst,
-// sector is binair). Geeft null terug als er geen inhoudelijk criterium is —
-// in dat geval slaan we match_strength + excerpts over (alleen availability-
-// filtering bv. heeft geen ranking-relevantie).
+// Bepaal de primaire zoek-term waar match_strength tegen wordt berekend.
+// Bij meerdere filters wint de meest-specifieke (keyword is breedst, sector
+// is binair). Geeft null terug als er geen inhoudelijk criterium is — in dat
+// geval slaan we match_strength over (alleen availability-filtering bv.
+// heeft geen ranking-relevantie).
 function pickPrimaryCriterion({ keyword, skill, technology, sector } = {}) {
   return keyword || skill || technology || sector || null;
 }
@@ -473,46 +461,17 @@ function computeMatchStrength(m, criterion) {
   return out;
 }
 
-// Trek max `maxCount` snippets van ±contextChars rond hits in cv_text. Bedoeld
-// als quote-bewijs in Nova's antwoord ("uit z'n CV: '…specialist Power BI op
-// het Caesar-traject…'"). cv_text zelf gaat NIET terug naar de tool-response —
-// alleen deze fragmenten. Privacy/token-budget is bewust afgewogen: intern
-// teamdata, geen klant-PII, en een handvol fragmenten weegt licht.
-function extractCvExcerpts(cvText, criterion, maxCount = 3, contextChars = 200) {
-  if (!cvText || !criterion) return [];
-  const lcText = cvText.toLowerCase();
-  const lcQ = criterion.toLowerCase();
-  const half = Math.floor(contextChars / 2);
-  const excerpts = [];
-  let from = 0;
-  while (excerpts.length < maxCount) {
-    const idx = lcText.indexOf(lcQ, from);
-    if (idx === -1) break;
-    const start = Math.max(0, idx - half);
-    const end = Math.min(cvText.length, idx + criterion.length + half);
-    let snippet = cvText.slice(start, end).replace(/\s+/g, ' ').trim();
-    if (start > 0) snippet = '…' + snippet;
-    if (end < cvText.length) snippet = snippet + '…';
-    excerpts.push(snippet);
-    from = idx + criterion.length;
-  }
-  return excerpts;
-}
-
 // ─── team_members tools ──────────────────────────────────────────────────
 // Zoekt consultants in 't Creates-team. Filter-velden mappen 1-op-1 op de
 // team_members-kolommen. Substring-match (case-insensitive) op skills/tech;
 // exacte match op sector (uit canonical lijst); free-text keyword zoekt
-// breder. Raw cv_text gaat NIET terug — alleen ±200-char excerpts rond hits
-// van het primaire criterium (zie extractCvExcerpts). Vector/semantic search
-// op cv_text staat op de roadmap (Fase C — pgvector).
+// breder. Raw cv_text gaat NIET terug — privacy + token-budget. Vector/
+// semantic search op cv_text staat op de roadmap (Fase C — pgvector).
 async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
   const supabase = getSupabase();
-  // cv_text wordt opgehaald om er ±200-char fragmenten uit te trekken (zie
-  // extractCvExcerpts) — de raw cv_text gaat NIET terug naar de tool-response.
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from, cv_text');
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
 
   const lc = (s) => (s || '').toLowerCase();
@@ -566,8 +525,7 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
   // Inclusief afgeleide availability_status zodat Nova in haar antwoord direct
   // de bucket kan benoemen ("Niels is nu beschikbaar", "Sara komt vrij in juni").
   // Bij een inhoudelijke zoek-term (keyword/skill/technology/sector): per match
-  // ook match_strength (telling per profielveld) en excerpts (CV-fragmenten met
-  // hits) — geeft Nova pre-computed signalen voor ranking + quote-bewijs.
+  // ook match_strength (pre-computed counts uit certifications + project_experience).
   const criterion = pickPrimaryCriterion({ keyword, skill, technology, sector });
   return filtered.slice(0, 8).map(m => {
     const status = isAvailableNow(m)
@@ -594,7 +552,6 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
     };
     if (criterion) {
       result.match_strength = computeMatchStrength(m, criterion);
-      result.excerpts = extractCvExcerpts(m.cv_text, criterion);
       result.criterion = criterion;
     }
     return result;
