@@ -196,7 +196,7 @@ function TabNova() {
       <section className="ins-section">
         <h3>Wat Nova voor je kan doen</h3>
         <p>
-          Elf skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
+          Twaalf skills die je proactief kunt inzetten — stel de vraag gewoon in natuurlijke taal,
           Nova herkent zelf wat voor type verzoek het is.
         </p>
         <ul>
@@ -264,6 +264,20 @@ function TabNova() {
             <em>Voorbeelden:</em> "Welke collega heeft Fabric-ervaring in retail?"  ·
             "Wie kan ik meenemen naar een gesprek over een dataplatform?"  ·
             [tender-paragraaf plakken] "Match deze klantvraag met onze collega's."
+          </li>
+          <li>
+            <strong>Soft-vragen / semantic-zoek</strong> — voor vragen waar exacte
+            termen niet helpen ("iemand die goed met klanten omgaat", "strategisch
+            denker", "creatief in greenfield"). Nova gebruikt embeddings om profielen
+            te vinden die semantisch matchen — óók als de exacte term niet in jullie
+            kernskills- of technologies-lijst staat. Vangt synoniemen en afkortingen
+            ("PBI" voor Power BI, "DWH" voor datawarehouse). Combineer gerust met
+            harde filters (sector, seniority): kandidaten die in <em>beide</em> bronnen
+            matchen krijgen voorrang. Profielen verschijnen pas in deze zoek nadat ze
+            ge-embed zijn — gebeurt automatisch bij elke save in Beheer → Team.<br />
+            <em>Voorbeelden:</em> "Wie kan goed met stakeholders omgaan?"  ·
+            "Wie heeft greenfield-ervaring met dataplatformen?"  ·
+            "Wie heeft PBI-ervaring?"
           </li>
           <li>
             <strong>Klantgerichte profielpitch</strong> — Nova schrijft een korte (3–4 zinnen)
@@ -511,6 +525,14 @@ function TabBeheer() {
             <strong>Klantgerichte samenvatting</strong> — 2–3 zinnen die sales kan kopiëren
             naar offertes/voorstellen. Anders dan de interne CV-samenvatting; bewust
             commercieel verwoord.
+          </li>
+          <li>
+            <strong>🧠 Semantic embeddings (geavanceerd)</strong> — onderaan de Team-sectie
+            zit een ingeklapte sectie met twee knoppen: <em>Embed ontbrekende profielen</em>
+            (default) en <em>Herbouw alle embeddings</em> (force). Embeddings maken Nova's
+            soft-zoek mogelijk ("wie kan goed met klanten omgaan", synoniemen zoals "PBI").
+            Nieuwe of gewijzigde profielen worden automatisch ge-embed bij save — deze
+            knoppen zijn alleen voor backfill of reparatie als er een API-storing was.
           </li>
         </ul>
         <p>
