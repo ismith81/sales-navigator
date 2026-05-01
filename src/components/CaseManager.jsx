@@ -166,7 +166,7 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
                 </button>
                 <button
                   className="btn-icon"
-                  onClick={(e) => { e.stopPropagation(); exportCaseToDocx(c); }}
+                  onClick={(e) => { e.stopPropagation(); exportCaseToDocx(c, filters); }}
                   title="Exporteren als .docx"
                 >
                   📄
