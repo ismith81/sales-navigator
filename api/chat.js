@@ -468,6 +468,20 @@ function computeMatchStrength(m, criterion) {
 // breder. Raw cv_text gaat NIET terug — privacy + token-budget. Vector/
 // semantic search op cv_text staat op de roadmap (Fase C — pgvector).
 async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
+  // Valideer available_before vóór DB-werk. Zonder deze check zou een
+  // ongeldige string (bv. 'Q3' of 'next month') een Invalid Date opleveren
+  // die in isAvailableBefore vervolgens élke kandidaat uit-filtert — Nova
+  // zag een lege lijst en interpreteerde 't als "niemand beschikbaar"
+  // i.p.v. een verkeerde datum. Foutterugkoppeling is informatiever.
+  if (available_before !== undefined && available_before !== null && available_before !== '') {
+    const validIsoDate = typeof available_before === 'string'
+      && /^\d{4}-\d{2}-\d{2}$/.test(available_before)
+      && !isNaN(new Date(available_before).getTime());
+    if (!validIsoDate) {
+      return { error: `available_before is geen geldige ISO-datum (verwacht YYYY-MM-DD), kreeg: '${available_before}'. Gebruik bv. '2026-07-01' voor 'tegen Q3'.` };
+    }
+  }
+
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('team_members')
@@ -490,11 +504,13 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
     return false;
   };
   const isAvailableBefore = (m, isoDate) => {
+    // isoDate is gevalideerd in de tool-entry (vóór deze code-pad), dus
+    // we hoeven hier niet meer voor invalid-dates te beschermen.
     if (isAvailableNow(m)) return true;
     if (!m.available_from) return false; // bezet onbekend → niet bevestigd vrij
     const d = new Date(m.available_from); d.setHours(0, 0, 0, 0);
     const cutoff = new Date(isoDate); cutoff.setHours(23, 59, 59, 999);
-    return !isNaN(cutoff) && d <= cutoff;
+    return d <= cutoff;
   };
 
   const filtered = (data || []).filter(m => {
