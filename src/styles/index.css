@@ -5107,6 +5107,23 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   text-decoration-thickness: 1px;
 }
 .chat-case-link:hover { text-decoration-thickness: 2px; }
+
+/* Team-lid-naam als klikbare link — zelfde stijl als case-link voor
+   visuele consistentie. Beide openen een detail-view; semantisch
+   gelijkwaardig in de chat. */
+.chat-team-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--teal);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.chat-team-link:hover { text-decoration-thickness: 2px; }
 .chat-msg--user .chat-msg-bubble {
   background: var(--teal);
   color: #fff;

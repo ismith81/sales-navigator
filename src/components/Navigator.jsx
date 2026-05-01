@@ -12,6 +12,8 @@ import CasesOverview from './CasesOverview';
 import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
+import TeamMemberDetail from './TeamMemberDetail';
+import { listTeamMembers } from '../lib/teamMembers';
 import Login from './Login';
 
 const ROUTE_KEY = 'sn.route'; // 'assistent' | 'gids'
@@ -59,6 +61,11 @@ export default function Navigator() {
   }, [authLoading, session]);
 
   const [cases, setCases] = useState([]);
+  // Lichte lijst van team-leden (alleen id+name nodig in chat) voor klikbare
+  // namen in Nova's antwoorden. Zwaardere data wordt door TeamMemberDetail
+  // zelf opgehaald op het moment dat de modal opent.
+  const [teamMemberList, setTeamMemberList] = useState([]);
+  const [chatTeamMemberId, setChatTeamMemberId] = useState(null);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
   const [personas, setPersonas] = useState({});
@@ -183,6 +190,18 @@ export default function Navigator() {
         setLoadError(err.message || 'Kon data niet laden');
         setLoading(false);
       });
+    return () => { cancelled = true; };
+  }, [session]);
+
+  // Lichte team-leden-lijst voor klikbare namen in chat. Apart van loadAll
+  // omdat team_members buiten de standaard cases/topics/filters/personas-set
+  // valt; geen RLS-issue zolang er een sessie is.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    listTeamMembers()
+      .then(list => { if (!cancelled) setTeamMemberList(list || []); })
+      .catch(err => console.warn('[Navigator] team list load faalde:', err?.message));
     return () => { cancelled = true; };
   }, [session]);
 
@@ -669,6 +688,7 @@ export default function Navigator() {
               variant="inline"
               open
               cases={cases}
+              teamMembers={teamMemberList}
               initialPrompt={chatInitialPrompt}
               onPromptConsumed={() => setChatInitialPrompt(null)}
               onNavigateToCase={(caseName) => {
@@ -676,6 +696,7 @@ export default function Navigator() {
                 setActiveFilter(null);
                 setSearchQuery(caseName);
               }}
+              onNavigateToTeamMember={(memberId) => setChatTeamMemberId(memberId)}
               context={{
                 activeTab: null,
                 activeFilter: null,
@@ -800,6 +821,17 @@ export default function Navigator() {
 
       {/* Toast notification */}
       {toast && <div className="toast">{toast}</div>}
+
+      {/* Team-lid profiel-modal — getriggerd vanuit een klikbare naam in de
+          chat (Assistent-route). Buiten de route-conditional zodat 't ook
+          werkt als de gebruiker tijdens 't openen van de modal naar een
+          andere view scrollt. */}
+      {chatTeamMemberId && (
+        <TeamMemberDetail
+          memberId={chatTeamMemberId}
+          onClose={() => setChatTeamMemberId(null)}
+        />
+      )}
     </div>
   );
 }

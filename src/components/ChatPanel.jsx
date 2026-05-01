@@ -62,13 +62,22 @@ const TOOL_LABELS = {
   get_team_member: 'Profiel',
 };
 
-export default function ChatPanel({ open, onClose, context = {}, cases = [], onNavigateToCase, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
+export default function ChatPanel({ open, onClose, context = {}, cases = [], teamMembers = [], onNavigateToCase, onNavigateToTeamMember, initialPrompt = null, onPromptConsumed, variant = 'drawer' }) {
   const inline = variant === 'inline';
   // Namen van bestaande cases — gebruikt om in assistent-antwoorden klikbare links te maken.
   // Langste eerst zodat "AkzoNobel (Paint Company)" vóór "AkzoNobel" wordt gematcht.
   const caseNames = React.useMemo(
     () => cases.map(c => c.name).filter(Boolean).sort((a, b) => b.length - a.length),
     [cases]
+  );
+
+  // Namen van team-leden — analoog aan caseNames. Geeft Nova's antwoorden
+  // klikbare links naar het profiel-modal zodra ze een teamlid noemt in **vet**.
+  // Langste eerst om bv. "Niels Laan - van der Drift" voor "Niels Laan" te
+  // matchen.
+  const teamMemberNames = React.useMemo(
+    () => teamMembers.map(m => ({ id: m.id, name: m.name })).filter(t => t.name).sort((a, b) => b.name.length - a.name.length),
+    [teamMembers]
   );
 
   // Fuzzy helper: strip spaties, punctuatie, diacritics en lowercase.
@@ -108,7 +117,9 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
     strong: ({ children }) => {
       const text = React.Children.toArray(children).map(c => typeof c === 'string' ? c : '').join('').trim();
       const textNorm = normalize(text);
-      const matched = textNorm.length >= 3 && caseNames.find(n => {
+
+      // Eerst case-match (bestaand gedrag heeft voorrang).
+      const matchedCase = textNorm.length >= 3 && caseNames.find(n => {
         const nNorm = normalize(n);
         if (!nNorm || nNorm.length < 3) return false;
         return nNorm === textNorm
@@ -117,18 +128,42 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], onN
           || (textNorm.length >= 5 && nNorm.includes(textNorm))
           || (nNorm.length >= 5 && textNorm.includes(nNorm));
       });
-      if (matched && onNavigateToCase) {
+      if (matchedCase && onNavigateToCase) {
         return (
           <button
             type="button"
             className="chat-case-link"
-            onClick={() => onNavigateToCase(matched)}
-            title={`Bekijk case: ${matched}`}
+            onClick={() => onNavigateToCase(matchedCase)}
+            title={`Bekijk case: ${matchedCase}`}
           >
             {children}
           </button>
         );
       }
+
+      // Daarna team-lid-match — zelfde fuzzy-logica als cases.
+      const matchedTeam = textNorm.length >= 3 && teamMemberNames.find(t => {
+        const nNorm = normalize(t.name);
+        if (!nNorm || nNorm.length < 3) return false;
+        return nNorm === textNorm
+          || nNorm.startsWith(textNorm)
+          || textNorm.startsWith(nNorm)
+          || (textNorm.length >= 5 && nNorm.includes(textNorm))
+          || (nNorm.length >= 5 && textNorm.includes(nNorm));
+      });
+      if (matchedTeam && onNavigateToTeamMember) {
+        return (
+          <button
+            type="button"
+            className="chat-team-link"
+            onClick={() => onNavigateToTeamMember(matchedTeam.id)}
+            title={`Bekijk profiel van ${matchedTeam.name}`}
+          >
+            {children}
+          </button>
+        );
+      }
+
       return <strong>{children}</strong>;
     },
     // <a> override: #cite-N = citatie-marker (superscript), #cv-pdf-<path> =
