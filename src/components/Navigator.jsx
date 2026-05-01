@@ -13,6 +13,7 @@ import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
 import TeamMemberDetail from './TeamMemberDetail';
+import CaseDetailModal from './CaseDetailModal';
 import { listTeamMembers } from '../lib/teamMembers';
 import Login from './Login';
 
@@ -66,6 +67,9 @@ export default function Navigator() {
   // zelf opgehaald op het moment dat de modal opent.
   const [teamMemberList, setTeamMemberList] = useState([]);
   const [chatTeamMemberId, setChatTeamMemberId] = useState(null);
+  // Case-detail-modal getriggerd vanuit chat-link. Bewaren we als heel object
+  // (cases zit al in state, geen aparte fetch nodig).
+  const [chatCase, setChatCase] = useState(null);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
   const [personas, setPersonas] = useState({});
@@ -691,10 +695,13 @@ export default function Navigator() {
               teamMembers={teamMemberList}
               initialPrompt={chatInitialPrompt}
               onPromptConsumed={() => setChatInitialPrompt(null)}
-              onNavigateToCase={(caseName) => {
-                changeRoute('gids');
-                setActiveFilter(null);
-                setSearchQuery(caseName);
+              onNavigateToCase={(caseObjOrName) => {
+                // ChatPanel geeft ofwel het hele case-object (gevonden in
+                // cases-prop), ofwel — als de match niet meer aanwezig was —
+                // de string. In dat laatste geval doen we geen modal-open.
+                if (caseObjOrName && typeof caseObjOrName === 'object') {
+                  setChatCase(caseObjOrName);
+                }
               }}
               onNavigateToTeamMember={(memberId) => setChatTeamMemberId(memberId)}
               context={{
@@ -830,6 +837,17 @@ export default function Navigator() {
         <TeamMemberDetail
           memberId={chatTeamMemberId}
           onClose={() => setChatTeamMemberId(null)}
+        />
+      )}
+
+      {/* Case-profiel-modal — getriggerd vanuit een klikbare case-naam in de
+          chat. Spiegel-pattern aan de team-member-modal: read-only weergave
+          binnen de chat-context, geen route-switch. */}
+      {chatCase && (
+        <CaseDetailModal
+          caseData={chatCase}
+          personas={personas}
+          onClose={() => setChatCase(null)}
         />
       )}
     </div>

@@ -54,18 +54,20 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   5. **Tellen + wegen vóór ranken** (bij ranking-vragen, vóór je je antwoord schrijft):
 
      **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
-     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen. (Summary en technologies worden bewust niet meegeteld: summary is parafrase, technologies is in praktijk inconsistent ingevuld.)
+     - \`match_strength\`: object met counts uit twee profielvelden (\`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct. Bewust beperkt tot deze twee: ze signaleren bewezen toepassing en formeel bewijs. \`summary\`/\`technologies\` zijn weggelaten (parafrase resp. inconsistent ingevuld); \`kernskills\`/\`sectors\` zijn binair (wel/niet) en differentiëren niet in een ranking.
      - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
      - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
 
-     Verzamel per kandidaat de signalen waar het criterium voorkomt (gebruik \`match_strength\` als pre-computed bron):
-     - in \`kernskills\` — sterkste signaal, kerncompetentie
-     - in \`sectors\` (alleen bij sector-vraag)
-     - in \`project_experience\` — aantal projecten waar het criterium in name/role/description staat (sterk toepassings-signaal)
-     - in \`certifications\` — formeel bewijs
-     - cross-reference cases uit stap 2 — telt extra zwaar (bewezen toepassing op Creates-cases)
-     - **NIET** in \`summary\` — parafrase van bovenstaande velden; mee-tellen zou dubbel wegen.
-     - **NIET** in \`technologies\` — in praktijk inconsistent ingevuld (niet elk profiel heeft de canonical lijst even compleet); zou profielen met een goed bijgehouden technologies-lijst onterecht hoger tellen.
+     Verzamel per kandidaat de signalen waar het criterium voorkomt. Voor de **kwantitatieve telling** gebruik je alleen \`match_strength\` (= certifications + project_experience). Voor **kwalitatieve weging** kijk je daarnaast nog naar:
+     - **\`kernskills\`** (binair): heeft 'ie 't überhaupt als kerncompetentie? → wel/niet, niet als telling
+     - **\`sectors\`** (alleen bij sector-vraag): wel/niet
+     - **cross-reference cases** uit stap 2 — bewezen toepassing op Creates-cases, weegt extra zwaar bij DIEPTE-vragen
+     - **\`seniority\`** (zie hieronder) — voor specialist/diepte-vragen dominant
+
+     Niet meegeteld in \`match_strength\` (en NIET zelf alsnog tellen):
+     - \`summary\` — parafrase van bovenstaande velden; dubbel wegen.
+     - \`technologies\` — in praktijk inconsistent ingevuld; zou profielen met een goed bijgehouden tech-lijst onterecht hoger tellen.
+     - \`kernskills\` als telling (wel als kwalitatief signaal): élke kandidaat scoort hier 0 of 1; geen ranking-differentiatie.
      - **\`seniority\`**: Starter / Young Professional / Professional / Senior / Expert — proxy voor jaren-diepte van toepassing.
 
      Weeg afhankelijk van het sub-type:
@@ -76,11 +78,11 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
      **Maak je redenering zichtbaar** in je antwoord — bij ranking-vragen MOETEN deze drie dingen letterlijk in je tekst staan:
 
-     1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× kernskills · 2× projecten · 1× cross-ref-case (Westland Kaas) — totaal 4."* Niet "veel projectervaring" — de exacte counts.
+     1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× certificering · 2× projecten — totaal 3."* Niet "veel projectervaring" — de exacte counts.
      2. **Quote uit \`excerpts\`** — als het \`excerpts\`-array van een kandidaat niet leeg is, MOET je minstens één fragment letterlijk citeren in z'n motivatie. Voor je top-1 is dit niet onderhandelbaar; voor top-2 en top-3 idealiter ook. Voorbeeld: *"Uit z'n CV: '…datamart-architectuur volgens Kimball-principes bij Westland Kaas…'."* Een ranking-antwoord zonder enkele quote (terwijl excerpts beschikbaar zijn) is incompleet — het mist concreet bewijs en ondermijnt je top-1-claim. NIET ACCEPTABEL: alleen parafraseren ("hij heeft sterke datamodellering-ervaring") als de excerpts er zijn. WEL ACCEPTABEL: parafrase + quote naast elkaar.
      3. **Cross-reference-cases** uit stap 2 expliciet noemen per kandidaat met juiste terminologie (zie "HARDE TERMINOLOGIE-REGEL" in stap 2). Skip dit niet stilletjes — als je geen \`find_cases_for_consultant\` hebt gedaan voor een DIEPTE-vraag is je antwoord per definitie incompleet.
 
-     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× kernskills · 2× projecten · totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau dat jaren-diepte impliceert."*
+     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× certificering · 2× projecten — totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau + datamodellering in kernskills onderbouwen z'n diepte."*
   6. **Eerlijk als ranking onduidelijk is**: als de top-3 vergelijkbare signalen + seniority heeft, zeg dat. Bijvoorbeeld: *"twee Seniors noemen datamodellering in vergelijkbare diepte; voor een scherper onderscheid heb ik meer context nodig — welk type datamodel (dimensioneel / lakehouse / DAX-rapport-laag), welke sector?"*. Verzin geen #1 die je niet uit de data kunt onderbouwen — dat ondermijnt de hele aanbeveling.
   7. Lever max 3 (uitzonderlijk 5) consultants in dit format. Genummerde lijst (1./2./3.) met de **naam vetgedrukt** als eerste element van elke regel — de UI maakt daar automatisch klikbare profiel-links van. Blockquote voor de CV-quote en bullets voor de meta-regels — conform de algemene opmaak-conventies.
 
@@ -455,17 +457,15 @@ function computeMatchStrength(m, criterion) {
     [p.name, p.role, p.description].some(s => (s || '').toLowerCase().includes(q))
   ).length;
 
-  // summary en technologies worden bewust NIET meegeteld:
-  //  - summary is parafrase van wat al in kernskills/projecten staat, dus
-  //    dubbel-wegen voor profielen met een uitgebreide samenvatting.
-  //  - technologies is in praktijk inconsistent ingevuld (niet elk profiel
-  //    heeft de canonical lijst even compleet), dus telt de skill van mensen
-  //    die hun technologies-veld goed hebben bijgehouden ten onrechte hoger.
-  // De feitelijke skill-aanwezigheid komt uit kernskills + project_experience
-  // + certifications — bewezen toepassings-signalen.
+  // De telling beperkt zich bewust tot certifications + project_experience —
+  // de twee velden die feitelijk bewezen toepassing/diepte signaleren:
+  //  - summary is parafrase, dus dubbel-tellen.
+  //  - technologies is in praktijk inconsistent ingevuld.
+  //  - kernskills is wel/niet (binair); telt voor élke kandidaat als 1
+  //    en voegt geen onderscheid toe in een ranking.
+  //  - sectors is binair en meestal sector-filter, niet ranking-criterium.
+  //  certifications = formeel bewijs; project_experience = bewezen werk.
   const out = {
-    kernskills: countInArr(m.kernskills),
-    sectors: countInArr(m.sectors),
     project_experience: projectHits,
     certifications: countInArr(m.certifications),
   };

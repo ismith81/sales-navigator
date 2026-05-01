@@ -3425,6 +3425,122 @@ body::before {
   cursor: pointer;
 }
 .team-cv-link:hover { background: rgba(49,183,185,0.06); }
+
+/* ── Case detail-modal ─────────────────────────────────────────────────
+   Read-only modal getriggerd vanuit een klikbare case-naam in de chat.
+   Pattern parallel aan team-detail-* — eigen klassen omdat layout
+   afwijkt (logo i.p.v. avatar, geen client-regel, andere secties). */
+.case-detail-overlay {
+  padding: 1.5rem 1rem;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+.case-detail-box {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  width: min(640px, 100%);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
+  padding: 1.4rem 1.4rem 1.6rem;
+  box-shadow: 0 24px 60px rgba(44, 60, 82, 0.25);
+}
+.case-detail-close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.case-detail-close:hover {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--navy);
+}
+.case-detail-header {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-right: 2rem;
+}
+.case-detail-logo {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.case-detail-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.case-detail-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.18rem;
+}
+.case-detail-section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+}
+.case-detail-h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+.case-detail-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--navy);
+  white-space: pre-line; /* respecteer paragrafen in bv. situatie/oplossing */
+}
+.case-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.case-detail-keyword {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(44, 60, 82, 0.06);
+  color: var(--navy);
+  border: 1px solid var(--border);
+}
+.case-detail-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.case-detail-list li {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--navy);
+}
 .team-cv-replace {
   border: 1px solid var(--border);
   background: transparent;

@@ -119,7 +119,7 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], tea
       const textNorm = normalize(text);
 
       // Eerst case-match (bestaand gedrag heeft voorrang).
-      const matchedCase = textNorm.length >= 3 && caseNames.find(n => {
+      const matchedCaseName = textNorm.length >= 3 && caseNames.find(n => {
         const nNorm = normalize(n);
         if (!nNorm || nNorm.length < 3) return false;
         return nNorm === textNorm
@@ -128,13 +128,14 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], tea
           || (textNorm.length >= 5 && nNorm.includes(textNorm))
           || (nNorm.length >= 5 && textNorm.includes(nNorm));
       });
-      if (matchedCase && onNavigateToCase) {
+      if (matchedCaseName && onNavigateToCase) {
+        const matchedCase = cases.find(c => c.name === matchedCaseName);
         return (
           <button
             type="button"
             className="chat-case-link"
-            onClick={() => onNavigateToCase(matchedCase)}
-            title={`Bekijk case: ${matchedCase}`}
+            onClick={() => onNavigateToCase(matchedCase || matchedCaseName)}
+            title={`Bekijk case: ${matchedCaseName}`}
           >
             {children}
           </button>
