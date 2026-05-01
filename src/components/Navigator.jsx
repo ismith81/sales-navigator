@@ -156,18 +156,9 @@ export default function Navigator() {
 
   // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
-  // (bijna scrollY 0) komt hij terug.
-  // Op mobile (≤768px) skippen we de scroll-hide: de subnav (Gids/Assistent,
-  // Beheer-secties etc.) is daar belangrijker om snel tussen routes te
-  // wisselen, en welcome-screens scrollen vaak al > 32px waardoor de subnav
-  // anders bij elke pagina-load meteen verstopt was.
+  // (bijna scrollY 0) komt hij terug. Geldt zowel desktop als mobile.
   useEffect(() => {
-    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
     const updateSubnavVisibility = () => {
-      if (isMobile()) {
-        setShowTopbarSubnav(true);
-        return;
-      }
       const y = window.scrollY;
       setShowTopbarSubnav((prev) => {
         if (prev) return y < 32;
@@ -176,10 +167,8 @@ export default function Navigator() {
     };
     updateSubnavVisibility();
     window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
-    window.addEventListener('resize', updateSubnavVisibility);
     return () => {
       window.removeEventListener('scroll', updateSubnavVisibility);
-      window.removeEventListener('resize', updateSubnavVisibility);
     };
   }, []);
 
