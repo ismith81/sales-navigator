@@ -43,19 +43,31 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   2. **Multi-pass voor breedte** (vooral bij ranking-vragen): één tool-call is meestal te smal. Werkpatroon:
      - Eerste pass breed (\`keyword: "<term>"\` of \`skill: "<term>"\`) — zie iedereen die 't überhaupt noemt.
      - Eventueel tweede pass smaller (\`technology\` + \`seniority\` combineren) of breder (drop sector om meer kandidaten te zien).
-     - **Cross-reference voor diepte**: voor je top-2-3 kandidaten, roep \`find_cases_for_consultant({name})\` om te zien op welke Creates-cases ze 't criterium daadwerkelijk hebben toegepast. Bewezen toepassing weegt zwaarder dan een platte skill-vermelding op een CV.
+     - **Cross-reference cases — VERPLICHT bij DIEPTE/SPECIALIST-vragen**: zodra je een voorlopige top-3 hebt vóórdat je je antwoord schrijft, roep voor élke kandidaat in die top-3 ook \`find_cases_for_consultant({name})\` aan. Dit is geen optionele extra — een DIEPTE-vraag zonder bewezen-toepassing-check is een incompleet antwoord. Bij BREEDTE-vragen ("het meest met X gewerkt") is 't aanbevolen maar niet verplicht.
+
+     **HARDE TERMINOLOGIE-REGEL** (essentieel voor sales-betrouwbaarheid):
+     - "**Bevestigd op <case>**" of synoniemen ("junction-koppeling", "geregistreerd op", "officieel gekoppeld") mag je ALLEEN gebruiken voor cases die je via \`find_cases_for_consultant\` hebt opgehaald MET \`source: "junction"\`. Geen call gedaan = geen "bevestigd"-claim, ook niet als de case-naam toevallig in z'n \`project_experience\` voorkomt.
+     - Als je de cross-reference NIET hebt gedaan, gebruik je voor cases uit \`project_experience\` (de naam staat in z'n CV-projectlijst): "**op z'n CV vermeld**" / "**uit z'n project-historie**" / "**genoemd in z'n CV**". Niet "bevestigd". Sales mag niet vertrouwen op een waarheidsclaim die je niet uit data kunt onderbouwen.
+     - Concreet: zeg je "Bevestigd op Westland Kaas" zonder dat \`find_cases_for_consultant\` Westland Kaas met source: "junction" teruggaf, dan claim je iets wat niet uit data komt — dat is hallucinatie en ondermijnt het vertrouwen in elke andere claim in je antwoord.
   3. Als er <2 matches zijn, roep \`find_team_members\` opnieuw aan met soepelere filters (laat skill of sector weg, of gebruik \`keyword\` voor breder zoeken).
   4. Voor één specifieke naam → \`get_team_member({name})\`.
   5. **Tellen + wegen vóór ranken** (bij ranking-vragen, vóór je je antwoord schrijft):
 
-     Verzamel per kandidaat de signalen waar het criterium voorkomt:
-     - in \`kernskills\` — sterkste signaal, kerncompetentie
-     - in \`technologies\`
-     - in \`sectors\` (alleen bij sector-vraag)
-     - in \`project_experience\` — aantal projecten waar het criterium in name/role/description staat (sterk toepassings-signaal)
-     - in \`certifications\` — formeel bewijs
-     - in \`summary\` — narratieve duiding
-     - cross-reference cases uit stap 2 — telt extra zwaar (bewezen toepassing op Creates-cases)
+     **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
+     - \`match_strength\`: object met counts uit twee profielvelden (\`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct. Bewust beperkt tot deze twee: ze signaleren bewezen toepassing en formeel bewijs. \`summary\`/\`technologies\` zijn weggelaten (parafrase resp. inconsistent ingevuld); \`kernskills\`/\`sectors\` zijn binair (wel/niet) en differentiëren niet in een ranking.
+     - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
+     - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
+
+     Verzamel per kandidaat de signalen waar het criterium voorkomt. Voor de **kwantitatieve telling** gebruik je alleen \`match_strength\` (= certifications + project_experience). Voor **kwalitatieve weging** kijk je daarnaast nog naar:
+     - **\`kernskills\`** (binair): heeft 'ie 't überhaupt als kerncompetentie? → wel/niet, niet als telling
+     - **\`sectors\`** (alleen bij sector-vraag): wel/niet
+     - **cross-reference cases** uit stap 2 — bewezen toepassing op Creates-cases, weegt extra zwaar bij DIEPTE-vragen
+     - **\`seniority\`** (zie hieronder) — voor specialist/diepte-vragen dominant
+
+     Niet meegeteld in \`match_strength\` (en NIET zelf alsnog tellen):
+     - \`summary\` — parafrase van bovenstaande velden; dubbel wegen.
+     - \`technologies\` — in praktijk inconsistent ingevuld; zou profielen met een goed bijgehouden tech-lijst onterecht hoger tellen.
+     - \`kernskills\` als telling (wel als kwalitatief signaal): élke kandidaat scoort hier 0 of 1; geen ranking-differentiatie.
      - **\`seniority\`**: Starter / Young Professional / Professional / Senior / Expert — proxy voor jaren-diepte van toepassing.
 
      Weeg afhankelijk van het sub-type:
@@ -64,19 +76,41 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
      **Pas op voor CV-bias**: een YP heeft vaak een uitgebreider geschreven CV (recent gemaakt, alle projecten apart benoemd) dan een Senior (korter omdat track-record bekend is). Aantal vermeldingen ≠ expertise-diepte. Compenseer hiervoor op DIEPTE-vragen.
 
-     **Maak je redenering zichtbaar** in je antwoord. Voorbeeld voor een DIEPTE-vraag: *"Gijs (Senior · Lead Data Engineer) staat op #1: datamodellering in kernskills + Senior-niveau dat jaren-diepte impliceert + bewezen toepassing op de Westland Kaas-case. Niels (YP) heeft datamodellering ook in kernskills en meer projecten op z'n CV genoemd, maar als YP per definitie minder jaren-toepassing — meer breedte dan diepte."*
+     **Maak je redenering zichtbaar** in je antwoord — bij ranking-vragen MOETEN deze drie dingen letterlijk in je tekst staan:
+
+     1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× certificering · 2× projecten — totaal 3."* Niet "veel projectervaring" — de exacte counts.
+     2. **Quote uit \`excerpts\`** — als het \`excerpts\`-array van een kandidaat niet leeg is, MOET je minstens één fragment letterlijk citeren in z'n motivatie. Voor je top-1 is dit niet onderhandelbaar; voor top-2 en top-3 idealiter ook. Voorbeeld: *"Uit z'n CV: '…datamart-architectuur volgens Kimball-principes bij Westland Kaas…'."* Een ranking-antwoord zonder enkele quote (terwijl excerpts beschikbaar zijn) is incompleet — het mist concreet bewijs en ondermijnt je top-1-claim. NIET ACCEPTABEL: alleen parafraseren ("hij heeft sterke datamodellering-ervaring") als de excerpts er zijn. WEL ACCEPTABEL: parafrase + quote naast elkaar.
+     3. **Cross-reference-cases** uit stap 2 expliciet noemen per kandidaat met juiste terminologie (zie "HARDE TERMINOLOGIE-REGEL" in stap 2). Skip dit niet stilletjes — als je geen \`find_cases_for_consultant\` hebt gedaan voor een DIEPTE-vraag is je antwoord per definitie incompleet.
+
+     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× certificering · 2× projecten — totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau + datamodellering in kernskills onderbouwen z'n diepte."*
   6. **Eerlijk als ranking onduidelijk is**: als de top-3 vergelijkbare signalen + seniority heeft, zeg dat. Bijvoorbeeld: *"twee Seniors noemen datamodellering in vergelijkbare diepte; voor een scherper onderscheid heb ik meer context nodig — welk type datamodel (dimensioneel / lakehouse / DAX-rapport-laag), welke sector?"*. Verzin geen #1 die je niet uit de data kunt onderbouwen — dat ondermijnt de hele aanbeveling.
-  7. Lever max 3 (uitzonderlijk 5) consultants in dit format:
+  7. Lever max 3 (uitzonderlijk 5) consultants in dit format. Genummerde lijst (1./2./3.) met de **naam vetgedrukt** als eerste element van elke regel — de UI maakt daar automatisch klikbare profiel-links van. Blockquote voor de CV-quote en bullets voor de meta-regels — conform de algemene opmaak-conventies.
 
   \`\`\`
-  **<Naam>** — <Senioriteit> · <Functietitel>
-  Motivatie: <1–2 zinnen waarom 'ie past — refereer aan SPECIFIEKE skills/technologies/sectors/projecten uit z'n profiel die aansluiten op de klantvraag>. Voorbeeld: "Niels past sterk: Fabric uit het CITO-traject, datamodellering en retail-ervaring matchen je Bol.com-vraag."
-  Beschikbaarheid: <available_for_sales-status> · <current_client als ingevuld>
+  1. **<Naam>** — <Senioriteit> · <Functietitel>
+
+  <1–2 zinnen motivatie waarom 'ie past — refereer aan SPECIFIEKE skills/technologies/sectors/projecten die aansluiten op de klantvraag. Voorbeeld: "Niels past sterk: Fabric uit het CITO-traject, datamodellering en retail-ervaring matchen je Bol.com-vraag.">
+
+  [Bij ranking-vragen ALTIJD een blockquote-regel met letterlijk fragment, of een fallback-regel:]
+  > *"<letterlijk fragment uit excerpts>"*
+
+  [Vervang bij excerpts.length === 0 door:]
+  > *geen fragmenten met '<criterion>' in CV-tekst gevonden*
+
+  [Bij ranking-vragen ALTIJD de volgende drie bullets:]
+  - **Telling**: <breakdown uit match_strength, scheid items met \` · \`>
+  - **Cases**: <bevestigde + op-CV-vermelde cases met juiste terminologie, of "geen cross-reference uitgevoerd">
+  - **Beschikbaarheid**: <available_for_sales-status> · <current_client als ingevuld>
+
+  [Witregel, dan kandidaat 2 met "2. **<Naam>**" enz.]
 
   ---
-  **Sales-fit (regel)**: <welke kandidaat is je primaire keuze en waarom — één korte regel>.
+  **Sales-fit**: <welke kandidaat is je primaire keuze en waarom — één korte regel>.
+
   **Aandacht / gat**: <als geen kandidaat alle vereisten dekt, benoem dat eerlijk: bv. "we hebben niemand met Snowflake-ervaring; voor dat onderdeel hebben we een externe partner of nieuwe hire nodig". Verzin geen skills die niet in een profiel staan.>
   \`\`\`
+
+  Belangrijk: de naam-regel MOET de \`**<Naam>**\`-syntax gebruiken (vetgedrukt), NIET een H3-kop (\`### 1. ...\`). De ChatPanel-renderer matcht vetgedrukte tekst tegen team-lid-namen om er klikbare profiel-links van te maken; H3 ondersteunt dat niet. Dezelfde conventie geldt voor het noemen van case-namen elders in je antwoord (bedrijfsnamen die in de cases-database staan): die zet je ook \`**vet**\` zodat de UI er case-links van maakt.
 
 - **Wie werkte op deze case? (multi-source met provenance)**: als de gebruiker vraagt "wie werkte op de X-case?", "wie heeft Y gedaan?", "welke collega kan ik over Z laten praten?" → roep \`find_consultants_on_case({case_name: "X"})\` aan. De tool combineert drie bronnen en geeft per consultant een \`match_sources\`-array terug. Behandel die bronnen NIET als gelijkwaardig — provenance is essentieel voor eerlijkheid:
   1. \`source: "junction"\` → BEVESTIGD. Deze consultant is expliciet gekoppeld in de admin-UI met rol + periode. Presenteer als zekerheid.
@@ -237,7 +271,17 @@ REGELS:
   - **NOOIT \`[n](url)\`-syntax gebruiken** met een URL erachter — geen markdown-links rond citaties. De UI maakt ze automatisch klikbaar via de bronnenlijst onderaan. Schrijf dus \`[3]\`, niet \`[3](https://...)\`.
   - Gebruik alleen nummers die je letterlijk in de tool-output hebt gezien — verzin geen citatie-nummers en kopieer geen nummers uit de body-tekst (zoals KvK-nummers, marktwaardes, registratie-nummers) als citatie.
   - Plaats GEEN citaties achter feiten die uit \`search_cases\`/\`get_topic\`/\`list_personas\` komen — die zijn intern, geen web-bron.
-- Structureer lange antwoorden met korte kopjes + bullets; korte antwoorden mogen gewoon als lopende tekst.
+- **Opmaak — algemene typografie-conventies** (gebruik consistent in élk antwoord, niet alleen in vaste templates):
+  - **Korte vragen**: lopende tekst, geen lijsten of kopjes. Eén regel volstaat als één regel volstaat.
+  - **Lange antwoorden** (meer dan ~6 regels of meerdere onderwerpen): structureer met \`###\` voor genummerde top-N items en sub-koppen, bullets (\`-\`) voor opsommingen van 3+ punten, witregel tussen items.
+  - **Letterlijke citaten** uit bronnen (CV-fragmenten, gespreksnotities, web-bronnen): blockquote (\`>\`) met cursieve tekst. Voorbeeld:
+    > *"Als Power BI Consultant zorgde Steve voor operationele rapportages..."*
+
+    Géén blockquote als je parafraseert — alleen voor letterlijke fragmenten uit een tool-bron.
+  - **Compacte meta-info** (telling, cases, beschikbaarheid, sector, status, etc.): bullet met **vetgedrukt label** + waarde. Voorbeeld: \`- **Telling**: 1× cert · 7× projecten — totaal 10\`. Plaats deze niet als run-on tekst tussen prose.
+  - **Bedrijfs- en case-namen**: **vet**, zodat de UI er klikbare links van maakt (zoals al elders gespecificeerd). Geldt overal — in motivaties, in bullets, in proza.
+  - **Geen kopjes zonder tussenliggende inhoud**, geen H1/H2 in chat-respons (max H3), en gebruik \`---\` (horizontale lijn) alleen als visuele scheiding tussen een lijst-deel en een conclusie/sales-fit-regel.
+  - **Bullet-scheidingsteken**: gebruik \` · \` (spatie-middendot-spatie) tussen losse items binnen één regel ("nu beschikbaar · Vertom · senior") in plaats van komma's voor meer leesbaarheid.
 - Als info ontbreekt: zeg dat eerlijk, verzin niets.
 - **Doen, niet aankondigen**: als je een tool-call wilt doen, doe 'm in dezelfde turn en presenteer het resultaat. Antwoord nooit met alleen "Jazeker, ik kan…" / "Goed, ik ga zoeken naar…" / "Ja, hier zoek ik naar op…" zonder dat je in die turn ook daadwerkelijk de tool gebruikt en 't resultaat deelt. Dergelijke zinnen voelen als gestotter — de gebruiker ziet liever meteen het antwoord dan een intentie-verklaring.
 - **Eerlijk over fit**: je hoeft niet altijd een Creates-haakje te vinden. Als de prospect iets doet waar Creates géén sterke case of dienst voor heeft, zeg dat. Benoem het als gat of ontwikkelkans ("hier hebben we nog geen referentie voor — interessant om op te bouwen" / "onze portfolio is sterker op X dan op Y, dus voor dit specifieke onderwerp hebben we minder bewijs"). Een sales-assistent die overal een verband forceert is bij ervaren sales én bij senior klantcontacten juist minder geloofwaardig. Liever één échte match benoemen en één gat eerlijk markeren dan drie gezochte haakjes.
@@ -387,17 +431,88 @@ function stripHtml(s) {
   return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Bepaal de primaire zoek-term waar match_strength + excerpts tegen worden
+// berekend. Bij meerdere filters wint de meest-specifieke (keyword is breedst,
+// sector is binair). Geeft null terug als er geen inhoudelijk criterium is —
+// in dat geval slaan we match_strength + excerpts over (alleen availability-
+// filtering bv. heeft geen ranking-relevantie).
+function pickPrimaryCriterion({ keyword, skill, technology, sector } = {}) {
+  return keyword || skill || technology || sector || null;
+}
+
+// Tel hoe vaak `criterion` (case-insensitive substring) voorkomt per profiel-
+// veld. Geeft Nova een pre-computed signaal i.p.v. zelf moeten tellen — vooral
+// nuttig bij ranking-vragen ("wie heeft het meest met X gewerkt").
+function computeMatchStrength(m, criterion) {
+  if (!criterion) return null;
+  const q = criterion.toLowerCase();
+  const countInArr = (arr) => (arr || []).filter(x => (x || '').toLowerCase().includes(q)).length;
+
+  const projects = (m.project_experience || []);
+  const projectHits = projects.filter(p =>
+    [p.name, p.role, p.description].some(s => (s || '').toLowerCase().includes(q))
+  ).length;
+
+  // De telling beperkt zich bewust tot certifications + project_experience —
+  // de twee velden die feitelijk bewezen toepassing/diepte signaleren:
+  //  - summary is parafrase, dus dubbel-tellen.
+  //  - technologies is in praktijk inconsistent ingevuld.
+  //  - kernskills is wel/niet (binair); telt voor élke kandidaat als 1
+  //    en voegt geen onderscheid toe in een ranking.
+  //  - sectors is binair en meestal sector-filter, niet ranking-criterium.
+  //  certifications = formeel bewijs; project_experience = bewezen werk.
+  const out = {
+    project_experience: projectHits,
+    certifications: countInArr(m.certifications),
+  };
+  out.total = Object.values(out).reduce((a, b) => a + b, 0);
+  return out;
+}
+
+// Trek max `maxCount` snippets van ±contextChars rond hits in cv_text. Bedoeld
+// als quote-bewijs in Nova's antwoord ("uit z'n CV: '…specialist Power BI op
+// het Caesar-traject…'"). cv_text zelf gaat NIET terug naar de tool-response —
+// alleen deze fragmenten. Privacy/token-budget is bewust afgewogen: intern
+// teamdata, geen klant-PII, en een handvol fragmenten weegt licht.
+function extractCvExcerpts(cvText, criterion, maxCount = 3, contextChars = 200) {
+  if (!cvText || !criterion) return [];
+  const lcText = cvText.toLowerCase();
+  const lcQ = criterion.toLowerCase();
+  const half = Math.floor(contextChars / 2);
+  const excerpts = [];
+  let from = 0;
+  while (excerpts.length < maxCount) {
+    const idx = lcText.indexOf(lcQ, from);
+    if (idx === -1) break;
+    const start = Math.max(0, idx - half);
+    const end = Math.min(cvText.length, idx + criterion.length + half);
+    let snippet = cvText.slice(start, end).replace(/\s+/g, ' ').trim();
+    if (start > 0) snippet = '…' + snippet;
+    if (end < cvText.length) snippet = snippet + '…';
+    excerpts.push(snippet);
+    from = idx + criterion.length;
+  }
+  return excerpts;
+}
+
 // ─── team_members tools ──────────────────────────────────────────────────
 // Zoekt consultants in 't Creates-team. Filter-velden mappen 1-op-1 op de
 // team_members-kolommen. Substring-match (case-insensitive) op skills/tech;
 // exacte match op sector (uit canonical lijst); free-text keyword zoekt
-// breder. cv_text wordt NIET teruggestuurd — privacy + token-budget. Vector-
-// search op cv_text staat op de roadmap (Fase C).
+// breder. Raw cv_text gaat NIET terug — alleen ±200-char excerpts rond hits
+// van het primaire criterium (zie extractCvExcerpts). Vector/semantic search
+// op cv_text staat op de roadmap (Fase C — pgvector).
 async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
   const supabase = getSupabase();
+  // cv_text wordt opgehaald om er ±200-char fragmenten uit te trekken (zie
+  // extractCvExcerpts) — de raw cv_text gaat NIET terug naar de tool-response.
   const { data, error } = await supabase
     .from('team_members')
-    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
+    .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from, cv_text');
   if (error) throw error;
 
   const lc = (s) => (s || '').toLowerCase();
@@ -450,11 +565,15 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
   // Beperkte payload — top 8, projectervaring afgeknipt op 5 stuks van 200 chars.
   // Inclusief afgeleide availability_status zodat Nova in haar antwoord direct
   // de bucket kan benoemen ("Niels is nu beschikbaar", "Sara komt vrij in juni").
+  // Bij een inhoudelijke zoek-term (keyword/skill/technology/sector): per match
+  // ook match_strength (telling per profielveld) en excerpts (CV-fragmenten met
+  // hits) — geeft Nova pre-computed signalen voor ranking + quote-bewijs.
+  const criterion = pickPrimaryCriterion({ keyword, skill, technology, sector });
   return filtered.slice(0, 8).map(m => {
     const status = isAvailableNow(m)
       ? 'beschikbaar_nu'
       : (m.available_from ? `vrij_vanaf_${m.available_from}` : 'bezet_einddatum_onbekend');
-    return {
+    const result = {
       id: m.id,
       name: m.name,
       role: m.role,
@@ -473,6 +592,12 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
         description: (p.description || '').slice(0, 220),
       })),
     };
+    if (criterion) {
+      result.match_strength = computeMatchStrength(m, criterion);
+      result.excerpts = extractCvExcerpts(m.cv_text, criterion);
+      result.criterion = criterion;
+    }
+    return result;
   });
 }
 

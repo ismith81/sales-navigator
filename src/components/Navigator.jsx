@@ -12,6 +12,9 @@ import CasesOverview from './CasesOverview';
 import CardSectionTitle, { useCollapsibleSection } from './CardSectionTitle';
 import PersonaKompas from './PersonaKompas';
 import ChatPanel from './ChatPanel';
+import TeamMemberDetail from './TeamMemberDetail';
+import CaseDetailModal from './CaseDetailModal';
+import { listTeamMembers } from '../lib/teamMembers';
 import Login from './Login';
 
 const ROUTE_KEY = 'sn.route'; // 'assistent' | 'gids'
@@ -59,6 +62,14 @@ export default function Navigator() {
   }, [authLoading, session]);
 
   const [cases, setCases] = useState([]);
+  // Lichte lijst van team-leden (alleen id+name nodig in chat) voor klikbare
+  // namen in Nova's antwoorden. Zwaardere data wordt door TeamMemberDetail
+  // zelf opgehaald op het moment dat de modal opent.
+  const [teamMemberList, setTeamMemberList] = useState([]);
+  const [chatTeamMemberId, setChatTeamMemberId] = useState(null);
+  // Case-detail-modal getriggerd vanuit chat-link. Bewaren we als heel object
+  // (cases zit al in state, geen aparte fetch nodig).
+  const [chatCase, setChatCase] = useState(null);
   const [topics, setTopics] = useState({});
   const [filters, setFilters] = useState({ doelen: [], behoeften: [], diensten: [] });
   const [personas, setPersonas] = useState({});
@@ -183,6 +194,18 @@ export default function Navigator() {
         setLoadError(err.message || 'Kon data niet laden');
         setLoading(false);
       });
+    return () => { cancelled = true; };
+  }, [session]);
+
+  // Lichte team-leden-lijst voor klikbare namen in chat. Apart van loadAll
+  // omdat team_members buiten de standaard cases/topics/filters/personas-set
+  // valt; geen RLS-issue zolang er een sessie is.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    listTeamMembers()
+      .then(list => { if (!cancelled) setTeamMemberList(list || []); })
+      .catch(err => console.warn('[Navigator] team list load faalde:', err?.message));
     return () => { cancelled = true; };
   }, [session]);
 
@@ -669,13 +692,18 @@ export default function Navigator() {
               variant="inline"
               open
               cases={cases}
+              teamMembers={teamMemberList}
               initialPrompt={chatInitialPrompt}
               onPromptConsumed={() => setChatInitialPrompt(null)}
-              onNavigateToCase={(caseName) => {
-                changeRoute('gids');
-                setActiveFilter(null);
-                setSearchQuery(caseName);
+              onNavigateToCase={(caseObjOrName) => {
+                // ChatPanel geeft ofwel het hele case-object (gevonden in
+                // cases-prop), ofwel — als de match niet meer aanwezig was —
+                // de string. In dat laatste geval doen we geen modal-open.
+                if (caseObjOrName && typeof caseObjOrName === 'object') {
+                  setChatCase(caseObjOrName);
+                }
               }}
+              onNavigateToTeamMember={(memberId) => setChatTeamMemberId(memberId)}
               context={{
                 activeTab: null,
                 activeFilter: null,
@@ -800,6 +828,28 @@ export default function Navigator() {
 
       {/* Toast notification */}
       {toast && <div className="toast">{toast}</div>}
+
+      {/* Team-lid profiel-modal — getriggerd vanuit een klikbare naam in de
+          chat (Assistent-route). Buiten de route-conditional zodat 't ook
+          werkt als de gebruiker tijdens 't openen van de modal naar een
+          andere view scrollt. */}
+      {chatTeamMemberId && (
+        <TeamMemberDetail
+          memberId={chatTeamMemberId}
+          onClose={() => setChatTeamMemberId(null)}
+        />
+      )}
+
+      {/* Case-profiel-modal — getriggerd vanuit een klikbare case-naam in de
+          chat. Spiegel-pattern aan de team-member-modal: read-only weergave
+          binnen de chat-context, geen route-switch. */}
+      {chatCase && (
+        <CaseDetailModal
+          caseData={chatCase}
+          personas={personas}
+          onClose={() => setChatCase(null)}
+        />
+      )}
     </div>
   );
 }

@@ -68,21 +68,11 @@ export default function CaseCard({ caseData, matchReason }) {
         <div className="highlight-match" dangerouslySetInnerHTML={{ __html: matchReason }} />
       )}
 
-      <div className="section-title section-title--talking">Talking Points</div>
-      {caseData.talkingPoints.map((tp, i) => (
-        <div key={i} className="talking-point">
-          <span className="bullet">•</span>
-          <span>{tp}</span>
-        </div>
-      ))}
-
-      <div className="section-title section-title--followup">Vervolgvragen</div>
-      {caseData.followUps.map((q, i) => (
-        <div key={i} className="followup-question">
-          <span className="bullet">•</span>
-          <span>{q}</span>
-        </div>
-      ))}
+      {/* Talking points + vervolgvragen worden bewust NIET meer getoond op
+          case-niveau. Conceptueel horen ze bij Onderwerpen (topics in
+          app_config), niet bij cases. CaseEditor heeft daarvoor ook geen
+          invoer-velden meer; de DB-kolommen blijven als legacy bestaan
+          maar worden niet onderhouden. */}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { parseTemplate, generateDefaultTalkingPoints, generateDefaultFollowUps } from '../utils/parseTemplate';
+import { parseTemplate } from '../utils/parseTemplate';
 
 export default function ImportCase({ onImport }) {
   const fileRef = useRef(null);
@@ -22,14 +22,6 @@ export default function ImportCase({ onImport }) {
 
     try {
       const { caseData, rawText } = await parseTemplate(file);
-      
-      // Generate defaults for talking points and follow-ups
-      if (caseData.talkingPoints.length === 0) {
-        caseData.talkingPoints = generateDefaultTalkingPoints(caseData);
-      }
-      if (caseData.followUps.length === 0) {
-        caseData.followUps = generateDefaultFollowUps(caseData);
-      }
 
       setPreview(caseData);
       setStatus('Template geparsed — controleer de preview hieronder.');
