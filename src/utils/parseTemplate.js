@@ -162,8 +162,6 @@ export async function parseTemplate(file) {
     businessImpact: sections.businessImpact || '',
     mapping: { doelen, behoeften, diensten },
     matchReasons: { doelen: {}, behoeften: {}, diensten: {} },
-    _imported: true,
-    _importDate: new Date().toISOString(),
   };
 
   return { caseData, rawText };

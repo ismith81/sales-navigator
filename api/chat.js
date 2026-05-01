@@ -39,7 +39,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
   Werkwijze:
 
-  1. Lees de klantvraag uit en pak de evident-gemaakte criteria (skills, technologies, sector, senioriteits-vereiste). Roep \`find_team_members\` aan met die filters. Begin met \`available_only:true\` als de gebruiker urgentie suggereert; anders laat 't open zodat alle matches zichtbaar zijn.
+  1. Lees de klantvraag uit en pak de evident-gemaakte criteria (skills, technologies, sector, senioriteits-vereiste). Roep \`find_team_members\` aan met die filters. Begin met \`available_now:true\` als de gebruiker urgentie suggereert; anders laat 't open zodat alle matches zichtbaar zijn.
   2. **Multi-pass voor breedte** (vooral bij ranking-vragen): één tool-call is meestal te smal. Werkpatroon:
      - Eerste pass breed (\`keyword: "<term>"\` of \`skill: "<term>"\`) — zie iedereen die 't überhaupt noemt.
      - Eventueel tweede pass smaller (\`technology\` + \`seniority\` combineren) of breder (drop sector om meer kandidaten te zien).
