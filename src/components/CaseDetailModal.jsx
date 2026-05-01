@@ -35,10 +35,6 @@ export default function CaseDetailModal({ caseData, personas = {}, onClose }) {
     keywords = [],
     mapping = {},
   } = caseData;
-  // Note: caseData.talkingPoints / followUps zitten nog in 't DB-schema als
-  // legacy maar zijn NIET meer onderhouden via CaseEditor (geen invoer-velden
-  // meer). Talking points + vervolgvragen horen conceptueel bij Onderwerpen
-  // (topics in app_config), niet bij cases. Dus niet renderen in deze modal.
 
   const detailFields = [
     { key: 'situatie', label: 'Situatie', value: situatie },
