@@ -34,9 +34,11 @@ export default function CaseDetailModal({ caseData, personas = {}, onClose }) {
     businessImpact,
     keywords = [],
     mapping = {},
-    talkingPoints = [],
-    followUps = [],
   } = caseData;
+  // Note: caseData.talkingPoints / followUps zitten nog in 't DB-schema als
+  // legacy maar zijn NIET meer onderhouden via CaseEditor (geen invoer-velden
+  // meer). Talking points + vervolgvragen horen conceptueel bij Onderwerpen
+  // (topics in app_config), niet bij cases. Dus niet renderen in deze modal.
 
   const detailFields = [
     { key: 'situatie', label: 'Situatie', value: situatie },
@@ -114,24 +116,6 @@ export default function CaseDetailModal({ caseData, personas = {}, onClose }) {
                 <span key={kw} className="case-detail-keyword">{kw}</span>
               ))}
             </div>
-          </section>
-        )}
-
-        {talkingPoints.length > 0 && (
-          <section className="case-detail-section">
-            <h3 className="case-detail-h3">Talking points</h3>
-            <ul className="case-detail-list">
-              {talkingPoints.map((tp, i) => <li key={i}>{tp}</li>)}
-            </ul>
-          </section>
-        )}
-
-        {followUps.length > 0 && (
-          <section className="case-detail-section">
-            <h3 className="case-detail-h3">Vervolgvragen</h3>
-            <ul className="case-detail-list">
-              {followUps.map((q, i) => <li key={i}>{q}</li>)}
-            </ul>
           </section>
         )}
 
