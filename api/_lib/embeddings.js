@@ -1,14 +1,20 @@
-// Embedding-helper rondom Gemini's text-embedding-004 — gratis bij de
-// bestaande GEMINI_API_KEY, 768 dimensies, multilingual (NL/EN samen
-// werkt prima voor onze gemixte CV-content).
+// Embedding-helper rondom Gemini's embedding-001 — gratis bij de bestaande
+// GEMINI_API_KEY, 768 dimensies, multilingual (NL/EN samen werkt prima
+// voor onze gemixte CV-content).
 //
 // Pipeline-rol: server-side endpoints (embed-team-member.js,
 // embed-team-backfill.js) gebruiken deze helper om profielen te embedden;
 // find_team_members embedt de query-string en doet een vector-search.
+//
+// Model-keuze: text-embedding-004 was de eerste keuze maar geeft 404 op
+// het v1beta endpoint via de SDK. embedding-001 is de stabiele fallback
+// met dezelfde 768 dimensies — match met onze vector(768)-kolom.
+// Upgraden naar gemini-embedding-001 of -2 vereist outputDimensionality
+// of een schema-aanpassing (3072 dim default).
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const EMBED_MODEL = 'text-embedding-004';
+const EMBED_MODEL = 'embedding-001';
 const EMBED_DIMS = 768; // moet matchen met de vector(768)-kolom in DB
 
 // Bovengrens voor input-text — text-embedding-004 ondersteunt tot ~2048
