@@ -540,6 +540,18 @@ Senior-review-agent vond ~20 bevindingen; 7 quick wins gemerged in deze sessie:
 | #20 | embeddings: text-embedding-004 → embedding-001 (404-fix poging 1) |
 | #21 | embeddings: gemini-embedding-001 + outputDimensionality 768 (404-fix poging 2 — succes) |
 | #22 | Welcome-screen: soft-vraag-starter voor semantic-search demo |
+| #23 | Docs: Fase C pgvector — Instructies-tab + AGENTS.md sessie-status |
+| #24 | ChatPanel: microfoon-input via Web Speech API (NL-NL) |
+
+### Microfoon-input (#24)
+Sales kan nu hands-free vragen stellen of ruwe gespreksnotities inspreken via een mic-knop links van de send-knop in de chat-input-row. Werkt in Chrome, Edge en Safari (via webkit-prefix); knop verbergt zich in Firefox waar SpeechRecognition geen support heeft.
+
+- `src/lib/useSpeechRecognition.js` — React-hook met feature-detection, `continuous: true` + `interimResults: true`, `onFinalChunk`-callback voor commits naar parent. Refs voor recognition-instance en callback voorkomen re-init bij parent re-renders.
+- ChatPanel: hook geactiveerd met `lang: 'nl-NL'`, mic-knop met order: 0 (links). Final-chunks worden ge-append aan bestaande input (sales kan voortbouwen op getypte context). Live transcript verschijnt als placeholder tijdens opname.
+- CSS: `.chat-mic` met subtiele border default; `.chat-mic--rec` solid teal met `chat-mic-pulse`-keyframes tijdens opname.
+- UX-defaults: append (niet replace), geen auto-send, live preview in placeholder.
+
+Upgrade-pad als NL-kwaliteit teleurstelt voor sales-jargon: Whisper API (OpenAI) of Gemini Audio (zelfde GEMINI_API_KEY). Beide zijn server-side, hogere kwaliteit, meer latency (~2-5 sec).
 
 ### Bekende beperkingen / vervolgwerk
 - **Audit-backlog die nog open ligt** (vereisen testdekking om veilig op te ruimen): availability-duplicatie tussen `api/chat.js:480-498` (isAvailableNow/isAvailableBefore) en `src/lib/teamMembers.js:65` (getAvailabilityBucket); case-mapping refactor in store.js (5+ velden waarvan onduidelijk welke nog UI-relevant zijn).
