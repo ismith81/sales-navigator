@@ -293,3 +293,46 @@ export async function getCvPdfUrl(path, expiresIn = 60) {
   }
   return data?.signedUrl || null;
 }
+
+// ─── Semantic embedding ──────────────────────────────────────────────────
+// Trigger /api/embed-team-member voor een team-lid na save. Fire-and-forget:
+// de save-flow blijft werken ook als de embed faalt — het profiel verschijnt
+// dan alleen niet in semantic-zoek tot een succesvolle re-embed (handmatig
+// via Beheer → Team backfill-knop, of automatisch bij volgende save).
+export async function triggerEmbedTeamMember(memberId) {
+  if (!memberId) return;
+  try {
+    const res = await authedFetch('/api/embed-team-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      console.warn(`[teamMembers.triggerEmbedTeamMember] embedding faalde voor ${memberId}:`, json?.error || res.status);
+    }
+  } catch (err) {
+    // Network/fetch-fout — log maar laat save-flow verder gaan.
+    console.warn(`[teamMembers.triggerEmbedTeamMember] embedding-call faalde voor ${memberId}:`, err?.message || err);
+  }
+}
+
+// Backfill alle team-leden die nog geen embedding hebben (of álle als
+// force=true). Aangeroepen vanuit de Beheer → Team-knop. Returnt het
+// resultaat-object zodat de UI feedback kan tonen ("12/12 succesvol").
+export async function backfillTeamEmbeddings({ force = false } = {}) {
+  try {
+    const res = await authedFetch('/api/embed-team-backfill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { error: json?.error || `Server ${res.status}` };
+    }
+    return json; // { processed, succeeded, failed, errors? }
+  } catch (err) {
+    return { error: err?.message || 'Backfill-call faalde' };
+  }
+}
