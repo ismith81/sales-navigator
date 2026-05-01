@@ -9,6 +9,7 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 import { requireUser } from './_lib/auth.js';
+import { embedText, formatVectorForPostgres } from './_lib/embeddings.js';
 
 const SYSTEM_PROMPT = `Je bent Nova, de sales-assistent voor Creates — een data & analytics consultancy.
 Je helpt de gebruiker (sales) om zich voor te bereiden op klantgesprekken en erin te sparren.
@@ -36,10 +37,22 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   - **Match-vraag** ("wie heeft X?", "welke collega's passen bij Y?", "ik zoek iemand met Z"): brede selectie van geschikte kandidaten — een lijstje volstaat.
   - **Ranking-vraag, sub-type BREEDTE** ("wie heeft het **meest** met X gewerkt?", "wie heeft de meeste X-projecten gedaan?"): gebruiker wil zien wie 't criterium het vaakst toegepast heeft. Hier is project-telling dominant.
   - **Ranking-vraag, sub-type DIEPTE/SPECIALIST** ("wie is **dé** specialist op X?", "wie heeft de **diepste** kennis van Y?", "wie is onze **expert** op Z?"): gebruiker wil zien wie autoriteit/expert-status heeft. Hier wegen **senioriteit + kernskill + cross-reference cases dominant**, project-telling secundair. Een Senior of Expert met X in z'n kernskills heeft typisch jaren-diepte die niet in een platte project-telling zichtbaar is.
+  - **Soft/abstract-vraag** ("iemand die goed met klanten omgaat", "strategisch denker", "creatief in greenfield-projecten", "veel ervaring met lakehouse-architectuur"): geen exacte term in de canonical kernskills/technologies. Hier is **\`semantic_query\`** dominant — gebruik die i.p.v. \`keyword\`, want substring-match faalt op stijl-vragen en synoniemen. Combineer eventueel met structurele filters (bv. seniority of sector) om scherper resultaat te krijgen.
 
   Werkwijze:
 
   1. Lees de klantvraag uit en pak de evident-gemaakte criteria (skills, technologies, sector, senioriteits-vereiste). Roep \`find_team_members\` aan met die filters. Begin met \`available_now:true\` als de gebruiker urgentie suggereert; anders laat 't open zodat alle matches zichtbaar zijn.
+
+     **Wanneer \`semantic_query\` gebruiken** (i.p.v. of naast \`keyword\`/\`skill\`):
+     - Soft-vragen waar exacte termen niet vaststaan: *"iemand die goed met klanten omgaat"*, *"strategisch denker"*, *"creatief in greenfield"*. \`keyword\` zou hier op stijl-woorden moeten matchen — werkt zelden.
+     - Synoniemen / afkortingen die buiten de canonical lijst vallen: *"PBI"* voor Power BI, *"DWH"* voor datawarehouse. Embeddings vangen die associaties zonder dat je een synoniem-lijst hoeft bij te houden.
+     - Concept-zoek waar de gebruiker een idee beschrijft maar geen tag-naam: *"ervaring met datalakes-uitfasering"*, *"veel mensen-aansturen"*.
+     **Combineer met structurele filters** wanneer er ook harde criteria zijn (sector, seniority, availability) — dan krijg je het sterkste signaal: kandidaten die in BEIDE bronnen matchen verschijnen bovenaan met \`match_sources: ['structural','semantic']\`.
+
+     **\`match_sources\` interpretatie** (alleen aanwezig bij semantic_query):
+     - \`['structural','semantic']\` → sterkste match. Beide bronnen bevestigen.
+     - \`['structural']\` → matched op de harde filter, maar niet semantisch sterk. Kan een bredere match zijn.
+     - \`['semantic']\` → matched alléén op embedding-similarity. Zwakker signaal — kan een wilde match zijn als de score laag is. Toon de \`score\` (cosine similarity, 0-1, hoger = beter); onder ~0.5 is meestal toevallig.
   2. **Multi-pass voor breedte** (vooral bij ranking-vragen): één tool-call is meestal te smal. Werkpatroon:
      - Eerste pass breed (\`keyword: "<term>"\` of \`skill: "<term>"\`) — zie iedereen die 't überhaupt noemt.
      - Eventueel tweede pass smaller (\`technology\` + \`seniority\` combineren) of breder (drop sector om meer kandidaten te zien).
@@ -462,12 +475,24 @@ function computeMatchStrength(m, criterion) {
 }
 
 // ─── team_members tools ──────────────────────────────────────────────────
-// Zoekt consultants in 't Creates-team. Filter-velden mappen 1-op-1 op de
-// team_members-kolommen. Substring-match (case-insensitive) op skills/tech;
-// exacte match op sector (uit canonical lijst); free-text keyword zoekt
-// breder. Raw cv_text gaat NIET terug — privacy + token-budget. Vector/
-// semantic search op cv_text staat op de roadmap (Fase C — pgvector).
-async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword } = {}) {
+// Zoekt consultants in 't Creates-team. Twee zoek-modi die optioneel
+// gecombineerd kunnen worden:
+//
+//   1. STRUCTUREEL — filter op skill/technology/sector/seniority/keyword/
+//      availability. Substring-match (case-insensitive) op skills/tech;
+//      exacte match op sector (canonical lijst); free-text keyword zoekt
+//      breder over name/role/summary/etc.
+//
+//   2. SEMANTISCH — `semantic_query`-param triggert pgvector-search via
+//      embedding similarity. Voor soft/abstract-vragen waar exacte termen
+//      niet helpen ("iemand die goed met klanten omgaat", "strategisch
+//      denker"). Top-8 op cosine-similarity.
+//
+// Beide samen: union met match_sources-array per resultaat (`structural` /
+// `semantic` / beide). Kandidaten met dubbele match staan boven aan.
+//
+// Raw cv_text gaat NIET terug — privacy + token-budget.
+async function toolFindTeamMembers({ skill, technology, sector, seniority, available_now, available_before, keyword, semantic_query } = {}) {
   // Valideer available_before vóór DB-werk. Zonder deze check zou een
   // ongeldige string (bv. 'Q3' of 'next month') een Invalid Date opleveren
   // die in isAvailableBefore vervolgens élke kandidaat uit-filtert — Nova
@@ -487,6 +512,34 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
     .from('team_members')
     .select('id, name, role, seniority, kernskills, technologies, sectors, project_experience, certifications, summary, current_client, available_from');
   if (error) throw error;
+
+  // Semantic-search runt parallel aan structurele filter wanneer
+  // semantic_query is meegegeven. Resultaten worden hieronder gemerged.
+  // Score-map houdt de cosine-similarity per id voor sortering.
+  const semanticScores = new Map(); // id → similarity (0-1, hoger = beter)
+  if (semantic_query && typeof semantic_query === 'string' && semantic_query.trim()) {
+    try {
+      const queryEmbedding = await embedText(semantic_query.trim());
+      if (queryEmbedding) {
+        const { data: matches, error: rpcErr } = await supabase.rpc('match_team_members', {
+          query_embedding: formatVectorForPostgres(queryEmbedding),
+          match_count: 8,
+        });
+        if (rpcErr) {
+          console.warn('toolFindTeamMembers: match_team_members RPC fout:', rpcErr.message);
+        } else if (Array.isArray(matches)) {
+          for (const m of matches) {
+            if (m?.id && typeof m.similarity === 'number') {
+              semanticScores.set(m.id, m.similarity);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('toolFindTeamMembers: semantic embed fout:', err?.message || err);
+      // Tolerant-bij-fail: structurele filter draait sowieso door.
+    }
+  }
 
   const lc = (s) => (s || '').toLowerCase();
   const arrIncludesIC = (arr, q) => (arr || []).some(x => lc(x).includes(lc(q)));
@@ -543,7 +596,9 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
   // Bij een inhoudelijke zoek-term (keyword/skill/technology/sector): per match
   // ook match_strength (pre-computed counts uit certifications + project_experience).
   const criterion = pickPrimaryCriterion({ keyword, skill, technology, sector });
-  return filtered.slice(0, 8).map(m => {
+
+  // Helper om een team-member naar de output-shape te mappen.
+  const toResult = (m, extras = {}) => {
     const status = isAvailableNow(m)
       ? 'beschikbaar_nu'
       : (m.available_from ? `vrij_vanaf_${m.available_from}` : 'bezet_einddatum_onbekend');
@@ -565,13 +620,58 @@ async function toolFindTeamMembers({ skill, technology, sector, seniority, avail
         role: p.role,
         description: (p.description || '').slice(0, 220),
       })),
+      ...extras,
     };
     if (criterion) {
       result.match_strength = computeMatchStrength(m, criterion);
       result.criterion = criterion;
     }
     return result;
+  };
+
+  // Twee flows:
+  //   (a) Geen semantic-resultaten → bestaande gedrag, geen match_sources.
+  //   (b) Wel semantic-resultaten → union met match_sources per kandidaat,
+  //       gesorteerd op (beide bronnen > structureel-only > semantisch-only),
+  //       binnen elke rang op semantische score desc.
+  if (semanticScores.size === 0) {
+    return filtered.slice(0, 8).map(m => toResult(m));
+  }
+
+  const structuralIds = new Set(filtered.map(m => m.id));
+  const allMembersById = new Map((data || []).map(m => [m.id, m]));
+  const allIds = new Set([...structuralIds, ...semanticScores.keys()]);
+
+  const candidates = [];
+  for (const id of allIds) {
+    const m = allMembersById.get(id);
+    if (!m) continue;
+    const sources = [];
+    if (structuralIds.has(id)) sources.push({ source: 'structural' });
+    if (semanticScores.has(id)) {
+      sources.push({ source: 'semantic', score: Number(semanticScores.get(id).toFixed(3)) });
+    }
+    candidates.push({ member: m, sources });
+  }
+
+  const rankOf = (entry) => {
+    const has = new Set(entry.sources.map(s => s.source));
+    if (has.has('structural') && has.has('semantic')) return 0;
+    if (has.has('structural')) return 1;
+    return 2; // semantisch-only
+  };
+  candidates.sort((a, b) => {
+    const ra = rankOf(a);
+    const rb = rankOf(b);
+    if (ra !== rb) return ra - rb;
+    const sa = a.sources.find(s => s.source === 'semantic')?.score ?? 0;
+    const sb = b.sources.find(s => s.source === 'semantic')?.score ?? 0;
+    return sb - sa;
   });
+
+  return candidates.slice(0, 8).map(({ member: m, sources }) =>
+    toResult(m, { match_sources: sources })
+  );
 }
 
 // Volledige profiel-fetch op naam (fuzzy). Geen cv_text/cv_pdf-info terug
@@ -1154,7 +1254,7 @@ const tools = [
       },
       {
         name: 'find_team_members',
-        description: 'Zoek consultants in het Creates-team voor een klantvraag of skill-match. Filter op skill, technology, sector, senioriteit en/of beschikbaarheid (nu of vóór een datum). Gebruik dit als de gebruiker vraagt "wie heeft X-ervaring?" of "welke collega past bij deze klantvraag?" of bij een tender/RFP-match. Retourneert top 8 matches inclusief availability_status (beschikbaar_nu / vrij_vanaf_YYYY-MM-DD / bezet_einddatum_onbekend) zodat je de bucket per consultant in je antwoord kunt benoemen.',
+        description: 'Zoek consultants in het Creates-team voor een klantvraag of skill-match. Twee zoek-modi (combineerbaar): structureel via skill/technology/sector/seniority/keyword/availability, of semantisch via semantic_query (voor soft/abstract-vragen waar exacte termen niet helpen — "iemand die goed met klanten omgaat", "strategisch denker"). Resultaten met match_sources-array (`structural` / `semantic` / beide). Retourneert top 8 inclusief availability_status (beschikbaar_nu / vrij_vanaf_YYYY-MM-DD / bezet_einddatum_onbekend).',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
@@ -1164,7 +1264,8 @@ const tools = [
             seniority: { type: SchemaType.STRING, description: 'Een van: "Starter", "Young Professional", "Professional", "Senior", "Expert".' },
             available_now: { type: SchemaType.BOOLEAN, description: 'true = alleen direct-beschikbare consultants (geen current_client, of available_from is verleden). Default false (toont alle matches; sales kan zelf prioriteren op de availability_status in het antwoord).' },
             available_before: { type: SchemaType.STRING, description: 'ISO-datum YYYY-MM-DD. Filter op consultants die uiterlijk op deze datum vrijkomen (incl. nu-beschikbaren). Bv. "2026-07-01" voor "tegen Q3". Bezet-einddatum-onbekend valt automatisch buiten deze filter.' },
-            keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord — zoekt door naam, rol, samenvatting, projectervaring, certificaten. Handig voor specifieke termen die niet als skill/tech zijn ge-tagd (bv. "klantportaal", "embedded BI").' },
+            keyword: { type: SchemaType.STRING, description: 'Vrij trefwoord (substring-match) — zoekt door naam, rol, samenvatting, projectervaring, certificaten. Voor specifieke termen die niet als skill/tech zijn ge-tagd (bv. "klantportaal", "embedded BI"). NIET gebruiken voor soft/abstract-vragen — daarvoor is semantic_query.' },
+            semantic_query: { type: SchemaType.STRING, description: 'Soft/abstract zoekvraag waar exacte termen niet helpen. Doet semantic-search via embeddings over alle profielvelden (kernskills, technologies, projectervaring, summary, cv_text). Gebruik voor: stijl-vragen ("iemand die goed met klanten omgaat", "strategisch denker"), greenfield/architectuur-fit ("ervaring met groene-weide-projecten", "lakehouse-pionier"), synoniemen die buiten de canonical lijst vallen ("PBI" voor Power BI). Combineer met structurele filters voor scherper resultaat. Per match komt een match_sources-array terug (structural/semantic/beide) zodat je weet welke kandidaten op welke grond geselecteerd zijn.' },
           },
         },
       },

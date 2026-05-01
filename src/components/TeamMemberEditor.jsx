@@ -6,6 +6,7 @@ import {
   parseCvPdf,
   uploadCvPdf,
   getCvPdfUrl,
+  triggerEmbedTeamMember,
 } from '../lib/teamMembers';
 
 // Editor voor één team-member-profiel. Gebruikt zowel voor "+ Nieuw" (memberId=null)
@@ -262,6 +263,13 @@ export default function TeamMemberEditor({ memberId, prefill, branches = [], onC
         return;
       }
       await updateTeamMember(activeId, { cv_pdf_path: upRes.path });
+    }
+
+    // Auto-embed na succesvolle save (fire-and-forget). De save zelf is al
+    // afgerond op dit punt; embedding-fail blokkeert de UX niet — profiel
+    // verschijnt alleen niet in semantic-search tot een succesvolle re-embed.
+    if (activeId) {
+      triggerEmbedTeamMember(activeId);
     }
 
     setSaving(false);

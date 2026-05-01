@@ -2607,6 +2607,57 @@ body::before {
   color: var(--accent, #ED174B);
   border: 1px solid rgba(237,23,75,0.22);
 }
+
+/* Embeddings-onderhoud — collapsed sectie onderin team-actions. Sporadische
+   actie (backfill na initial setup), dus visueel ondergeschikt aan de
+   primaire +knoppen. */
+.team-embed-bar {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.85rem;
+}
+.team-embed-bar > summary {
+  cursor: pointer;
+  color: var(--text-light, #5a6b82);
+  padding: 0.35rem 0;
+  user-select: none;
+}
+.team-embed-bar > summary:hover {
+  color: var(--navy);
+}
+.team-embed-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+.team-embed-bar-hint {
+  margin: 0.55rem 0 0;
+  color: var(--text-light, #5a6b82);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.team-embed-status {
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+.team-embed-status--busy {
+  background: rgba(49,183,185,0.08);
+  color: var(--teal);
+}
+.team-embed-status--ok {
+  background: rgba(43,179,108,0.10);
+  color: #1f8a52;
+}
+.team-embed-status--partial {
+  background: rgba(240,163,58,0.10);
+  color: #b76b16;
+}
+.team-embed-status--error {
+  background: rgba(237,23,75,0.06);
+  color: var(--accent, #ED174B);
+}
 .team-empty {
   padding: 1.5rem 1.2rem;
   text-align: center;

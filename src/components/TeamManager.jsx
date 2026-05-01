@@ -7,6 +7,7 @@ import {
   uploadCvPdf,
   listBranches,
   getAvailabilityBucket,
+  backfillTeamEmbeddings,
 } from '../lib/teamMembers';
 import TeamMemberEditor from './TeamMemberEditor';
 
@@ -21,6 +22,7 @@ export default function TeamManager() {
   const [editingPrefill, setEditingPrefill] = useState(null);
   const [parseStatus, setParseStatus] = useState(null);
   const [parseError, setParseError] = useState(null);
+  const [embedStatus, setEmbedStatus] = useState(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -84,6 +86,31 @@ export default function TeamManager() {
     if (didSave) await refresh();
   };
 
+  // Backfill van semantic-embeddings — handmatige knop voor wanneer er
+  // profielen zonder embedding zijn (na de SQL-migratie of als ooit een
+  // auto-embed faalde tijdens save). Default = alleen profielen zonder
+  // embedding; force=true herrekent álle embeddings.
+  const handleEmbedBackfill = async ({ force = false } = {}) => {
+    setEmbedStatus({ kind: 'busy', message: force ? 'Alle profielen opnieuw embedden…' : 'Profielen zonder embedding ophalen + embedden…' });
+    const res = await backfillTeamEmbeddings({ force });
+    if (res?.error) {
+      setEmbedStatus({ kind: 'error', message: `Backfill faalde: ${res.error}` });
+      return;
+    }
+    const { processed = 0, succeeded = 0, failed = 0, errors = [], message } = res || {};
+    if (processed === 0) {
+      setEmbedStatus({ kind: 'ok', message: message || 'Niets te embedden.' });
+      return;
+    }
+    const errSummary = errors.length
+      ? ` Fouten: ${errors.slice(0, 3).map(e => `${e.name || e.id}: ${e.error}`).join('; ')}${errors.length > 3 ? '…' : ''}`
+      : '';
+    setEmbedStatus({
+      kind: failed > 0 ? 'partial' : 'ok',
+      message: `Embeddings: ${succeeded}/${processed} succesvol${failed > 0 ? `, ${failed} faalde` : ''}.${errSummary}`,
+    });
+  };
+
   if (editingId !== null) {
     return (
       <TeamMemberEditor
@@ -115,6 +142,43 @@ export default function TeamManager() {
           {parseStatus}
         </div>
       )}
+
+      {/* Embedding-onderhoud — collapsed sectie omdat 't een sporadische actie is.
+          Bij eerste setup: knop gebruiken om alle 12 profielen te embedden.
+          Daarna doen saves het zelf automatisch (fire-and-forget). */}
+      <details className="team-embed-bar">
+        <summary>🧠 Semantic embeddings (geavanceerd)</summary>
+        <div className="team-embed-bar-actions">
+          <button
+            type="button"
+            className="btn-add-small"
+            onClick={() => handleEmbedBackfill({ force: false })}
+            disabled={embedStatus?.kind === 'busy'}
+          >
+            {embedStatus?.kind === 'busy' ? '⏳ Bezig…' : 'Embed ontbrekende profielen'}
+          </button>
+          <button
+            type="button"
+            className="btn-add-small btn-add-small--secondary"
+            onClick={() => handleEmbedBackfill({ force: true })}
+            disabled={embedStatus?.kind === 'busy'}
+            title="Herrekent alle embeddings — gebruik na grote profiel-updates of model-wissel"
+          >
+            Herbouw alle embeddings
+          </button>
+          {embedStatus && (
+            <div className={`team-embed-status team-embed-status--${embedStatus.kind}`}>
+              {embedStatus.message}
+            </div>
+          )}
+        </div>
+        <p className="team-embed-bar-hint">
+          Embeddings maken Nova's <em>semantic_query</em> mogelijk — voor soft-vragen
+          zoals "iemand die goed met klanten omgaat" of synoniemen die niet in de
+          kernskills-lijst staan. Nieuwe of gewijzigde profielen worden automatisch
+          ge-embed bij save; deze knoppen zijn voor backfill of reparatie.
+        </p>
+      </details>
 
       {loading ? (
         <div className="team-empty">Laden…</div>
