@@ -578,7 +578,7 @@ async function toolGetTeamMember({ name } = {}) {
 
   const norm = (s) => (s || '')
     .toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip diacritics
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // strip diacritics
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
