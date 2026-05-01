@@ -407,6 +407,20 @@ export async function exportCaseToDocx(caseData, filters) {
   });
 
   const blob = await Packer.toBlob(doc);
-  const filename = `case-${caseData.id || caseData.name.toLowerCase().replace(/\s+/g, '-')}.docx`;
+  const filename = `case-${slugify(caseData.name) || caseData.id || 'export'}.docx`;
   saveAs(blob, filename);
+}
+
+// Maakt een nette URL/filename-vriendelijke slug van een case-naam.
+// Gebruikt voor docx-export-bestandsnamen. Voorrang voor name boven id
+// omdat een nieuwe (nog niet opgeslagen) case een placeholder-id heeft
+// als 'nieuwe-case-1776612093326' — daar wil de gebruiker geen export
+// mee. Diacritics worden gestript zodat 'AkzoNobel-Latam' netjes blijft.
+function slugify(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip combining-marks (diacritics, explicit unicode for source-stability)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
