@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FILTERS as DEFAULT_FILTERS } from '../data/filters';
+import { DEFAULT_FILTERS } from '../data/filters';
 import RichTextEditor from './RichTextEditor';
 import { exportCaseToDocx } from '../utils/exportCase';
 import { PersonaIcon } from '../lib/personaIcons.jsx';
@@ -186,7 +186,7 @@ export default function CaseEditor({ caseData, filters: dynamicFilters, personas
           <button
             type="button"
             className="ce-topbar-btn ce-topbar-export"
-            onClick={() => exportCaseToDocx({ ...caseData, ...form })}
+            onClick={() => exportCaseToDocx({ ...caseData, ...form }, FILTERS)}
             aria-label="Exporteer als .docx"
           >
             <span aria-hidden="true">📄</span>

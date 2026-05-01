@@ -4,9 +4,6 @@ export const DEFAULT_FILTERS = {
   diensten: ['Data modernisatie', 'Governance', 'Data kwaliteit', 'Training'],
 };
 
-// Kept for backward compat — components should use the dynamic filters prop instead
-export const FILTERS = DEFAULT_FILTERS;
-
 export const TAB_CONFIG = {
   doelen: { label: 'Doelen', singular: 'doel' },
   behoeften: { label: 'Behoeften', singular: 'behoefte' },

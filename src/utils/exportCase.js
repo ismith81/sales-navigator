@@ -3,7 +3,7 @@ import {
   AlignmentType, BorderStyle, WidthType, ShadingType,
 } from 'docx';
 import { saveAs } from 'file-saver';
-import { FILTERS } from '../data/filters';
+import { DEFAULT_FILTERS } from '../data/filters';
 
 // === House style (gelijk aan build_case_template.py / src/styles/index.css) ===
 const NAVY = '2C3C52';
@@ -310,18 +310,24 @@ function mappingTable(options, accentColor, filledMapping, reasons, col1Header, 
   });
 }
 
-function mappingSection(caseData) {
+function mappingSection(caseData, filters) {
   const m = caseData.mapping || {};
   const reasons = caseData.matchReasons || {};
+  // Gebruik dynamische filters uit Supabase (via app_config) zodat
+  // hernoemde / toegevoegde / verwijderde doelen-behoeften-diensten in de
+  // export verschijnen, niet de gehardcodeerde defaults. Fallback op
+  // DEFAULT_FILTERS alleen als de caller niets meegeeft (eerste-run
+  // fallback / tests).
+  const f = filters || DEFAULT_FILTERS;
   return [
     mappingHeader('Doelen', DOELEN_COLOR),
-    mappingTable(FILTERS.doelen, DOELEN_COLOR, m.doelen, reasons.doelen,
+    mappingTable(f.doelen || [], DOELEN_COLOR, m.doelen, reasons.doelen,
       'Doel', 'Toelichting (optioneel)'),
     mappingHeader('Behoeften', BEHOEFTEN_COLOR),
-    mappingTable(FILTERS.behoeften, BEHOEFTEN_COLOR, m.behoeften, reasons.behoeften,
+    mappingTable(f.behoeften || [], BEHOEFTEN_COLOR, m.behoeften, reasons.behoeften,
       'Behoefte', 'Hoe komt dit terug in de case?'),
     mappingHeader('Diensten', DIENSTEN_COLOR),
-    mappingTable(FILTERS.diensten, DIENSTEN_COLOR, m.diensten, reasons.diensten,
+    mappingTable(f.diensten || [], DIENSTEN_COLOR, m.diensten, reasons.diensten,
       'Dienst', 'Hoe is dit ingevuld?'),
   ];
 }
@@ -330,7 +336,11 @@ function spacer() {
   return new Paragraph({ spacing: { after: 0 }, children: [new TextRun({ text: '' })] });
 }
 
-export async function exportCaseToDocx(caseData) {
+// `filters` is de live doelen/behoeften/diensten-set uit Supabase
+// (app_config). Optioneel — bij ontbreken valt mappingSection terug op
+// DEFAULT_FILTERS. Geef 'm altijd door vanuit de UI zodat user-renames
+// in Beheer ook in de export verschijnen.
+export async function exportCaseToDocx(caseData, filters) {
   const fields = [
     { label: 'Situatie', key: 'situatie', accent: null,
       placeholder: '[Wat was het probleem of de ambitie van de klant? Beschrijf de uitgangssituatie.]' },
@@ -381,7 +391,7 @@ export async function exportCaseToDocx(caseData) {
       { italic: true, size: 20, color: MUTED }
     )],
   }));
-  children.push(...mappingSection(caseData));
+  children.push(...mappingSection(caseData, filters));
 
   const doc = new Document({
     styles: { default: { document: { run: { font: FONT, size: 20 } } } },
