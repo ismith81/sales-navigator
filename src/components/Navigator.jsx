@@ -157,18 +157,33 @@ export default function Navigator() {
   // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
   // (bijna scrollY 0) komt hij terug. Geldt zowel desktop als mobile.
+  //
+  // Listener gebruikt capture-mode zodat scroll-events vanuit ELKE scrollable
+  // container meegevangen worden — niet alleen window. De Assistent-route
+  // scrollt intern in .chat-messages (chat-panel is height-constrained), dus
+  // window.scrollY blijft daar op 0 staan; we pakken de scrollTop van de
+  // bron-container en gebruiken die als drempel-waarde.
   useEffect(() => {
-    const updateSubnavVisibility = () => {
-      const y = window.scrollY;
+    const updateSubnavVisibility = (e) => {
+      let y;
+      const target = e?.target;
+      if (target && target !== document && target !== window && typeof target.scrollTop === 'number') {
+        y = target.scrollTop;
+      } else {
+        y = window.scrollY;
+      }
       setShowTopbarSubnav((prev) => {
         if (prev) return y < 32;
         return y < 12;
       });
     };
     updateSubnavVisibility();
-    window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
+    // capture: true zodat ook scroll-events op nested elementen (chat-messages,
+    // case-detail-overlay, etc.) deze listener bereiken — anders bubble'n
+    // scroll-events niet vanaf intern-scrollable containers.
+    window.addEventListener('scroll', updateSubnavVisibility, { passive: true, capture: true });
     return () => {
-      window.removeEventListener('scroll', updateSubnavVisibility);
+      window.removeEventListener('scroll', updateSubnavVisibility, { capture: true });
     };
   }, []);
 
