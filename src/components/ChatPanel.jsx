@@ -32,22 +32,24 @@ const QUICK_PROMPT_GROUPS = [
     label: 'Voor het gesprek',
     items: [
       'Maak een briefing over Bol.com',
-      'Bereid een CFO-gesprek voor over dataplatform-migratie',
-      'Speel de IT-manager van een bank en val me aan op governance',
+      'Bereid CFO-gesprek voor over dataplatform-migratie',
+      'Speel IT-manager — val me aan op governance',
     ],
   },
   {
     label: 'Team-match',
     items: [
-      'Welke collega past het best bij een Microsoft Fabric-traject in retail? Geef top 3 met motivatie.',
-      'Schrijf een klantgerichte pitch voor Niels van Velthoven voor een Power BI-traject',
+      'Wie heeft kennis van Power BI?',
+      'Wie is dé specialist op datamodellering?',
+      'Wie is beschikbaar per juli 2026?',
+      'Welke cases heeft Niels gedaan?',
     ],
   },
   {
     label: 'Na het gesprek',
     items: [
-      'Maak van deze gespreksnotities een follow-up mail',
-      'Haal uit deze notes een actielijst met eigenaar en volgende stap',
+      'Maak een follow-up mail van deze notities',
+      'Actielijst uit deze notes',
     ],
   },
 ];
@@ -728,8 +730,8 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], tea
             <div className="chat-welcome">
               <div className="chat-welcome-intro">
                 <p>
-                  <span className="chat-welcome-copy-desktop">Hoi, ik ben <strong>Nova</strong> — ik help je vóór én na een klantgesprek en werk met jullie cases, topics en persona’s. Stel een vraag, plak je notities, of kies een starter:</span>
-                  <span className="chat-welcome-copy-mobile">Hoi, ik ben <strong>Nova</strong>. Ik help je vóór én na klantgesprekken met jullie cases, topics en persona’s.</span>
+                  <span className="chat-welcome-copy-desktop">Stel een vraag of kies een starter:</span>
+                  <span className="chat-welcome-copy-mobile">Stel een vraag of kies een starter:</span>
                 </p>
               </div>
               <div className="chat-quickgroups">
