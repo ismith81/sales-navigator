@@ -1814,7 +1814,11 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  /* Boven topbar (1100) en chat-panel (1000). Zonder dit zat de
+     overlay-z-index op 100 wat zichtbaar werd als "twee grijze balken
+     aan de zijkant" terwijl de modal-box achter de chat-content
+     verstopt zat. */
+  z-index: 1200;
   animation: fadeIn 0.15s ease;
 }
 
