@@ -39,7 +39,8 @@ const QUICK_PROMPT_GROUPS = [
   {
     label: 'Team-match',
     items: [
-      'Wie heeft kennis van Power BI?',
+      'Wie heeft Power BI?',
+      'Wie kan goed met stakeholders omgaan?',
       'Wie is dé specialist op datamodellering?',
       'Wie is beschikbaar per juli 2026?',
       'Welke cases heeft Niels gedaan?',
