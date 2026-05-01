@@ -1121,7 +1121,9 @@ body::before {
      padding snappen instant naar 0 in .is-hidden — de opacity-fade verbergt
      die snap zodat het 't oog niet opvalt. */
   will-change: opacity;
-  transition: opacity 0.18s ease;
+  /* Iets ruimer dan voorheen (0.18s → 0.28s) voor een smoothere fade.
+     Material-stijl ease-curve geeft een natuurlijkere acceleratie. */
+  transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .topbar-subnav-row.is-hidden {
   min-height: 0;
