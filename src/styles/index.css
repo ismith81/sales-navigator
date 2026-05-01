@@ -4929,6 +4929,24 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   color: var(--navy);
 }
 .chat-msg--assistant .chat-msg-bubble a { color: var(--teal); text-decoration: underline; }
+
+/* Blockquote — gebruikt voor letterlijke fragmenten uit bronnen
+   (CV-excerpts in team-match, web-citaten in briefings, etc.). Subtiele
+   teal linker-border + zachte tint zet 't visueel apart van de prose
+   zonder zwaar te ogen. */
+.chat-msg--assistant .chat-msg-bubble blockquote {
+  margin: 0.55em 0;
+  padding: 0.5em 0.85em;
+  border-left: 3px solid var(--teal);
+  background: rgba(49, 183, 185, 0.06);
+  border-radius: 0 8px 8px 0;
+  color: var(--navy);
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+.chat-msg--assistant .chat-msg-bubble blockquote > *:first-child { margin-top: 0; }
+.chat-msg--assistant .chat-msg-bubble blockquote > *:last-child { margin-bottom: 0; }
+.chat-msg--assistant .chat-msg-bubble blockquote p { margin: 0; }
 .chat-context-used {
   display: flex;
   align-items: center;
