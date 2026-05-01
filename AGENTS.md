@@ -542,6 +542,10 @@ Senior-review-agent vond ~20 bevindingen; 7 quick wins gemerged in deze sessie:
 | #22 | Welcome-screen: soft-vraag-starter voor semantic-search demo |
 | #23 | Docs: Fase C pgvector — Instructies-tab + AGENTS.md sessie-status |
 | #24 | ChatPanel: microfoon-input via Web Speech API (NL-NL) |
+| #25 | AGENTS.md: PR #23 + #24 toegevoegd aan sessie-status |
+| #26 | Mobile: subnav scroll-hide gedeactiveerd (te streng — zie #27) |
+| #27 | Mobile: scroll-hide weer aanzetten (uniform desktop+mobile) |
+| #28 | Subnav: scroll-listener vangt nested containers + smoother fade |
 
 ### Microfoon-input (#24)
 Sales kan nu hands-free vragen stellen of ruwe gespreksnotities inspreken via een mic-knop links van de send-knop in de chat-input-row. Werkt in Chrome, Edge en Safari (via webkit-prefix); knop verbergt zich in Firefox waar SpeechRecognition geen support heeft.
@@ -552,6 +556,15 @@ Sales kan nu hands-free vragen stellen of ruwe gespreksnotities inspreken via ee
 - UX-defaults: append (niet replace), geen auto-send, live preview in placeholder.
 
 Upgrade-pad als NL-kwaliteit teleurstelt voor sales-jargon: Whisper API (OpenAI) of Gemini Audio (zelfde GEMINI_API_KEY). Beide zijn server-side, hogere kwaliteit, meer latency (~2-5 sec).
+
+### Mobile subnav-iteraties (#26 → #27 → #28)
+Drie PR's om de subnav scroll-hide netjes op alle routes te krijgen:
+
+- **#26 (mis-step)**: `matchMedia('(max-width: 768px)')`-gate forceerde altijd `showTopbarSubnav=true` op mobile. Loste de oorspronkelijke "subnav initieel verstopt"-klacht op maar verbrak het scroll-hide-gedrag dat user juist wel wilde behouden.
+- **#27 (revert)**: gate verwijderd, scroll-hide weer uniform desktop + mobile (`scrollY < 32` zichtbaar, `< 12` re-show).
+- **#28 (echte fix)**: scroll-listener gebruikt nu `{ capture: true }` + `e.target.scrollTop` zodat scroll-events vanuit interne scrollable containers (bv. `.chat-messages` op de Assistent-route — chat-panel scrollt intern, window niet) ook worden gevangen. Eerder verdween de subnav nooit op de Nova-route. Plus animatie: `transition: opacity 0.18s ease` → `0.28s cubic-bezier(0.4, 0, 0.2, 1)` voor een natuurlijkere fade.
+
+Lessons-learned: bij scroll-gerelateerd UI-gedrag in een chat-app is window-scroll niet voldoende — de hoofd-content kan in een nested container scrollen. Capture-mode is daar de juiste oplossing.
 
 ### Bekende beperkingen / vervolgwerk
 - **Audit-backlog die nog open ligt** (vereisen testdekking om veilig op te ruimen): availability-duplicatie tussen `api/chat.js:480-498` (isAvailableNow/isAvailableBefore) en `src/lib/teamMembers.js:65` (getAvailabilityBucket); case-mapping refactor in store.js (5+ velden waarvan onduidelijk welke nog UI-relevant zijn).
