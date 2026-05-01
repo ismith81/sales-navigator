@@ -93,7 +93,16 @@ export default function CaseDetailModal({ caseData, personas = {}, onClose }) {
         {detailFields.map(({ key, label, value }) => (
           <section key={key} className="case-detail-section">
             <h3 className="case-detail-h3">{label}</h3>
-            <p className="case-detail-text">{value}</p>
+            {/* Velden situatie/doel/oplossing/resultaat/businessImpact worden in
+                CaseEditor via RichTextEditor opgeslagen — dat is HTML (paragrafen,
+                lijsten, vetgedrukt). Renderen via dangerouslySetInnerHTML zodat
+                de opmaak zichtbaar wordt; admin-content uit een gecontroleerde
+                editor (XSS-risico is laag, zelfde aanpak als CaseCard's
+                match_reason). */}
+            <div
+              className="case-detail-rich"
+              dangerouslySetInnerHTML={{ __html: value }}
+            />
           </section>
         ))}
 

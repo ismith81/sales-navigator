@@ -3515,6 +3515,24 @@ body::before {
   color: var(--navy);
   white-space: pre-line; /* respecteer paragrafen in bv. situatie/oplossing */
 }
+/* Rich-text-rendering — situatie/doel/oplossing/resultaat/businessImpact
+   komen als HTML uit RichTextEditor. Default browser-styling resulteert
+   in te grote spacings binnen de modal, dus subtiele override op p/ul/ol/
+   strong/em. */
+.case-detail-rich {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.case-detail-rich > *:first-child { margin-top: 0; }
+.case-detail-rich > *:last-child { margin-bottom: 0; }
+.case-detail-rich p { margin: 0 0 0.55em; }
+.case-detail-rich ul,
+.case-detail-rich ol { margin: 0 0 0.55em; padding-left: 1.25em; }
+.case-detail-rich li { margin-bottom: 0.15em; }
+.case-detail-rich strong { font-weight: 700; }
+.case-detail-rich em { font-style: italic; }
+.case-detail-rich a { color: var(--teal); text-decoration: underline; }
 .case-detail-tags {
   display: flex;
   flex-wrap: wrap;
@@ -5320,7 +5338,9 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   resize: none;
   border: 1px solid #d4d9de;
   border-radius: 10px;
-  padding: 0.55rem 0.75rem;
+  /* Iets meer right-padding zodat de (dunne) scrollbar binnen de
+     padding-area valt en niet over de afgeronde focus-border tekent. */
+  padding: 0.55rem 0.95rem 0.55rem 0.75rem;
   font-family: inherit;
   font-size: 0.9rem;
   color: var(--navy);
@@ -5328,7 +5348,20 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
   max-height: 120px;
   outline: none;
   transition: border-color 0.15s ease;
+  /* Firefox: dunne scrollbar in subtiele kleur. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(44, 60, 82, 0.25) transparent;
 }
+/* WebKit/Chromium: maak de native scrollbar dun en transparant zodat 'ie
+   binnen de border-radius valt — voorkomt dat de scrollbar visueel een
+   gat in de focus-border slaat. */
+.chat-input::-webkit-scrollbar { width: 6px; }
+.chat-input::-webkit-scrollbar-track { background: transparent; }
+.chat-input::-webkit-scrollbar-thumb {
+  background-color: rgba(44, 60, 82, 0.25);
+  border-radius: 3px;
+}
+.chat-input::-webkit-scrollbar-thumb:hover { background-color: rgba(44, 60, 82, 0.4); }
 .chat-input:focus { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(49,183,185,0.18); }
 .chat-send {
   order: 2;
