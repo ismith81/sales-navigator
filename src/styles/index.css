@@ -5433,6 +5433,46 @@ button.card-section-title:hover .card-section-title-icon { color: var(--teal); }
 .chat-send:hover:not(:disabled) { background: #2aa1a3; }
 .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Mic-knop voor speech-to-text — links van send-knop in de input-row.
+   Order: 0 zodat 'ie vóór textarea (order 1) en send (order 2) komt
+   dankzij flex-direction default = row.
+   Niet-actief: subtiel grijs (geen primaire actie). Actief: pulserend
+   teal zodat user weet dat 'ie luistert. */
+.chat-mic {
+  order: 0;
+  background: transparent;
+  border: 1px solid #d4d9de;
+  color: var(--text-light, #5a6b82);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chat-mic:hover {
+  background: rgba(49, 183, 185, 0.06);
+  border-color: var(--teal);
+  color: var(--teal);
+}
+.chat-mic--rec {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+  animation: chat-mic-pulse 1.4s ease-in-out infinite;
+}
+.chat-mic--rec:hover {
+  background: #2aa1a3;
+  color: #fff;
+}
+@keyframes chat-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(49, 183, 185, 0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(49, 183, 185, 0); }
+}
+
 /* Mobiel: bottom-sheet i.p.v. side-panel. */
 @media (max-width: 640px) {
   .topbar-chat-label { display: none; }

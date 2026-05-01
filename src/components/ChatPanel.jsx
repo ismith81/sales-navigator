@@ -13,6 +13,7 @@ import {
   setActiveSessionId,
 } from '../lib/chatHistory';
 import { getCvPdfUrl } from '../lib/teamMembers';
+import { useSpeechRecognition } from '../lib/useSpeechRecognition';
 import ChatSidebar from './ChatSidebar';
 
 const SIDEBAR_COLLAPSE_KEY = 'sn.chatSidebar';
@@ -229,6 +230,24 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], tea
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // Speech-to-text — mic-knop in de chat-input-row. Final-chunks worden
+  // append'd aan de bestaande input zodat user kan voortbouwen op
+  // getypte context. Knop wordt niet getoond als de browser geen
+  // SpeechRecognition heeft (Firefox).
+  const { isSupported: micSupported, isListening, transcript: liveTranscript, error: micError, start: startMic, stop: stopMic } = useSpeechRecognition({
+    lang: 'nl-NL',
+    onFinalChunk: (chunk) => {
+      setInput(prev => {
+        const trimmed = prev.trimEnd();
+        return trimmed ? `${trimmed} ${chunk}` : chunk;
+      });
+    },
+  });
+  const toggleMic = () => {
+    if (isListening) stopMic();
+    else startMic();
+  };
   const [toolActivity, setToolActivity] = useState(null);
   const [copiedIdx, setCopiedIdx] = useState(null);
   // History-state: actieve sessie-id, lijst met laatste 10 sessies.
@@ -881,9 +900,27 @@ export default function ChatPanel({ open, onClose, context = {}, cases = [], tea
                   handleSubmit(e);
                 }
               }}
-              placeholder="Plak notities of beschrijf je gesprek…"
+              placeholder={isListening
+                ? (liveTranscript ? `🎤 ${liveTranscript}` : '🎤 Luistert…')
+                : 'Plak notities of beschrijf je gesprek…'}
               rows={1}
             />
+            {micSupported && !busy && (
+              <button
+                type="button"
+                className={`chat-mic ${isListening ? 'chat-mic--rec' : ''}`}
+                onClick={toggleMic}
+                aria-label={isListening ? 'Stop dictee' : 'Spreek je vraag in'}
+                title={micError ? `Microfoon-fout: ${micError}` : (isListening ? 'Stop dictee' : 'Spreek je vraag in')}
+              >
+                {/* Microfoon-icoon */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+              </button>
+            )}
             {busy ? (
               <button type="button" className="chat-send chat-stop" onClick={stopGenerating} aria-label="Stop genereren" title="Stop genereren">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
