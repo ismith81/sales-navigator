@@ -70,7 +70,6 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
               keywords: [],
               businessImpact: '',
               mapping: { doelen: [], behoeften: [], diensten: [], personas: [], branches: [] },
-              talkingPoints: [], followUps: [],
               matchReasons: { doelen: {}, behoeften: {}, diensten: {} },
             });
             setEditingId(id);

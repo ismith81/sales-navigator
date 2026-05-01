@@ -161,42 +161,10 @@ export async function parseTemplate(file) {
     keywords,
     businessImpact: sections.businessImpact || '',
     mapping: { doelen, behoeften, diensten },
-    talkingPoints: [],
-    followUps: [],
     matchReasons: { doelen: {}, behoeften: {}, diensten: {} },
     _imported: true,
     _importDate: new Date().toISOString(),
   };
 
   return { caseData, rawText };
-}
-
-export function generateDefaultTalkingPoints(caseData) {
-  const points = [];
-  const situatie = stripTags(caseData.situatie);
-  const oplossing = stripTags(caseData.oplossing);
-  const resultaat = stripTags(caseData.resultaat);
-  const businessImpact = stripTags(caseData.businessImpact);
-  if (situatie) points.push(situatie);
-  if (oplossing) points.push(`Onze oplossing: ${oplossing.length > 200 ? oplossing.substring(0, 200) + '...' : oplossing}`);
-  if (resultaat) points.push(`Resultaat: ${resultaat}`);
-  if (businessImpact) points.push(`Business impact: ${businessImpact}`);
-  return points;
-}
-
-export function generateDefaultFollowUps(caseData) {
-  const questions = [];
-  if (caseData.mapping.doelen.includes('Meer waarde halen uit data'))
-    questions.push('Hoe gebruiken jullie data momenteel voor besluitvorming?');
-  if (caseData.mapping.doelen.includes('Data als business model'))
-    questions.push('Zijn er mogelijkheden om jullie data als dienst aan te bieden aan klanten of partners?');
-  if (caseData.mapping.behoeften.includes('Realtime data'))
-    questions.push('Werken jullie al met real-time dataverwerking, of is dat iets wat jullie overwegen?');
-  if (caseData.mapping.behoeften.includes('AI ready'))
-    questions.push('Hebben jullie plannen om AI of machine learning in te zetten op jullie data?');
-  if (caseData.mapping.diensten.includes('Data modernisatie'))
-    questions.push('Hoe oud is jullie huidige dataplatform en voldoet het nog aan de groeiende behoefte?');
-  if (questions.length === 0)
-    questions.push('Wat zijn jullie grootste uitdagingen op het gebied van data?');
-  return questions;
 }

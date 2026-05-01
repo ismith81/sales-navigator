@@ -33,8 +33,6 @@ function rowToCase(r) {
       personas: m.personas || [],
       branches: m.branches || [],
     },
-    talkingPoints: r.talking_points || [],
-    followUps: r.follow_ups || [],
     matchReasons: {
       doelen: mr.doelen || {},
       behoeften: mr.behoeften || {},
@@ -68,8 +66,6 @@ function caseToRow(c) {
     sectors,
     business_impact: c.businessImpact || '',
     mapping: c.mapping || {},
-    talking_points: c.talkingPoints || [],
-    follow_ups: c.followUps || [],
     match_reasons: c.matchReasons || {},
     updated_at: new Date().toISOString(),
   };
