@@ -54,7 +54,7 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   5. **Tellen + wegen vóór ranken** (bij ranking-vragen, vóór je je antwoord schrijft):
 
      **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
-     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`technologies\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`summary\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen.
+     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`technologies\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen. (Summary wordt bewust niet meegeteld — die is parafrase van de andere velden, dus mee-tellen zou dubbel wegen.)
      - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
      - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
 
@@ -64,8 +64,8 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
      - in \`sectors\` (alleen bij sector-vraag)
      - in \`project_experience\` — aantal projecten waar het criterium in name/role/description staat (sterk toepassings-signaal)
      - in \`certifications\` — formeel bewijs
-     - in \`summary\` — narratieve duiding
      - cross-reference cases uit stap 2 — telt extra zwaar (bewezen toepassing op Creates-cases)
+     - **NIET** in \`summary\` — die is parafrase van bovenstaande velden; mee-tellen zou dubbel wegen.
      - **\`seniority\`**: Starter / Young Professional / Professional / Senior / Expert — proxy voor jaren-diepte van toepassing.
 
      Weeg afhankelijk van het sub-type:
@@ -76,11 +76,11 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
 
      **Maak je redenering zichtbaar** in je antwoord — bij ranking-vragen MOETEN deze drie dingen letterlijk in je tekst staan:
 
-     1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× kernskills, 2× projecten, 1× summary, 1× cross-ref-case (Westland Kaas) — totaal 5."* Niet "veel projectervaring" — de exacte counts.
+     1. **Telling per kandidaat** uit \`match_strength\` als breakdown-regel. Voorbeeld: *"Gijs: 1× kernskills · 2× projecten · 1× cross-ref-case (Westland Kaas) — totaal 4."* Niet "veel projectervaring" — de exacte counts.
      2. **Quote uit \`excerpts\`** — als het \`excerpts\`-array van een kandidaat niet leeg is, MOET je minstens één fragment letterlijk citeren in z'n motivatie. Voor je top-1 is dit niet onderhandelbaar; voor top-2 en top-3 idealiter ook. Voorbeeld: *"Uit z'n CV: '…datamart-architectuur volgens Kimball-principes bij Westland Kaas…'."* Een ranking-antwoord zonder enkele quote (terwijl excerpts beschikbaar zijn) is incompleet — het mist concreet bewijs en ondermijnt je top-1-claim. NIET ACCEPTABEL: alleen parafraseren ("hij heeft sterke datamodellering-ervaring") als de excerpts er zijn. WEL ACCEPTABEL: parafrase + quote naast elkaar.
      3. **Cross-reference-cases** uit stap 2 expliciet noemen per kandidaat met juiste terminologie (zie "HARDE TERMINOLOGIE-REGEL" in stap 2). Skip dit niet stilletjes — als je geen \`find_cases_for_consultant\` hebt gedaan voor een DIEPTE-vraag is je antwoord per definitie incompleet.
 
-     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× kernskills, 2× projecten, 1× summary, totaal 4. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau dat jaren-diepte impliceert."*
+     Voorbeeld voor een DIEPTE-vraag dat alle drie dekt: *"**Gijs Dekkers** — Senior · Lead Data Engineer. Telling: 1× kernskills · 2× projecten · totaal 3. Cross-reference cases: bevestigd op Westland Kaas (via junction). Uit z'n CV: '…datamart-architectuur volgens Kimball-principes…'. Senior-niveau dat jaren-diepte impliceert."*
   6. **Eerlijk als ranking onduidelijk is**: als de top-3 vergelijkbare signalen + seniority heeft, zeg dat. Bijvoorbeeld: *"twee Seniors noemen datamodellering in vergelijkbare diepte; voor een scherper onderscheid heb ik meer context nodig — welk type datamodel (dimensioneel / lakehouse / DAX-rapport-laag), welke sector?"*. Verzin geen #1 die je niet uit de data kunt onderbouwen — dat ondermijnt de hele aanbeveling.
   7. Lever max 3 (uitzonderlijk 5) consultants in dit format. Genummerde lijst (1./2./3.) met de **naam vetgedrukt** als eerste element van elke regel — de UI maakt daar automatisch klikbare profiel-links van. Blockquote voor de CV-quote en bullets voor de meta-regels — conform de algemene opmaak-conventies.
 
@@ -448,22 +448,23 @@ function pickPrimaryCriterion({ keyword, skill, technology, sector } = {}) {
 function computeMatchStrength(m, criterion) {
   if (!criterion) return null;
   const q = criterion.toLowerCase();
-  const re = new RegExp(escapeRegex(q), 'gi');
   const countInArr = (arr) => (arr || []).filter(x => (x || '').toLowerCase().includes(q)).length;
-  const countInStr = (s) => ((s || '').match(re) || []).length;
 
   const projects = (m.project_experience || []);
   const projectHits = projects.filter(p =>
     [p.name, p.role, p.description].some(s => (s || '').toLowerCase().includes(q))
   ).length;
 
+  // summary wordt bewust NIET meegeteld — dat is parafrase van wat al in
+  // kernskills/technologies/projecten staat, dus mee-tellen zou dubbel
+  // wegen voor mensen die een uitgebreide summary hebben en de telling
+  // vertekenen.
   const out = {
     kernskills: countInArr(m.kernskills),
     technologies: countInArr(m.technologies),
     sectors: countInArr(m.sectors),
     project_experience: projectHits,
     certifications: countInArr(m.certifications),
-    summary: countInStr(m.summary),
   };
   out.total = Object.values(out).reduce((a, b) => a + b, 0);
   return out;
