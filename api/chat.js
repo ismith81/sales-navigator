@@ -54,18 +54,18 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   5. **Tellen + wegen vóór ranken** (bij ranking-vragen, vóór je je antwoord schrijft):
 
      **Pre-computed signalen uit de tool-response**: als \`find_team_members\` met een inhoudelijke zoek-term (keyword/skill/technology/sector) is aangeroepen, geeft elk resultaat per profiel ook deze velden terug:
-     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`technologies\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen. (Summary wordt bewust niet meegeteld — die is parafrase van de andere velden, dus mee-tellen zou dubbel wegen.)
+     - \`match_strength\`: object met counts per profielveld (\`kernskills\`, \`sectors\`, \`project_experience\`, \`certifications\`, \`total\`) — gebruik die counts direct, je hoeft niet zelf te tellen. (Summary en technologies worden bewust niet meegeteld: summary is parafrase, technologies is in praktijk inconsistent ingevuld.)
      - \`excerpts\`: array van ±200-char fragmenten uit het CV waar de zoekterm voorkomt (max 3). Gebruik die als **quote-bewijs** in je motivatie ("uit z'n CV: '…specialist Power BI op het Caesar-traject…'") — dat maakt de onderbouwing concreter dan een platte skill-vermelding.
      - \`criterion\`: de zoekterm waarop is geteld, zodat je weet waar de counts tegen zijn berekend.
 
      Verzamel per kandidaat de signalen waar het criterium voorkomt (gebruik \`match_strength\` als pre-computed bron):
      - in \`kernskills\` — sterkste signaal, kerncompetentie
-     - in \`technologies\`
      - in \`sectors\` (alleen bij sector-vraag)
      - in \`project_experience\` — aantal projecten waar het criterium in name/role/description staat (sterk toepassings-signaal)
      - in \`certifications\` — formeel bewijs
      - cross-reference cases uit stap 2 — telt extra zwaar (bewezen toepassing op Creates-cases)
-     - **NIET** in \`summary\` — die is parafrase van bovenstaande velden; mee-tellen zou dubbel wegen.
+     - **NIET** in \`summary\` — parafrase van bovenstaande velden; mee-tellen zou dubbel wegen.
+     - **NIET** in \`technologies\` — in praktijk inconsistent ingevuld (niet elk profiel heeft de canonical lijst even compleet); zou profielen met een goed bijgehouden technologies-lijst onterecht hoger tellen.
      - **\`seniority\`**: Starter / Young Professional / Professional / Senior / Expert — proxy voor jaren-diepte van toepassing.
 
      Weeg afhankelijk van het sub-type:
@@ -455,13 +455,16 @@ function computeMatchStrength(m, criterion) {
     [p.name, p.role, p.description].some(s => (s || '').toLowerCase().includes(q))
   ).length;
 
-  // summary wordt bewust NIET meegeteld — dat is parafrase van wat al in
-  // kernskills/technologies/projecten staat, dus mee-tellen zou dubbel
-  // wegen voor mensen die een uitgebreide summary hebben en de telling
-  // vertekenen.
+  // summary en technologies worden bewust NIET meegeteld:
+  //  - summary is parafrase van wat al in kernskills/projecten staat, dus
+  //    dubbel-wegen voor profielen met een uitgebreide samenvatting.
+  //  - technologies is in praktijk inconsistent ingevuld (niet elk profiel
+  //    heeft de canonical lijst even compleet), dus telt de skill van mensen
+  //    die hun technologies-veld goed hebben bijgehouden ten onrechte hoger.
+  // De feitelijke skill-aanwezigheid komt uit kernskills + project_experience
+  // + certifications — bewezen toepassings-signalen.
   const out = {
     kernskills: countInArr(m.kernskills),
-    technologies: countInArr(m.technologies),
     sectors: countInArr(m.sectors),
     project_experience: projectHits,
     certifications: countInArr(m.certifications),
