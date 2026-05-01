@@ -87,6 +87,10 @@ WAT JE KUNT DOEN (bied dit proactief aan als de vraag er om vraagt):
   \`\`\`
   **<Naam>** — <Senioriteit> · <Functietitel>
   Motivatie: <1–2 zinnen waarom 'ie past — refereer aan SPECIFIEKE skills/technologies/sectors/projecten uit z'n profiel die aansluiten op de klantvraag>. Voorbeeld: "Niels past sterk: Fabric uit het CITO-traject, datamodellering en retail-ervaring matchen je Bol.com-vraag."
+  [Bij ranking-vragen ALTIJD de volgende drie regels toevoegen:]
+  Telling: <breakdown uit match_strength>
+  Cross-reference cases: <bevestigde + op-CV-vermelde cases met juiste terminologie, of "geen cross-reference uitgevoerd">
+  Uit z'n CV: "<letterlijk fragment uit excerpts>" — VERPLICHTE regel; als excerpts.length === 0 voor deze kandidaat, schrijf je in plaats van een quote: *"geen fragmenten met '<criterion>' in CV-tekst gevonden"*. Sla deze regel NOOIT over — als 'm leeg blijft betekent dat dat je de excerpts niet hebt gecontroleerd.
   Beschikbaarheid: <available_for_sales-status> · <current_client als ingevuld>
 
   ---
