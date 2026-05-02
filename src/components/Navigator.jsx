@@ -158,32 +158,23 @@ export default function Navigator() {
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
   // (bijna scrollY 0) komt hij terug. Geldt zowel desktop als mobile.
   //
-  // Listener gebruikt capture-mode zodat scroll-events vanuit ELKE scrollable
-  // container meegevangen worden — niet alleen window. De Assistent-route
-  // scrollt intern in .chat-messages (chat-panel is height-constrained), dus
-  // window.scrollY blijft daar op 0 staan; we pakken de scrollTop van de
-  // bron-container en gebruiken die als drempel-waarde.
+  // Alleen window-scrolls triggeren de hide — capture-mode (PR #28) ving ook
+  // iOS Safari's focus-induced scroll wanneer 't keyboard opent, waardoor
+  // de subnav direct verdween bij textarea-focus op de chat-route. Trade-off:
+  // op de Nova-route waar .chat-messages intern scrollt blijft de subnav
+  // zichtbaar bij scrollen in de chat. Acceptabel; focus-bug was hinderlijker.
   useEffect(() => {
-    const updateSubnavVisibility = (e) => {
-      let y;
-      const target = e?.target;
-      if (target && target !== document && target !== window && typeof target.scrollTop === 'number') {
-        y = target.scrollTop;
-      } else {
-        y = window.scrollY;
-      }
+    const updateSubnavVisibility = () => {
+      const y = window.scrollY;
       setShowTopbarSubnav((prev) => {
         if (prev) return y < 32;
         return y < 12;
       });
     };
     updateSubnavVisibility();
-    // capture: true zodat ook scroll-events op nested elementen (chat-messages,
-    // case-detail-overlay, etc.) deze listener bereiken — anders bubble'n
-    // scroll-events niet vanaf intern-scrollable containers.
-    window.addEventListener('scroll', updateSubnavVisibility, { passive: true, capture: true });
+    window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
     return () => {
-      window.removeEventListener('scroll', updateSubnavVisibility, { capture: true });
+      window.removeEventListener('scroll', updateSubnavVisibility);
     };
   }, []);
 
