@@ -189,10 +189,12 @@ export default function Navigator() {
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') {
         inputFocused = false;
-        // Re-evalueer met de huidige scroll-positie zodat normale
-        // scroll-hide-gedrag weer geldt na blur.
-        const y = window.scrollY;
-        setShowTopbarSubnav((prev) => (prev ? y < 32 : y < 12));
+        // Bij blur ALTIJD zichtbaar — re-evalueer NIET op scrollY want
+        // iOS Safari laat het document na een focus-induced scroll vaak
+        // op een positie > 32 staan (keyboard heeft de viewport korter
+        // gemaakt). Een directe re-evaluatie zou dan opnieuw verbergen.
+        // Volgende echte user-scroll triggert de listener vanzelf weer.
+        setShowTopbarSubnav(true);
       }
     };
 
