@@ -571,3 +571,51 @@ Lessons-learned: bij scroll-gerelateerd UI-gedrag in een chat-app is window-scro
 - **Embedding-kwaliteit voor NL**: gemini-embedding-001 is multilingual maar EN-getraind; als sales merkt dat NL-soft-vragen ruizige matches geven, switch naar OpenAI's `text-embedding-3-small` (zie memory-note `project_pgvector_embedding_choice.md`).
 - **`/api/list-models` diagnostic endpoint** mag op termijn weg als we niet meer aan model-namen sleutelen. Niet kritiek.
 - **Mistral POC** blijft op `nova-mistral-poc`-branch geparkeerd — sinds Fase C werkt op Gemini geen reden om de Mistral-route nu te activeren.
+
+## Status (sessie 2026-05-02 — mobile polish + iOS subnav-saga)
+
+Korte vervolg-sessie na de grote 2026-05-01 sessie. Focus volledig op iOS/mobile UX-bugs die uit live testing kwamen. 7 PR's gemerged.
+
+### iOS subnav-saga (#30 → #31 → #32 → #33)
+Vier PR's om te leren dat slimme detectie van iOS Safari's browser-induced scrolls niet betrouwbaar werkt. Iteratie-pad:
+
+- **#28 introduceerde** een `capture: true` scroll-listener om ook nested-container-scrolls (chat-messages op Assistent-route) te vangen. Werkte op desktop, brak op iOS.
+- **#30 (eerste fix-poging)**: `capture: true` weggehaald — alleen window-scroll. Verdween focus-bug (iOS-keyboard-induced scroll triggerde subnav-hide bij elke textarea-tap), maar subnav verbergde nu nooit meer op Nova-route bij chat-scrollen. Acceptabel afgewogen.
+- **#31 (focus-tracking)**: `focusin`/`focusout` op `document` voor input/textarea. Tijdens focus skip de listener, plus `setShowTopbarSubnav(true)` bij focus-in. Bij focus-out re-evalueren op `scrollY`.
+- **#32 (blur-fix)**: bij blur **niet** re-evalueren op scrollY. iOS Safari laat het document na een focus-induced scroll vaak op > 32 staan (keyboard heeft viewport korter gemaakt); re-evaluatie zag y > 32 en verborg subnav opnieuw. Nu force `setShowTopbarSubnav(true)` bij blur.
+- **#33 (definitief: scroll-hide uit op mobile)**: ondanks #31 + #32 bleef de subnav verstopt bij eerste page-load. Oorzaak: iOS Safari's URL-bar collapse + dvh-adjustments + andere browser-quirks zetten `window.scrollY > 32` al vóór React mount, dus voor elke listener actief is. Pragmatisch besluit: op mobile (`≤ 768px`) **scroll-hide volledig uit**, subnav altijd zichtbaar. Kost ~40px constante verticale ruimte; UX-trade richting voorspelbaarheid.
+
+**Lessons-learned**:
+- `window.scrollY > 0` op page-load is normaal op iOS Safari — URL-bar collapse en dvh-adjustments gebeuren vóór React mount.
+- Focus-induced scroll is niet altijd te vangen via `focusin` (timing-issues).
+- 100dvh schuift onvoorspelbaar bij keyboard-open.
+- Conclusie: scroll-gebaseerde UI-hide-tricks op mobile zijn fragile — vaak beter constant zichtbaar.
+
+Op desktop blijft scroll-hide werken zoals voorheen (incl. focus-tracking voor de chat-input zodat tijdens typen niets verstopt).
+
+### Beheer/Onderwerpen mobile-layout (#34 → #35)
+Twee iteraties op de FilterManager-row op smal scherm:
+
+- **#34 (column-stack)**: bij lange tag-namen ("Meer waarde halen uit data") overlapte de tag met de cases-counter en compleet-status. `flex-shrink: 0` op de tag pushed 'm over de meta-info heen. Fix: op `≤ 640px` `.fm-row` van `flex-row` naar `column`. Tag/preview op rij 1, meta op rij 2 rechts uitgelijnd.
+- **#35 (minimaal)**: user feedback — geef op mobile alléén de tag-naam + chevron. Geen cases-counter, geen compleet-status, geen preview-omschrijving. Volle inhoud blijft beschikbaar via expand-toggle. Verbergt `.fm-row-preview`, `.fm-row-refs`, `.cm-badge` op mobile. Visueel rustiger.
+
+### Sessie-resultaat (PR-overzicht, 2026-05-02)
+| PR | Onderwerp |
+|---|---|
+| #29 | AGENTS.md: PR #25-#28 toegevoegd — mobile subnav-iteraties (eerste handoff-update) |
+| #30 | Mobile: subnav verdwijnt niet meer bij textarea-focus (capture-mode listener weg) |
+| #31 | Mobile/iOS: subnav blijft zichtbaar tijdens textarea-focus (focus-tracking) |
+| #32 | Mobile/iOS: subnav blijft zichtbaar na blur, niet re-evalueren op scrollY |
+| #33 | **Mobile: subnav scroll-hide volledig uitgezet — iOS-quirks fixen niet anders** |
+| #34 | Mobile: Beheer/Onderwerpen rij verticaal stacken (column layout) |
+| #35 | Mobile: Beheer/Onderwerpen alleen tag + chevron (minimaal) |
+
+### Bekende beperkingen / vervolgwerk (na 2026-05-02)
+Onveranderd t.o.v. 2026-05-01:
+- Audit-backlog (availability-duplicatie + case-mapping refactor) wachtend op tests.
+- Embedding-kwaliteit-NL upgrade-pad naar OpenAI text-embedding-3-small wachtend op signaal vanuit gebruik.
+- `/api/list-models` diagnostic kan op termijn weg.
+- Mistral POC blijft geparkeerd.
+
+Nieuw geïdentificeerd in deze sessie:
+- **Mic-feature upgrade**: Whisper API (OpenAI) of Gemini Audio voor betere NL-kwaliteit zodra Web Speech API tekortschiet voor sales-jargon. Plus: auto-send na X sec stilte als UX-polish; mic-knop in welcome-screen voor totaal hands-free starten.
