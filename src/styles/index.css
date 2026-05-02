@@ -1996,25 +1996,18 @@ body::before {
   text-align: center;
 }
 
-/* Mobile: tag + preview + meta passen niet horizontaal naast elkaar in
-   één rij wanneer tag-tekst lang is ("Meer waarde halen uit data"). Zonder
-   stack overlapte de tag met de cases-counter en compleet-status. Verticale
-   stack: tag/preview bovenaan, meta-info eronder rechts uitgelijnd. */
+/* Mobile: minimalistische rij — alleen tag + chevron, geen preview-tekst,
+   geen cases-counter, geen compleet-status. Volle inhoud blijft achter
+   de expand-toggle zichtbaar; als de gebruiker meta-info wil zien tikt
+   ze de rij open. Voorkomt overlap-issues met lange tag-namen op smal
+   scherm en houdt de lijst rustig scanbaar. */
 @media (max-width: 640px) {
   .fm-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.45rem;
-    padding: 0.7rem 0.85rem;
+    padding: 0.65rem 0.85rem;
   }
-  .fm-row-main {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  .fm-row-meta {
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
+  .fm-row-preview { display: none; }
+  .fm-row-refs { display: none; }
+  .fm-row-meta .cm-badge { display: none; }
 }
 
 .fm-expand-panel {
