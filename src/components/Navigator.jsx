@@ -158,23 +158,52 @@ export default function Navigator() {
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
   // (bijna scrollY 0) komt hij terug. Geldt zowel desktop als mobile.
   //
-  // Alleen window-scrolls triggeren de hide — capture-mode (PR #28) ving ook
-  // iOS Safari's focus-induced scroll wanneer 't keyboard opent, waardoor
-  // de subnav direct verdween bij textarea-focus op de chat-route. Trade-off:
-  // op de Nova-route waar .chat-messages intern scrollt blijft de subnav
-  // zichtbaar bij scrollen in de chat. Acceptabel; focus-bug was hinderlijker.
+  // iOS Safari fix: bij focus op input/textarea scrollt iOS automatisch het
+  // document om de focused element zichtbaar te houden voor het keyboard.
+  // Die focus-induced scroll mag de subnav NIET verbergen — gebruiker is niet
+  // bewust aan 't lezen-en-scrollen, ze gaan typen. We pauzeren de listener
+  // tijdens focus en forceren de subnav zichtbaar; bij blur evalueren we
+  // opnieuw zodat normale scroll-hide weer werkt.
   useEffect(() => {
+    let inputFocused = false;
+
     const updateSubnavVisibility = () => {
+      if (inputFocused) return;
       const y = window.scrollY;
       setShowTopbarSubnav((prev) => {
         if (prev) return y < 32;
         return y < 12;
       });
     };
+
+    const onFocusIn = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        inputFocused = true;
+        // Forceer zichtbaar — iOS-scroll bij keyboard-open zou anders
+        // de subnav direct verbergen.
+        setShowTopbarSubnav(true);
+      }
+    };
+    const onFocusOut = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        inputFocused = false;
+        // Re-evalueer met de huidige scroll-positie zodat normale
+        // scroll-hide-gedrag weer geldt na blur.
+        const y = window.scrollY;
+        setShowTopbarSubnav((prev) => (prev ? y < 32 : y < 12));
+      }
+    };
+
     updateSubnavVisibility();
     window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
     return () => {
       window.removeEventListener('scroll', updateSubnavVisibility);
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
     };
   }, []);
 
