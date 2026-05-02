@@ -1996,6 +1996,27 @@ body::before {
   text-align: center;
 }
 
+/* Mobile: tag + preview + meta passen niet horizontaal naast elkaar in
+   één rij wanneer tag-tekst lang is ("Meer waarde halen uit data"). Zonder
+   stack overlapte de tag met de cases-counter en compleet-status. Verticale
+   stack: tag/preview bovenaan, meta-info eronder rechts uitgelijnd. */
+@media (max-width: 640px) {
+  .fm-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .fm-row-main {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .fm-row-meta {
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}
+
 .fm-expand-panel {
   border-top: 1px solid var(--border);
   padding: 1rem 1.1rem 1.1rem;
