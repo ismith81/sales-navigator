@@ -156,18 +156,28 @@ export default function Navigator() {
 
   // Hoofdtopbar blijft sticky; de subnav mag alleen zichtbaar zijn aan de
   // start van de pagina. Zodra je omlaag scrolt klapt die weg, en bovenaan
-  // (bijna scrollY 0) komt hij terug. Geldt zowel desktop als mobile.
+  // (bijna scrollY 0) komt hij terug.
   //
-  // iOS Safari fix: bij focus op input/textarea scrollt iOS automatisch het
-  // document om de focused element zichtbaar te houden voor het keyboard.
-  // Die focus-induced scroll mag de subnav NIET verbergen — gebruiker is niet
-  // bewust aan 't lezen-en-scrollen, ze gaan typen. We pauzeren de listener
-  // tijdens focus en forceren de subnav zichtbaar; bij blur evalueren we
-  // opnieuw zodat normale scroll-hide weer werkt.
+  // **Op mobile (≤ 768px) volledig uitgezet** — iOS Safari heeft te veel
+  // browser-induced scroll-momenten (URL-bar collapse, focus-induced scroll,
+  // dvh-adjustments bij keyboard) die niet betrouwbaar zijn te onderscheiden
+  // van user-scroll. Resultaat in eerdere iteraties: subnav verbergde
+  // willekeurig bij page-load, focus, of route-switch. Permanent zichtbaar
+  // op mobile is een betere UX-trade dan af-en-toe-onverwacht-verstopt.
+  // Subnav kost ~40px verticale ruimte; sales heeft daardoor altijd directe
+  // toegang tot route-switch (Gids/Assistent, Beheer-secties).
+  //
+  // Op desktop blijft de scroll-hide logica werken zoals voorheen, plus
+  // focus-tracking voor de chat-input zodat tijdens typen niets verstopt.
   useEffect(() => {
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
     let inputFocused = false;
 
     const updateSubnavVisibility = () => {
+      if (isMobile()) {
+        setShowTopbarSubnav(true);
+        return;
+      }
       if (inputFocused) return;
       const y = window.scrollY;
       setShowTopbarSubnav((prev) => {
@@ -180,8 +190,6 @@ export default function Navigator() {
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') {
         inputFocused = true;
-        // Forceer zichtbaar — iOS-scroll bij keyboard-open zou anders
-        // de subnav direct verbergen.
         setShowTopbarSubnav(true);
       }
     };
@@ -189,21 +197,18 @@ export default function Navigator() {
       const tag = e.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') {
         inputFocused = false;
-        // Bij blur ALTIJD zichtbaar — re-evalueer NIET op scrollY want
-        // iOS Safari laat het document na een focus-induced scroll vaak
-        // op een positie > 32 staan (keyboard heeft de viewport korter
-        // gemaakt). Een directe re-evaluatie zou dan opnieuw verbergen.
-        // Volgende echte user-scroll triggert de listener vanzelf weer.
         setShowTopbarSubnav(true);
       }
     };
 
     updateSubnavVisibility();
     window.addEventListener('scroll', updateSubnavVisibility, { passive: true });
+    window.addEventListener('resize', updateSubnavVisibility);
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
     return () => {
       window.removeEventListener('scroll', updateSubnavVisibility);
+      window.removeEventListener('resize', updateSubnavVisibility);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
     };
