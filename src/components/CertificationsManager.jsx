@@ -16,9 +16,9 @@ import CertMigrationWizard from './CertMigrationWizard';
 // Beheer → Certificeringen — twee subviews:
 //
 //   1. Teamview (default): matrix consultants × certs, gegroepeerd op tier.
-//      Filter op rol. Aggregaten + top-3 gaps. Click consultant → detail.
+//      Filter op specialisatie. Aggregaten + top-3 gaps. Click consultant → detail.
 //   2. Detail: per consultant alle relevante certs (expected + recommended)
-//      met checkbox + other_certifications-veld + role_code-keuze.
+//      met checkbox + other_certifications-veld + specialisatie-keuze.
 //
 // Plus: knoppen voor seed (master-list updaten vanuit JSON) en migratie-
 // wizard (eenmalige conversie van bestaande vrije-tekst certs).
@@ -26,7 +26,7 @@ import CertMigrationWizard from './CertMigrationWizard';
 const ROLE_OPTIONS = [
   { code: 'AE', label: 'Analytics Engineer' },
   { code: 'DE', label: 'Data Engineer' },
-  { code: 'DSA', label: 'Solution Architect' },
+  { code: 'DSA', label: 'Data Solution Architect' },
 ];
 
 const RELEVANCE_LABEL = {
@@ -106,13 +106,13 @@ export default function CertificationsManager() {
 
   // ─── Aggregaten ──────────────────────────────────────────────────────
   const teamCoverage = useMemo(() => {
-    const stats = { foundationComplete: 0, specialistComplete: 0, total: 0 };
+    const stats = { baselineComplete: 0, specialistComplete: 0, total: 0 };
     for (const m of filteredMembers) {
       if (!m.role_code) continue;
       stats.total++;
-      const found = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'foundation' });
+      const base = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'baseline' });
       const spec = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'specialist' });
-      if (found.expected > 0 && found.achieved === found.expected) stats.foundationComplete++;
+      if (base.expected > 0 && base.achieved === base.expected) stats.baselineComplete++;
       if (spec.expected === 0 || spec.achieved === spec.expected) stats.specialistComplete++;
     }
     return stats;
@@ -238,15 +238,15 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
   }, [consultantCerts]);
 
   const certsByTier = useMemo(() => {
-    const foundation = certs.filter(c => c.tier === 'foundation' && c.active !== false);
+    const baseline = certs.filter(c => c.tier === 'baseline' && c.active !== false);
     const specialist = certs.filter(c => c.tier === 'specialist' && c.active !== false);
-    return { foundation, specialist };
+    return { baseline, specialist };
   }, [certs]);
 
   return (
     <div className="cert-team-view">
       <div className="cert-filter-bar">
-        <span style={{ marginRight: '0.5rem', fontSize: '0.85rem', color: 'var(--muted)' }}>Rol:</span>
+        <span style={{ marginRight: '0.5rem', fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
         <button type="button" className={`cert-filter-btn ${filterRole === 'all' ? 'active' : ''}`} onClick={() => setFilterRole('all')}>Alle</button>
         {ROLE_OPTIONS.map(opt => (
           <button
@@ -262,13 +262,13 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
 
       <div className="cert-aggregate-grid">
         <div className="cert-aggregate-card">
-          <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.foundationComplete / teamCoverage.total) * 100) : 0}%</div>
-          <div className="cert-aggregate-label">Foundation compleet</div>
-          <div className="cert-aggregate-sub">{teamCoverage.foundationComplete} van {teamCoverage.total} consultants</div>
+          <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.baselineComplete / teamCoverage.total) * 100) : 0}%</div>
+          <div className="cert-aggregate-label">Baseline compleet</div>
+          <div className="cert-aggregate-sub">{teamCoverage.baselineComplete} van {teamCoverage.total} consultants</div>
         </div>
         <div className="cert-aggregate-card">
           <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.specialistComplete / teamCoverage.total) * 100) : 0}%</div>
-          <div className="cert-aggregate-label">Specialist compleet</div>
+          <div className="cert-aggregate-label">Specialistisch compleet</div>
           <div className="cert-aggregate-sub">{teamCoverage.specialistComplete} van {teamCoverage.total} consultants</div>
         </div>
         <div className="cert-aggregate-card cert-aggregate-card--gaps">
@@ -292,23 +292,23 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
           <thead>
             <tr>
               <th rowSpan={2} className="cert-matrix-name-th">Consultant</th>
-              <th rowSpan={2}>Rol</th>
-              <th colSpan={certsByTier.foundation.length}>Foundation</th>
-              <th colSpan={certsByTier.specialist.length}>Specialist</th>
+              <th rowSpan={2}>Specialisatie</th>
+              <th colSpan={certsByTier.baseline.length}>Baseline</th>
+              <th colSpan={certsByTier.specialist.length}>Specialistisch</th>
             </tr>
             <tr>
-              {certsByTier.foundation.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
+              {certsByTier.baseline.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
               {certsByTier.specialist.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
             </tr>
           </thead>
           <tbody>
             {members.length === 0 ? (
-              <tr><td colSpan={2 + certsByTier.foundation.length + certsByTier.specialist.length}>Geen consultants in deze filter.</td></tr>
+              <tr><td colSpan={2 + certsByTier.baseline.length + certsByTier.specialist.length}>Geen consultants in deze filter.</td></tr>
             ) : members.map(m => (
               <tr key={m.id} className="cert-matrix-row" onClick={() => onSelectConsultant(m.id)}>
                 <td className="cert-matrix-name-td">{m.name}</td>
                 <td className="cert-matrix-role-td">{m.role_code || <span style={{ color: 'var(--muted)' }}>—</span>}</td>
-                {certsByTier.foundation.map(c => (
+                {certsByTier.baseline.map(c => (
                   <td key={c.id} className="cert-matrix-cell">
                     {achievedSet.has(`${m.id}::${c.id}`) ? '✓' : ''}
                   </td>
@@ -353,8 +353,8 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
     return s;
   }, [consultantCerts, consultantId]);
 
-  const foundationCoverage = useMemo(
-    () => computeConsultantCoverage(consultant, certs, roleRelevance, consultantCerts, { tier: 'foundation' }),
+  const baselineCoverage = useMemo(
+    () => computeConsultantCoverage(consultant, certs, roleRelevance, consultantCerts, { tier: 'baseline' }),
     [consultant, certs, roleRelevance, consultantCerts]
   );
   const specialistCoverage = useMemo(
@@ -383,7 +383,7 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
         <section className="cert-detail-section">
           <h3>{label}</h3>
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-            Geen relevante certs voor deze rol — kies eerst een rol-classificatie.
+            Geen relevante certs voor deze specialisatie — kies eerst een specialisatie.
           </p>
         </section>
       );
@@ -429,13 +429,14 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
           {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
         <div className="cert-detail-role-bar">
-          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Rol-code:</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
           {ROLE_OPTIONS.map(opt => (
             <button
               key={opt.code}
               type="button"
               className={`cert-filter-btn ${consultant.role_code === opt.code ? 'active' : ''}`}
               onClick={() => onUpdateRoleCode(consultant.id, opt.code)}
+              title={opt.label}
             >
               {opt.code}
             </button>
@@ -450,24 +451,24 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
 
       <div className="cert-detail-coverage">
         <div className="cert-detail-coverage-item">
-          <span className="cert-detail-coverage-label">Foundation:</span>
-          <strong>{foundationCoverage.achieved} / {foundationCoverage.expected}</strong>
-          <span className="cert-detail-coverage-pct">({foundationCoverage.percent}%)</span>
+          <span className="cert-detail-coverage-label">Baseline:</span>
+          <strong>{baselineCoverage.achieved} / {baselineCoverage.expected}</strong>
+          <span className="cert-detail-coverage-pct">({baselineCoverage.percent}%)</span>
         </div>
         <div className="cert-detail-coverage-item">
-          <span className="cert-detail-coverage-label">Specialist:</span>
+          <span className="cert-detail-coverage-label">Specialistisch:</span>
           <strong>{specialistCoverage.achieved} / {specialistCoverage.expected}</strong>
           <span className="cert-detail-coverage-pct">({specialistCoverage.percent}%)</span>
         </div>
       </div>
 
-      {renderTier('foundation', 'Foundation')}
-      {renderTier('specialist', 'Specialist')}
+      {renderTier('baseline', 'Baseline')}
+      {renderTier('specialist', 'Specialistisch')}
 
       <section className="cert-detail-section">
-        <h3>Overige certificeringen</h3>
+        <h3>Overige certificeringen (niet-standaard)</h3>
         <p style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
-          Vrije tekst, één per regel. Voor certs buiten de Creates-standaard (bv. AWS, GCP).
+          Vrije tekst, één per regel. Voor certs buiten de Creates-standaard (bv. AWS, GCP). Tellen niet mee in de gap-analyse — wel zichtbaar in het profiel.
         </p>
         <textarea
           className="cert-wizard-textarea"

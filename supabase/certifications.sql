@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════════
 -- Sales Navigator — Certificeringsstandaard + gap-analyse per consultant
 -- ════════════════════════════════════════════════════════════════════════════
--- Implementeert de 14-cert standaard (9 foundation + 5 specialist) gedefinieerd
+-- Implementeert de 14-cert standaard (9 baseline + 5 specialistisch) gedefinieerd
 -- in src/data/certifications.json. Doel: per consultant zien welke certs
--- behaald zijn en welke ontbreken op basis van rol (AE/DE/DSA) en tier.
+-- behaald zijn en welke ontbreken op basis van specialisatie (AE/DE/DSA) en tier.
 --
 -- Architectonische keuzes:
 --   - tier zit op de cert (eigenschap van de cert), niet op de consultant
@@ -22,10 +22,12 @@
 begin;
 
 -- ─── 1. team_members krijgt role_code + other_certifications kolommen ──────
--- role_code: enum-achtige tekst-kolom voor AE/DE/DSA. Optioneel — bestaande
--- vrije `role`-tekst blijft voor descriptive doeleinden (Nova-output, sales-
--- pitches). Sales kiest role_code per consultant in de Beheer-UI; bij eerste
--- migratie wordt 'm geguessed via fuzzy match op de vrije role-string.
+-- role_code: enum-achtige tekst-kolom voor AE/DE/DSA — de *interne*
+-- specialisatie van de consultant. De vrije `role`-tekst blijft voor de
+-- *externe* CV-laag (varieert per project, drijft Nova's match-flow). Sales
+-- kiest role_code expliciet per consultant in de migratie-wizard; geen
+-- auto-guess op de vrije role-tekst (die kan letterlijk "Data Consultant"
+-- zijn en is geen betrouwbare bron voor specialisatie).
 alter table public.team_members
   add column if not exists role_code text
   check (role_code is null or role_code in ('AE', 'DE', 'DSA'));
@@ -43,7 +45,7 @@ create table if not exists public.certifications (
   id text primary key,
   name text not null,
   vendor text not null,
-  tier text not null check (tier in ('foundation', 'specialist')),
+  tier text not null check (tier in ('baseline', 'specialist')),
   active boolean not null default true,
   notes text,
   created_at timestamptz not null default now(),

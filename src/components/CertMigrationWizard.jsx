@@ -6,7 +6,6 @@ import {
   setOtherCertifications,
   setConsultantRoleCode,
   migrateCertificationsArray,
-  guessRoleCode,
 } from '../lib/certifications';
 
 // Eenmalige migratie-wizard om de bestaande team_members.certifications
@@ -17,13 +16,15 @@ import {
 //   - Hoge-confidence matches zijn default geselecteerd; lage-confidence
 //     vereisen handmatige bevestiging
 //   - Niet-matchende strings vallen in other_certifications (vrije text)
-//   - role_code wordt geguessed uit de vrije role-tekst; sales kan corrigeren
+//   - Specialisatie (AE/DE/DSA) wordt door sales handmatig gekozen — geen
+//     auto-guess, want de externe role-tekst zegt niet automatisch iets over
+//     de interne specialisatie
 //   - "Bevestig"-knop slaat alle keuzes op en stapt naar de volgende
 //
 // Wizard kan tussentijds worden afgesloten zonder data-verlies — alleen
 // bevestigde consultants worden opgeslagen. Re-runnable: consultants die
-// al een role_code + achieved-rijen hebben kunnen worden geskipt of opnieuw
-// gedaan via een "Heroverweeg"-knop.
+// al een specialisatie + achieved-rijen hebben kunnen worden geskipt of
+// opnieuw gedaan.
 
 const CONFIDENCE_LABEL = {
   high: 'Hoge zekerheid',
@@ -39,7 +40,7 @@ const CONFIDENCE_COLOR = {
 const ROLE_OPTIONS = [
   { code: 'AE', label: 'Analytics Engineer' },
   { code: 'DE', label: 'Data Engineer' },
-  { code: 'DSA', label: 'Solution Architect' },
+  { code: 'DSA', label: 'Data Solution Architect' },
 ];
 
 export default function CertMigrationWizard({ onClose }) {
@@ -96,7 +97,7 @@ export default function CertMigrationWizard({ onClose }) {
     setDecisions(prev => ({
       ...prev,
       [active.id]: {
-        roleCode: active.role_code || guessRoleCode(active.role),
+        roleCode: active.role_code || null,
         matchSelections,
         otherCerts: [
           ...(active.other_certifications || []),
@@ -252,11 +253,14 @@ export default function CertMigrationWizard({ onClose }) {
 
         <section className="cert-wizard-section">
           <div className="cert-wizard-name">{active.name}</div>
-          <div className="cert-wizard-role">Huidige rol-tekst: <em>{active.role || '—'}</em></div>
+          <div className="cert-wizard-role">Huidige CV-rol: <em>{active.role || '—'}</em></div>
         </section>
 
         <section className="cert-wizard-section">
-          <h3 className="case-detail-h3">Rol-classificatie</h3>
+          <h3 className="case-detail-h3">Specialisatie</h3>
+          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+            Interne specialisatie van deze Data Consultant — bepaalt welke certs verwacht worden in de gap-analyse. Onafhankelijk van de externe CV-rol hierboven.
+          </p>
           <div className="cert-wizard-role-options">
             {ROLE_OPTIONS.map(opt => (
               <label key={opt.code} className="cert-wizard-role-option">
@@ -327,9 +331,9 @@ export default function CertMigrationWizard({ onClose }) {
         </section>
 
         <section className="cert-wizard-section">
-          <h3 className="case-detail-h3">Overige certificeringen (vrije tekst)</h3>
+          <h3 className="case-detail-h3">Overige certificeringen (niet-standaard)</h3>
           <p style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
-            Eén cert per regel. Hier landen niet-matchende strings + handmatig afgewezen matches.
+            Eén cert per regel. Hier landen niet-matchende strings + handmatig afgewezen matches. Tellen niet mee in de gap-analyse.
           </p>
           <textarea
             className="cert-wizard-textarea"

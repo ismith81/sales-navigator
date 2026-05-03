@@ -9,8 +9,10 @@
 //      Bij 12 consultants × 14 certs is dat triviaal.
 //   4. Fuzzy match-helpers — voor de migratie-wizard. Match cert-strings
 //      uit een vrije tekst-array (oude team_members.certifications) tegen
-//      master-certs op ID en name, plus role-code guess uit vrije
-//      role-string.
+//      master-certs op ID en name. Specialisatie (role_code) wordt door
+//      sales handmatig gekozen — geen auto-guess op de vrije role-tekst,
+//      omdat die de externe CV-laag is en kan afwijken van de interne
+//      specialisatie.
 
 import { supabase } from './supabase';
 import { authedFetch } from './auth';
@@ -161,7 +163,7 @@ function buildRelevanceMap(roleRelevanceRows) {
 //   roleRelevanceRows: array uit listRoleRelevance()
 //   consultantCerts: array uit listConsultantCertifications(id) of
 //                    listAllConsultantCerts() (alle rijen, gefilterd binnenin)
-//   options: { tier?: 'foundation' | 'specialist' }
+//   options: { tier?: 'baseline' | 'specialist' }
 //
 // Returns: array van { cert, relevance } objecten.
 export function computeConsultantGaps(consultant, certifications, roleRelevanceRows, consultantCerts, options = {}) {
@@ -371,26 +373,3 @@ export function migrateCertificationsArray(certStrings, certifications) {
   return { matched, unmatched };
 }
 
-// Guess role_code uit de vrije role-string van een team_member. Patroon-match
-// op gangbare titels — voor de migratie-wizard. Geeft null als geen patroon
-// matched (dan moet sales handmatig kiezen).
-//
-// Heuristieken:
-//   "Solution Architect", "Data Architect"               → DSA
-//   "Data Engineer", "Lead Data Engineer", "DE"           → DE
-//   "Analytics Engineer", "BI Consultant",
-//   "Power BI Consultant", "Analytics Consultant"         → AE
-export function guessRoleCode(roleString) {
-  const norm = normalize(roleString);
-  if (!norm) return null;
-  if (/architect/.test(norm)) return 'DSA';
-  if (/dataengineer|de/.test(norm) && !/analyticsengineer/.test(norm)) {
-    // DE-match als 'data engineer' voorkomt, behalve als 't 'analytics engineer' is
-    if (/dataengineer/.test(norm)) return 'DE';
-    if (norm === 'de') return 'DE';
-  }
-  if (/analyticsengineer|biconsultant|powerbiconsultant|analyticsconsultant|dataanalyst/.test(norm)) {
-    return 'AE';
-  }
-  return null;
-}

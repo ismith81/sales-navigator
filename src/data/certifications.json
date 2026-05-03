@@ -1,14 +1,14 @@
 {
   "$schema_version": "1.0",
-  "description": "Certificeringsstandaard Data & Analytics team. Tier classificatie: foundation = gedeelde basis voor alle rollen, voldoende voor klanten op niveau 1-2 van de maturity matrix. Specialist = verdiepingscerts gekoppeld aan rol, relevant voor klanten op niveau 3-4.",
+  "description": "Certificeringsstandaard Data & Analytics team. Tier classificatie: baseline = gedeelde basis voor alle Data Consultants, voldoende voor klanten op niveau 1-2 van de maturity matrix. Specialistisch = verdiepingscerts gekoppeld aan specialisatie, relevant voor klanten op niveau 3-4.",
   "tiers": {
-    "foundation": {
-      "label": "Foundation",
-      "description": "Gedeelde basis voor het hele team. Stelt elk teamlid in staat om niveau 1-2 klanten te helpen op zowel Analytics Engineering als Data Engineering vlak (T-shape principe)."
+    "baseline": {
+      "label": "Baseline",
+      "description": "Gedeelde basis voor het hele team. Stelt elke Data Consultant in staat om niveau 1-2 klanten te helpen op zowel Analytics Engineering als Data Engineering vlak (T-shape principe)."
     },
     "specialist": {
-      "label": "Specialist",
-      "description": "Rol-specifieke verdieping voor niveau 3-4 klantvragen. Gekoppeld aan rol; niet verwacht buiten de eigen rol."
+      "label": "Specialistisch",
+      "description": "Specialisatie-specifieke verdieping voor niveau 3-4 klantvragen. Gekoppeld aan specialisatie; niet verwacht buiten de eigen specialisatie."
     }
   },
   "roles": {
@@ -21,8 +21,8 @@
       "full_name": "Data Consultant - Data Engineer"
     },
     "DSA": {
-      "label": "Solution Architect",
-      "full_name": "Data Solution Architect"
+      "label": "Data Solution Architect",
+      "full_name": "Data Consultant - Data Solution Architect"
     }
   },
   "relevance_levels": {
@@ -35,7 +35,7 @@
       "id": "DP-900",
       "name": "Azure Data Fundamentals",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -47,7 +47,7 @@
       "id": "AI-900",
       "name": "Azure AI Fundamentals",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -59,7 +59,7 @@
       "id": "SC-900",
       "name": "Security, Compliance & Identity Fundamentals",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -71,7 +71,7 @@
       "id": "PL-300",
       "name": "Power BI Data Analyst Associate",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -83,7 +83,7 @@
       "id": "DP-600",
       "name": "Fabric Analytics Engineer Associate",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -95,7 +95,7 @@
       "id": "DP-700",
       "name": "Fabric Data Engineer Associate",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "expected",
@@ -107,7 +107,7 @@
       "id": "AZ-400",
       "name": "DevOps Engineer Expert",
       "vendor": "Microsoft",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "recommended",
@@ -119,7 +119,7 @@
       "id": "DBX-FUND",
       "name": "Databricks Fundamentals",
       "vendor": "Databricks",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "not_applicable",
@@ -131,7 +131,7 @@
       "id": "DBX-DE-A",
       "name": "Databricks Certified Data Engineer Associate",
       "vendor": "Databricks",
-      "tier": "foundation",
+      "tier": "baseline",
       "active": true,
       "role_relevance": {
         "AE": "not_applicable",
