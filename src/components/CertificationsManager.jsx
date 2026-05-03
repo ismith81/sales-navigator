@@ -84,7 +84,7 @@ export default function CertificationsManager() {
   // ─── Seed-actie ───────────────────────────────────────────────────────
   const handleSeed = async () => {
     setSeeding(true);
-    setSeedStatus({ kind: 'busy', message: 'Master-lijst aan 't seeden…' });
+    setSeedStatus({ kind: 'busy', message: "Master-lijst aan 't seeden…" });
     const res = await seedCertifications();
     if (res?.error) {
       setSeedStatus({ kind: 'error', message: `Seed faalde: ${res.error}` });
