@@ -3139,23 +3139,25 @@ body::before {
 }
 .csm-section-note strong { color: var(--teal-dim, #2A9FA1); }
 
-.csm-table-wrap { overflow-x: auto; }
+.csm-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
 .csm-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.82rem;
-  background: var(--bg-soft, #F5F7FA);
-  border-radius: 8px;
-  overflow: hidden;
 }
 .csm-table th, .csm-table td {
-  padding: 0.55rem 0.6rem;
+  padding: 0.55rem 0.7rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 .csm-table thead th {
-  background: rgba(44,60,82,0.04);
+  background: rgba(49,183,185,0.06);
   color: var(--navy);
   font-weight: 700;
   font-size: 0.7rem;
@@ -3163,7 +3165,8 @@ body::before {
   text-transform: uppercase;
   white-space: nowrap;
 }
-.csm-table tbody tr:hover { background: rgba(49,183,185,0.04); }
+.csm-table tbody tr:hover td { background: var(--bg-soft, #F5F7FA); }
+.csm-table tbody tr:last-child td { border-bottom: none; }
 .csm-deprecated { opacity: 0.5; }
 .csm-deprecated td:not(:last-child):not(:nth-last-child(2)) { text-decoration: line-through; }
 

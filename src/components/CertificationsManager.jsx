@@ -178,7 +178,6 @@ export default function CertificationsManager() {
             type="button"
             className={`cert-tab-btn ${view === 'detail' ? 'active' : ''}`}
             onClick={() => setView('detail')}
-            disabled={!selectedConsultantId && view !== 'detail'}
           >
             Per consultant
           </button>
