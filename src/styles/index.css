@@ -3048,7 +3048,9 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 6px 16px rgba(44,60,82,0.12);
-  min-width: 320px;
+  width: max-content;
+  min-width: 280px;
+  max-width: calc(100vw - 1.5rem);
   padding: 0.4rem;
   animation: fadeUp 0.15s ease;
 }
@@ -3122,6 +3124,13 @@ body::before {
   margin-bottom: 0.85rem;
   flex-wrap: wrap;
 }
+@media (max-width: 640px) {
+  .csm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
 .csm-counter {
   font-size: 0.78rem;
   color: var(--text-light);
@@ -3144,6 +3153,14 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
+  /* Geef visuele hint dat de tabel horizontaal scrollbaar is op mobile */
+  background-image:
+    linear-gradient(to right, #fff 30%, rgba(255,255,255,0)),
+    linear-gradient(to right, rgba(0,0,0,0.04), #fff 70%);
+  background-position: 0 0, 100% 0;
+  background-repeat: no-repeat;
+  background-size: 30px 100%, 30px 100%;
+  background-attachment: local, local;
 }
 .csm-table {
   width: 100%;
@@ -3343,6 +3360,13 @@ body::before {
   width: 540px;
   max-width: 92vw;
   padding: 1.5rem 1.7rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@media (max-width: 640px) {
+  .csm-modal {
+    padding: 1.2rem 1rem;
+  }
 }
 .csm-form { margin-top: 1rem; }
 .csm-form-row { margin-bottom: 0.85rem; }
