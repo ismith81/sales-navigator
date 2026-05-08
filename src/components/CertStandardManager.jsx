@@ -267,7 +267,8 @@ function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRel
         </button>
       </div>
 
-      <div className="csm-table-wrap">
+      {/* Desktop: tabel-layout. Verborgen op <=768px via CSS. */}
+      <div className="csm-table-wrap csm-desktop-only">
         <table className="csm-table">
           <thead>
             <tr>
@@ -303,8 +304,126 @@ function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRel
           </tbody>
         </table>
       </div>
+
+      {/* Mobile: card-layout. Alleen zichtbaar op <=768px via CSS. */}
+      <div className="csm-cards csm-mobile-only">
+        {sorted.length === 0 ? (
+          <div className="csm-empty">
+            Nog geen certificeringen — gebruik "Nieuwe certificering" om te beginnen.
+          </div>
+        ) : (
+          <CertCards
+            rows={sorted}
+            activeSpecs={activeSpecs}
+            relevanceByCert={relevanceByCert}
+            onTierChange={onTierChange}
+            onRelevanceChange={onRelevanceChange}
+            onActiveChange={onActiveChange}
+            onEditCert={onEditCert}
+          />
+        )}
+      </div>
     </>
   );
+}
+
+function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanceChange, onActiveChange, onEditCert }) {
+  const blocks = [];
+  let last = null;
+  for (const c of rows) {
+    if (c.tier !== last) {
+      blocks.push(
+        <div key={`hdr-${c.tier}`} className="csm-card-tier-header">
+          {c.tier === 'baseline' ? 'Baseline' : 'Specialistisch'}
+        </div>
+      );
+      last = c.tier;
+    }
+    blocks.push(
+      <div key={c.id} className={`csm-card ${c.active ? '' : 'csm-deprecated'}`}>
+        <div className="csm-card-head">
+          <span className="csm-cert-id">{c.id}</span>
+          <div className="csm-card-title-block">
+            {c.url ? (
+              <a href={c.url} target="_blank" rel="noopener noreferrer" className="csm-cert-link">
+                {c.name} <span className="csm-link-icon">↗</span>
+              </a>
+            ) : (
+              <span className="csm-cert-name">{c.name}</span>
+            )}
+            <div className="csm-cert-vendor">{c.vendor}</div>
+          </div>
+          <button
+            type="button"
+            className="csm-row-edit"
+            title="Naam, vendor, link en notitie bewerken"
+            onClick={() => onEditCert(c)}
+          >
+            <EditIcon />
+          </button>
+        </div>
+
+        <div className="csm-card-controls">
+          <div className="csm-card-control">
+            <span className="csm-card-control-label">Tier</span>
+            <div className="csm-tier-radio">
+              <input
+                type="radio"
+                name={`m-tier-${c.id}`}
+                id={`m-tier-${c.id}-base`}
+                checked={c.tier === 'baseline'}
+                onChange={() => onTierChange(c.id, 'baseline')}
+              />
+              <label htmlFor={`m-tier-${c.id}-base`}>Baseline</label>
+              <input
+                type="radio"
+                name={`m-tier-${c.id}`}
+                id={`m-tier-${c.id}-spec`}
+                checked={c.tier === 'specialist'}
+                onChange={() => onTierChange(c.id, 'specialist')}
+              />
+              <label htmlFor={`m-tier-${c.id}-spec`}>Spec.</label>
+            </div>
+          </div>
+
+          <div className="csm-card-control">
+            <span className="csm-card-control-label">Actief</span>
+            <label className="csm-toggle">
+              <input
+                type="checkbox"
+                checked={!!c.active}
+                onChange={(e) => onActiveChange(c.id, e.target.checked)}
+              />
+              <span className="csm-toggle-slider" />
+            </label>
+          </div>
+        </div>
+
+        <div className="csm-card-relevance">
+          {activeSpecs.map(s => {
+            const cur = relevanceByCert.get(c.id)?.[s.code] || 'not_applicable';
+            return (
+              <div key={s.code} className="csm-card-relevance-row">
+                <span className="csm-card-control-label">{s.code}</span>
+                <select
+                  className={`csm-relevance csm-relevance--${cur}`}
+                  value={cur}
+                  onChange={(e) => onRelevanceChange(c.id, s.code, e.target.value)}
+                >
+                  {RELEVANCE_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+
+        {c.notes && <div className="csm-cert-note">{c.notes}</div>}
+      </div>
+    );
+  }
+  return <>{blocks}</>;
 }
 
 function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanceChange, onActiveChange, onEditCert }) {
@@ -421,7 +540,8 @@ function SpecsSubview({ specs, memberCounts, onFieldChange, onActiveChange, onAd
         <strong>Specialisaties drijven de gap-analyse.</strong> Elke nieuwe specialisatie krijgt automatisch een kolom in de Certificeringen-tabel en een filter-knop in de teamview-matrix. Hernoemen werkt direct overal door — geen redeploy nodig. Een gedeactiveerde specialisatie verdwijnt uit de UI maar bestaande consultant-toewijzingen blijven intact.
       </div>
 
-      <div className="csm-table-wrap">
+      {/* Desktop: tabel */}
+      <div className="csm-table-wrap csm-desktop-only">
         <table className="csm-table">
           <thead>
             <tr>
@@ -479,6 +599,61 @@ function SpecsSubview({ specs, memberCounts, onFieldChange, onActiveChange, onAd
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: card-layout */}
+      <div className="csm-cards csm-mobile-only">
+        {sorted.length === 0 ? (
+          <div className="csm-empty">
+            Nog geen specialisaties geconfigureerd — voeg de eerste toe om te beginnen.
+          </div>
+        ) : sorted.map(s => (
+          <div key={s.code} className={`csm-card ${s.active ? '' : 'csm-deprecated'}`}>
+            <div className="csm-card-head">
+              <span className="csm-spec-code">{s.code}</span>
+              <div className="csm-card-title-block">
+                <input
+                  className="csm-spec-input"
+                  defaultValue={s.label}
+                  placeholder="Korte label"
+                  onBlur={(e) => {
+                    if (e.target.value !== s.label) onFieldChange(s.code, 'label', e.target.value);
+                  }}
+                />
+                <input
+                  className="csm-spec-input"
+                  defaultValue={s.full_name || ''}
+                  placeholder="Volledige naam (CV-context)"
+                  onBlur={(e) => {
+                    if (e.target.value !== (s.full_name || '')) {
+                      onFieldChange(s.code, 'full_name', e.target.value);
+                    }
+                  }}
+                  style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: 'var(--text-light)' }}
+                />
+              </div>
+            </div>
+            <div className="csm-card-controls">
+              <div className="csm-card-control">
+                <span className="csm-card-control-label">Consultants</span>
+                <span className={`csm-spec-count ${(memberCounts[s.code] || 0) === 0 ? 'csm-spec-count-zero' : ''}`}>
+                  {memberCounts[s.code] || 0}
+                </span>
+              </div>
+              <div className="csm-card-control">
+                <span className="csm-card-control-label">Actief</span>
+                <label className="csm-toggle">
+                  <input
+                    type="checkbox"
+                    checked={!!s.active}
+                    onChange={(e) => onActiveChange(s.code, e.target.checked)}
+                  />
+                  <span className="csm-toggle-slider" />
+                </label>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </>
   );

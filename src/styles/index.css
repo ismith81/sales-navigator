@@ -3085,6 +3085,116 @@ body::before {
 /* ─── Standaard beheren (CertStandardManager) ──────────────────────────── */
 .csm-wrap { animation: fadeUp 0.3s ease; }
 
+/* Responsive: tabel op desktop, card-layout op mobile */
+.csm-mobile-only { display: none; }
+.csm-desktop-only { display: block; }
+@media (max-width: 768px) {
+  .csm-mobile-only { display: block; }
+  .csm-desktop-only { display: none; }
+}
+
+.csm-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.csm-card-tier-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal-dim, #2A9FA1);
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.csm-card-tier-header:first-child { margin-top: 0; }
+
+.csm-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.csm-card.csm-deprecated { opacity: 0.55; }
+
+.csm-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.csm-card-head > .csm-cert-id,
+.csm-card-head > .csm-spec-code {
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+}
+.csm-card-title-block {
+  flex: 1;
+  min-width: 0; /* zodat lange names breken i.p.v. overflow */
+}
+.csm-card-title-block .csm-cert-name,
+.csm-card-title-block .csm-cert-link {
+  font-size: 0.92rem;
+  display: block;
+  word-break: break-word;
+}
+.csm-card-title-block .csm-cert-vendor {
+  font-size: 0.72rem;
+  margin-top: 0.15rem;
+}
+
+.csm-card-controls {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.csm-card-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.csm-card-control-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.csm-card-relevance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+.csm-card-relevance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  background: var(--bg-soft, #F5F7FA);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+}
+.csm-card-relevance-row .csm-card-control-label {
+  font-family: 'Consolas', monospace;
+  font-size: 0.75rem;
+  color: var(--navy);
+}
+.csm-card-relevance-row .csm-relevance {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  .csm-card-relevance { grid-template-columns: 1fr; }
+}
+
 .csm-subnav {
   display: flex;
   gap: 0.3rem;
