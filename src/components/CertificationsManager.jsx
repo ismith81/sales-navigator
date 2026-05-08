@@ -191,9 +191,6 @@ export default function CertificationsManager() {
           </button>
         </div>
         <div className="cert-manager-toolbar-right">
-          <button type="button" className="btn-add-small" onClick={() => setShowWizard(true)}>
-            🪄 Migratie-wizard
-          </button>
           <div className="cert-advanced-wrap">
             <button
               type="button"
@@ -209,6 +206,14 @@ export default function CertificationsManager() {
                 {/* Click-outside catcher */}
                 <div className="cert-advanced-backdrop" onClick={() => setShowAdvanced(false)} />
                 <div className="cert-advanced-menu" role="menu">
+                  <button
+                    type="button"
+                    className="cert-advanced-item"
+                    onClick={() => { setShowAdvanced(false); setShowWizard(true); }}
+                  >
+                    🪄 Migratie-wizard openen
+                    <small>Eenmalige conversie van vrije-tekst certs naar gestructureerde rijen — re-runnable per consultant</small>
+                  </button>
                   <button
                     type="button"
                     className="cert-advanced-item cert-advanced-item--danger"
