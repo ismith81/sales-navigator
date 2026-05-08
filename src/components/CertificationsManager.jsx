@@ -52,6 +52,8 @@ export default function CertificationsManager() {
   const [seeding, setSeeding] = useState(false);
   const [seedStatus, setSeedStatus] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showSeedConfirm, setShowSeedConfirm] = useState(false);
 
   // Specialisaties dynamic uit DB. Sorteer op sort_order, dan code; alleen
   // active=true is relevant voor team/detail-views (de Standaard-tab toont
@@ -192,15 +194,34 @@ export default function CertificationsManager() {
           <button type="button" className="btn-add-small" onClick={() => setShowWizard(true)}>
             🪄 Migratie-wizard
           </button>
-          <button
-            type="button"
-            className="btn-add-small"
-            onClick={handleSeed}
-            disabled={seeding}
-            title="Overschrijft handmatige wijzigingen met de versie uit src/data/certifications.json — alleen draaien voor eerste setup of disaster-recovery."
-          >
-            {seeding ? '⏳ Bezig…' : '↻ Seed master-lijst'}
-          </button>
+          <div className="cert-advanced-wrap">
+            <button
+              type="button"
+              className="btn-add-small"
+              onClick={() => setShowAdvanced(v => !v)}
+              aria-expanded={showAdvanced}
+              aria-haspopup="menu"
+            >
+              ⋯ Geavanceerd
+            </button>
+            {showAdvanced && (
+              <>
+                {/* Click-outside catcher */}
+                <div className="cert-advanced-backdrop" onClick={() => setShowAdvanced(false)} />
+                <div className="cert-advanced-menu" role="menu">
+                  <button
+                    type="button"
+                    className="cert-advanced-item cert-advanced-item--danger"
+                    onClick={() => { setShowAdvanced(false); setShowSeedConfirm(true); }}
+                    disabled={seeding}
+                  >
+                    {seeding ? '⏳ Bezig…' : '↻ Seed master-lijst uit JSON'}
+                    <small>Overschrijft handmatige wijzigingen — alleen voor eerste setup / disaster-recovery</small>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -215,7 +236,7 @@ export default function CertificationsManager() {
       ) : certs.length === 0 ? (
         <div className="cert-empty">
           <p><strong>De master-lijst is nog niet ingelezen.</strong></p>
-          <p>Ga naar <em>Standaard beheren</em> om certs handmatig toe te voegen, of klik op <em>↻ Seed master-lijst</em> om de 14 standaard-certificeringen vanuit <code>src/data/certifications.json</code> in de database te zetten.</p>
+          <p>Ga naar <em>Standaard beheren</em> om certs handmatig toe te voegen, of gebruik <em>⋯ Geavanceerd → Seed master-lijst uit JSON</em> om de 14 standaard-certificeringen vanuit <code>src/data/certifications.json</code> in de database te zetten.</p>
         </div>
       ) : view === 'team' ? (
         <TeamView
@@ -257,6 +278,75 @@ export default function CertificationsManager() {
       {showWizard && (
         <CertMigrationWizard onClose={() => { setShowWizard(false); refresh(); }} />
       )}
+
+      {showSeedConfirm && (
+        <SeedConfirmDialog
+          onCancel={() => setShowSeedConfirm(false)}
+          onConfirm={async () => {
+            setShowSeedConfirm(false);
+            await handleSeed();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Seed-confirm-dialog ──────────────────────────────────────────────
+// Vereist dat de user letterlijk "seed" typt voor 't draaien — voorkomt
+// onbedoelde clicks. De seed-actie reset role-relevance per cert in de
+// JSON; handmatige UI-wijzigingen op die certs raken kwijt.
+function SeedConfirmDialog({ onCancel, onConfirm }) {
+  const [typed, setTyped] = useState('');
+  const canConfirm = typed.trim().toLowerCase() === 'seed';
+  return (
+    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="case-detail-box csm-modal" style={{ maxWidth: 540 }}>
+        <h2 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--accent)' }}>
+          ⚠ Master-lijst seeden uit JSON?
+        </h2>
+        <p style={{ marginTop: '0.6rem', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.5 }}>
+          Dit zal de 14 certs uit <code>src/data/certifications.json</code> upserten en
+          <strong> alle role-relevance per cert resetten</strong> naar de JSON-waarden.
+        </p>
+        <div className="csm-section-note" style={{ borderLeftColor: 'var(--accent)', background: 'rgba(237,23,75,0.06)', marginTop: '0.8rem' }}>
+          <strong style={{ color: 'var(--accent)' }}>Handmatige wijzigingen op de standaard-certs raken kwijt:</strong>
+          <ul style={{ margin: '0.4rem 0 0 1.2rem', padding: 0 }}>
+            <li>Tier-aanpassingen (baseline ↔ specialistisch)</li>
+            <li>Role-relevance per specialisatie</li>
+            <li>Naam, link, vendor, notitie-velden</li>
+          </ul>
+        </div>
+        <p style={{ marginTop: '0.7rem', fontSize: '0.78rem', color: 'var(--text-light)', lineHeight: 1.5 }}>
+          <strong>Blijven intact:</strong> specialisaties, consultant-toewijzingen, eigen toegevoegde certs (niet in JSON), other_certifications.
+        </p>
+        <div className="csm-form-row" style={{ marginTop: '1.1rem' }}>
+          <label>Typ <code>seed</code> om te bevestigen</label>
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder="seed"
+            autoFocus
+          />
+        </div>
+        <div className="csm-modal-actions">
+          <button type="button" className="btn-cancel" onClick={onCancel}>Annuleren</button>
+          <button
+            type="button"
+            className="csm-btn-primary"
+            onClick={onConfirm}
+            disabled={!canConfirm}
+            style={{
+              background: canConfirm ? 'var(--accent)' : 'var(--muted)',
+              borderColor: canConfirm ? 'var(--accent)' : 'var(--muted)',
+              cursor: canConfirm ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Doorvoeren
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
