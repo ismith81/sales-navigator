@@ -415,7 +415,9 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
       </div>
 
       <h3 className="cert-section-heading">Cert-matrix per consultant</h3>
-      <div className="cert-matrix-wrap">
+
+      {/* Desktop: matrix-tabel. Verborgen op <=768px. */}
+      <div className="cert-matrix-wrap csm-desktop-only">
         <table className="cert-matrix">
           <thead>
             <tr>
@@ -450,6 +452,75 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: consultant-cards met coverage-bars. */}
+      <div className="csm-mobile-only cert-team-cards">
+        {members.length === 0 ? (
+          <div className="csm-empty">Geen consultants in deze filter.</div>
+        ) : members.map(m => {
+          const baseline = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'baseline' });
+          const specialist = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'specialist' });
+          const hasSpec = !!m.role_code;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              className="cert-team-card"
+              onClick={() => onSelectConsultant(m.id)}
+            >
+              <div className="cert-team-card-head">
+                <span className="cert-team-card-name">{m.name}</span>
+                {hasSpec ? (
+                  <span className="cert-team-card-spec">{m.role_code}</span>
+                ) : (
+                  <span className="cert-team-card-spec cert-team-card-spec--none">geen spec.</span>
+                )}
+              </div>
+              {hasSpec ? (
+                <>
+                  <CoverageBar label="Baseline" achieved={baseline.achieved} expected={baseline.expected} percent={baseline.percent} />
+                  <CoverageBar label="Specialistisch" achieved={specialist.achieved} expected={specialist.expected} percent={specialist.percent} />
+                </>
+              ) : (
+                <div className="cert-team-card-empty">
+                  Wijs een specialisatie toe om gap-analyse te zien.
+                </div>
+              )}
+              <div className="cert-team-card-cta">→ Detail</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CoverageBar({ label, achieved, expected, percent }) {
+  if (expected === 0) {
+    return (
+      <div className="cert-coverage-bar">
+        <div className="cert-coverage-bar-head">
+          <span className="cert-coverage-bar-label">{label}</span>
+          <span className="cert-coverage-bar-stats" style={{ color: 'var(--muted)' }}>n.v.t.</span>
+        </div>
+      </div>
+    );
+  }
+  const isComplete = achieved === expected;
+  return (
+    <div className="cert-coverage-bar">
+      <div className="cert-coverage-bar-head">
+        <span className="cert-coverage-bar-label">{label}</span>
+        <span className="cert-coverage-bar-stats">
+          <strong>{achieved}/{expected}</strong> · {percent}%
+        </span>
+      </div>
+      <div className="cert-coverage-bar-track">
+        <div
+          className={`cert-coverage-bar-fill ${isComplete ? 'cert-coverage-bar-fill--complete' : ''}`}
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   );
