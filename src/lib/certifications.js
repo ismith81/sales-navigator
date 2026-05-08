@@ -19,10 +19,25 @@ import { authedFetch } from './auth';
 
 // ─── Fetchers ──────────────────────────────────────────────────────────────
 
+export async function listSpecializations({ activeOnly = false } = {}) {
+  let q = supabase
+    .from('specializations')
+    .select('code, label, full_name, sort_order, active, updated_at')
+    .order('sort_order', { ascending: true })
+    .order('code', { ascending: true });
+  if (activeOnly) q = q.eq('active', true);
+  const { data, error } = await q;
+  if (error) {
+    console.warn('listSpecializations fout:', error.message);
+    return [];
+  }
+  return data || [];
+}
+
 export async function listCertifications() {
   const { data, error } = await supabase
     .from('certifications')
-    .select('id, name, vendor, tier, active, notes, updated_at')
+    .select('id, name, vendor, tier, active, notes, url, updated_at')
     .order('tier', { ascending: true })
     .order('id', { ascending: true });
   if (error) {
@@ -121,6 +136,112 @@ export async function setConsultantRoleCode(consultantId, roleCode) {
     console.warn('setConsultantRoleCode fout:', error.message);
     return { error: error.message };
   }
+  return { ok: true };
+}
+
+// ─── Mutators voor Standaard beheren-UI ──────────────────────────────────
+
+// Insert/upsert van een cert vanuit de beheer-UI. Voor "Nieuwe certificering"
+// gebruikt de UI insert; voor naam/vendor/url/notes-edits gebruikt 'm update.
+// Beide via één upsert zodat de UI eenvoudig blijft.
+export async function upsertCertification(cert) {
+  if (!cert?.id) return { error: 'Cert-id is verplicht.' };
+  const row = {
+    id: String(cert.id).trim(),
+    name: cert.name || '',
+    vendor: cert.vendor || '',
+    tier: cert.tier === 'specialist' ? 'specialist' : 'baseline',
+    active: cert.active !== false,
+    notes: cert.notes || null,
+    url: cert.url || null,
+  };
+  const { error } = await supabase
+    .from('certifications')
+    .upsert(row, { onConflict: 'id' });
+  if (error) {
+    console.warn('upsertCertification fout:', error.message);
+    return { error: error.message };
+  }
+  return { ok: true };
+}
+
+// Toggle 'tier' voor een cert (baseline ↔ specialist).
+export async function setCertificationTier(certId, tier) {
+  const value = tier === 'specialist' ? 'specialist' : 'baseline';
+  const { error } = await supabase
+    .from('certifications')
+    .update({ tier: value })
+    .eq('id', certId);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+// Active-toggle voor cert. Behoudt historische consultant_certifications-rijen.
+export async function setCertificationActive(certId, active) {
+  const { error } = await supabase
+    .from('certifications')
+    .update({ active: !!active })
+    .eq('id', certId);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+// Set 1 role-relevance-rij. Upsert zodat new + edit dezelfde codepath delen.
+export async function setRoleRelevance(certId, role, relevance) {
+  if (!certId || !role) return { error: 'cert_id en role verplicht.' };
+  const valid = ['expected', 'recommended', 'not_applicable'];
+  if (!valid.includes(relevance)) return { error: `Ongeldige relevance: ${relevance}` };
+  const { error } = await supabase
+    .from('certification_role_relevance')
+    .upsert(
+      { cert_id: certId, role, relevance },
+      { onConflict: 'cert_id,role' }
+    );
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+// ─── Specialisaties CRUD ─────────────────────────────────────────────────
+
+// Toevoegen van een specialisatie. Code wordt geforceerd uppercase + trim.
+export async function createSpecialization({ code, label, full_name, sort_order }) {
+  const trimmedCode = (code || '').trim().toUpperCase();
+  if (!trimmedCode) return { error: 'Code is verplicht.' };
+  if (!label || !label.trim()) return { error: 'Label is verplicht.' };
+  if (!/^[A-Z][A-Z0-9]{1,5}$/.test(trimmedCode)) {
+    return { error: 'Code moet 2-6 hoofdletters/cijfers zijn, beginnend met een letter.' };
+  }
+  const row = {
+    code: trimmedCode,
+    label: label.trim(),
+    full_name: (full_name || '').trim() || `Data Consultant - ${label.trim()}`,
+    sort_order: typeof sort_order === 'number' ? sort_order : 99,
+    active: true,
+  };
+  const { error } = await supabase.from('specializations').insert(row);
+  if (error) {
+    console.warn('createSpecialization fout:', error.message);
+    return { error: error.message };
+  }
+  return { ok: true, code: trimmedCode };
+}
+
+// Update label/full_name/sort_order/active op een specialisatie.
+// Code is primary key + FK-target — niet via deze functie wijzigbaar (dat
+// vereist een aparte cascade-flow met confirm-dialog).
+export async function updateSpecialization(code, patch) {
+  if (!code) return { error: 'code verplicht.' };
+  const allowed = {};
+  if (patch.label !== undefined) allowed.label = (patch.label || '').trim();
+  if (patch.full_name !== undefined) allowed.full_name = (patch.full_name || '').trim() || null;
+  if (patch.sort_order !== undefined) allowed.sort_order = patch.sort_order;
+  if (patch.active !== undefined) allowed.active = !!patch.active;
+  if (Object.keys(allowed).length === 0) return { ok: true };
+  const { error } = await supabase
+    .from('specializations')
+    .update(allowed)
+    .eq('code', code);
+  if (error) return { error: error.message };
   return { ok: true };
 }
 

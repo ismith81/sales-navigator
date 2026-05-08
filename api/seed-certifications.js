@@ -35,13 +35,21 @@ export default async function handler(req, res) {
   // Haal bestaande certs op voor diff-detectie (NEW vs UPDATED vs UNCHANGED).
   const { data: existing, error: fetchErr } = await supabase
     .from('certifications')
-    .select('id, name, vendor, tier, active, notes');
+    .select('id, name, vendor, tier, active, notes, url');
   if (fetchErr) {
     console.error('seed-certifications fetch fout:', fetchErr.message);
     res.status(500).json({ error: 'Kon bestaande certs niet ophalen.' });
     return;
   }
   const existingById = new Map((existing || []).map(c => [c.id, c]));
+
+  // Haal actieve specialisaties op om role-relevance keys te valideren —
+  // anders kraakt de INSERT op de FK-constraint.
+  const { data: specsData } = await supabase
+    .from('specializations')
+    .select('code')
+    .eq('active', true);
+  const validSpecCodes = new Set((specsData || []).map(s => s.code));
 
   const seedCerts = Array.isArray(seedFile?.certifications) ? seedFile.certifications : [];
   const log = [];
@@ -57,6 +65,7 @@ export default async function handler(req, res) {
       tier: cert.tier,
       active: cert.active !== false,
       notes: cert.notes || null,
+      url: cert.url || null,
     };
     const prev = existingById.get(cert.id);
 
@@ -70,6 +79,7 @@ export default async function handler(req, res) {
       || prev.tier !== row.tier
       || prev.active !== row.active
       || (prev.notes || null) !== (row.notes || null)
+      || (prev.url || null) !== (row.url || null)
     ) {
       status = 'UPDATED';
       updatedCount++;
@@ -92,15 +102,22 @@ export default async function handler(req, res) {
 
   // role_relevance: hard reset per cert (delete + insert) zodat oude
   // mappings die uit de seed verdwijnen ook werkelijk verdwenen zijn.
-  // Goedkoop bij 14 certs × 3 rollen = 42 rows.
+  // Filter keys op actieve specialisaties — als een role_relevance-key niet
+  // bestaat in specializations zou de INSERT crashen op de FK-constraint.
+  // Skipped keys worden gelogd zodat duidelijk is dat ze genegeerd zijn.
   let roleRelevanceCount = 0;
+  const skippedRoles = [];
   for (const cert of seedCerts) {
     const rr = cert.role_relevance || {};
-    const rows = Object.entries(rr).map(([role, relevance]) => ({
-      cert_id: cert.id,
-      role,
-      relevance,
-    }));
+    const rows = Object.entries(rr)
+      .filter(([role]) => {
+        if (!validSpecCodes.has(role)) {
+          skippedRoles.push({ cert: cert.id, role });
+          return false;
+        }
+        return true;
+      })
+      .map(([role, relevance]) => ({ cert_id: cert.id, role, relevance }));
 
     // Delete bestaande rows voor deze cert
     const { error: delErr } = await supabase
@@ -121,6 +138,13 @@ export default async function handler(req, res) {
       continue;
     }
     roleRelevanceCount += rows.length;
+  }
+  if (skippedRoles.length > 0) {
+    log.push({
+      status: 'ROLES_SKIPPED',
+      message: `${skippedRoles.length} role-relevance keys niet bestaand in specializations — geskipt`,
+      details: skippedRoles,
+    });
   }
 
   res.status(200).json({

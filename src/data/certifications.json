@@ -1,6 +1,6 @@
 {
-  "$schema_version": "1.0",
-  "description": "Certificeringsstandaard Data & Analytics team. Tier classificatie: baseline = gedeelde basis voor alle Data Consultants, voldoende voor klanten op niveau 1-2 van de maturity matrix. Specialistisch = verdiepingscerts gekoppeld aan specialisatie, relevant voor klanten op niveau 3-4.",
+  "$schema_version": "1.1",
+  "description": "Certificeringsstandaard Data & Analytics team. Tier classificatie: baseline = gedeelde basis voor alle Data Consultants, voldoende voor klanten op niveau 1-2 van de maturity matrix. Specialistisch = verdiepingscerts gekoppeld aan specialisatie, relevant voor klanten op niveau 3-4. Sinds v1.1: optioneel url-veld per cert (clickable naam in Beheer-UI), specialisaties komen uit de DB-tabel public.specializations.",
   "tiers": {
     "baseline": {
       "label": "Baseline",
@@ -11,24 +11,10 @@
       "description": "Specialisatie-specifieke verdieping voor niveau 3-4 klantvragen. Gekoppeld aan specialisatie; niet verwacht buiten de eigen specialisatie."
     }
   },
-  "roles": {
-    "AE": {
-      "label": "Analytics Engineer",
-      "full_name": "Data Consultant - Analytics Engineer"
-    },
-    "DE": {
-      "label": "Data Engineer",
-      "full_name": "Data Consultant - Data Engineer"
-    },
-    "DSA": {
-      "label": "Data Solution Architect",
-      "full_name": "Data Consultant - Data Solution Architect"
-    }
-  },
   "relevance_levels": {
-    "expected": "Verwacht voor de rol op deze tier",
-    "recommended": "Aanbevolen / specialisatie - waardevol maar niet verplicht",
-    "not_applicable": "Niet relevant voor deze rol"
+    "expected": "Verwacht voor de specialisatie op deze tier",
+    "recommended": "Aanbevolen / persoonlijke verdieping - waardevol maar niet verplicht",
+    "not_applicable": "Niet relevant voor deze specialisatie"
   },
   "certifications": [
     {
@@ -37,6 +23,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-data-fundamentals/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -49,6 +36,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-ai-fundamentals/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -61,6 +49,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/security-compliance-and-identity-fundamentals/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -73,6 +62,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/data-analyst-associate/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -85,6 +75,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/fabric-analytics-engineer-associate/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -97,6 +88,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/fabric-data-engineer-associate/",
       "role_relevance": {
         "AE": "expected",
         "DE": "expected",
@@ -109,6 +101,7 @@
       "vendor": "Microsoft",
       "tier": "baseline",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/devops-engineer/",
       "role_relevance": {
         "AE": "recommended",
         "DE": "expected",
@@ -121,6 +114,7 @@
       "vendor": "Databricks",
       "tier": "baseline",
       "active": true,
+      "url": "https://www.databricks.com/learn/certification/fundamentals",
       "role_relevance": {
         "AE": "not_applicable",
         "DE": "recommended",
@@ -133,6 +127,7 @@
       "vendor": "Databricks",
       "tier": "baseline",
       "active": true,
+      "url": "https://www.databricks.com/learn/certification/data-engineer-associate",
       "role_relevance": {
         "AE": "not_applicable",
         "DE": "recommended",
@@ -145,6 +140,7 @@
       "vendor": "Microsoft",
       "tier": "specialist",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-solutions-architect/",
       "role_relevance": {
         "AE": "not_applicable",
         "DE": "recommended",
@@ -157,6 +153,7 @@
       "vendor": "Microsoft",
       "tier": "specialist",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-security-engineer/",
       "role_relevance": {
         "AE": "recommended",
         "DE": "expected",
@@ -169,6 +166,7 @@
       "vendor": "Microsoft",
       "tier": "specialist",
       "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-ai-engineer/",
       "notes": "Aanbevolen, niet verwacht. Examen breed van scope (Computer Vision, Speech, Document Intelligence) waardoor slechts beperkt deel relevant is voor Fabric Data Agents. Heroverwegen wanneer Microsoft een specifieke Fabric AI cert uitbrengt.",
       "role_relevance": {
         "AE": "recommended",
@@ -182,6 +180,7 @@
       "vendor": "DAMA",
       "tier": "specialist",
       "active": true,
+      "url": "https://cdmp.info/",
       "role_relevance": {
         "AE": "not_applicable",
         "DE": "not_applicable",
@@ -194,6 +193,7 @@
       "vendor": "Databricks",
       "tier": "specialist",
       "active": true,
+      "url": "https://www.databricks.com/learn/certification/data-engineer-professional",
       "role_relevance": {
         "AE": "not_applicable",
         "DE": "recommended",

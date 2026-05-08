@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
+  listSpecializations,
   listCertifications,
   listRoleRelevance,
   listAllConsultantCerts,
@@ -12,22 +13,22 @@ import {
   computeTopTeamGaps,
 } from '../lib/certifications';
 import CertMigrationWizard from './CertMigrationWizard';
+import CertStandardManager from './CertStandardManager';
 
-// Beheer → Certificeringen — twee subviews:
+// Beheer → Certificeringen — drie subviews:
 //
 //   1. Teamview (default): matrix consultants × certs, gegroepeerd op tier.
 //      Filter op specialisatie. Aggregaten + top-3 gaps. Click consultant → detail.
 //   2. Detail: per consultant alle relevante certs (expected + recommended)
 //      met checkbox + other_certifications-veld + specialisatie-keuze.
+//   3. Standaard beheren: CRUD op certs + specialisaties. Voor competentie-
+//      leads om de master-lijst zelfstandig te onderhouden.
 //
 // Plus: knoppen voor seed (master-list updaten vanuit JSON) en migratie-
 // wizard (eenmalige conversie van bestaande vrije-tekst certs).
-
-const ROLE_OPTIONS = [
-  { code: 'AE', label: 'Analytics Engineer' },
-  { code: 'DE', label: 'Data Engineer' },
-  { code: 'DSA', label: 'Data Solution Architect' },
-];
+//
+// ROLE_OPTIONS komt sinds Optie A uit de DB (specializations-tabel) i.p.v.
+// hardcoded — toevoegen/hernoemen van specialisaties werkt direct overal door.
 
 const RELEVANCE_LABEL = {
   expected: 'Verwacht',
@@ -37,13 +38,14 @@ const RELEVANCE_LABEL = {
 
 export default function CertificationsManager() {
   const [members, setMembers] = useState([]);
+  const [specs, setSpecs] = useState([]);
   const [certs, setCerts] = useState([]);
   const [roleRelevance, setRoleRelevance] = useState([]);
   const [consultantCerts, setConsultantCerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [view, setView] = useState('team'); // 'team' | 'detail'
+  const [view, setView] = useState('team'); // 'team' | 'detail' | 'standard'
   const [selectedConsultantId, setSelectedConsultantId] = useState(null);
   const [filterRole, setFilterRole] = useState('all');
 
@@ -51,11 +53,23 @@ export default function CertificationsManager() {
   const [seedStatus, setSeedStatus] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
 
+  // Specialisaties dynamic uit DB. Sorteer op sort_order, dan code; alleen
+  // active=true is relevant voor team/detail-views (de Standaard-tab toont
+  // ook gedeactiveerde via z'n eigen fetch).
+  const roleOptions = useMemo(
+    () => specs
+      .filter(s => s.active)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.code.localeCompare(b.code))
+      .map(s => ({ code: s.code, label: s.label })),
+    [specs]
+  );
+
   const refresh = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [c, rr, cc, mRes] = await Promise.all([
+      const [s, c, rr, cc, mRes] = await Promise.all([
+        listSpecializations(),
         listCertifications(),
         listRoleRelevance(),
         listAllConsultantCerts(),
@@ -69,6 +83,7 @@ export default function CertificationsManager() {
       } else {
         setMembers(mRes.data || []);
       }
+      setSpecs(s);
       setCerts(c);
       setRoleRelevance(rr);
       setConsultantCerts(cc);
@@ -163,14 +178,27 @@ export default function CertificationsManager() {
             onClick={() => setView('detail')}
             disabled={!selectedConsultantId && view !== 'detail'}
           >
-            Detail
+            Per consultant
+          </button>
+          <button
+            type="button"
+            className={`cert-tab-btn ${view === 'standard' ? 'active' : ''}`}
+            onClick={() => setView('standard')}
+          >
+            Standaard beheren
           </button>
         </div>
         <div className="cert-manager-toolbar-right">
           <button type="button" className="btn-add-small" onClick={() => setShowWizard(true)}>
             🪄 Migratie-wizard
           </button>
-          <button type="button" className="btn-add-small" onClick={handleSeed} disabled={seeding}>
+          <button
+            type="button"
+            className="btn-add-small"
+            onClick={handleSeed}
+            disabled={seeding}
+            title="Overschrijft handmatige wijzigingen met de versie uit src/data/certifications.json — alleen draaien voor eerste setup of disaster-recovery."
+          >
             {seeding ? '⏳ Bezig…' : '↻ Seed master-lijst'}
           </button>
         </div>
@@ -182,10 +210,12 @@ export default function CertificationsManager() {
         </div>
       )}
 
-      {certs.length === 0 ? (
+      {view === 'standard' ? (
+        <CertStandardManager onChange={refresh} />
+      ) : certs.length === 0 ? (
         <div className="cert-empty">
           <p><strong>De master-lijst is nog niet ingelezen.</strong></p>
-          <p>Klik op <em>↻ Seed master-lijst</em> om de 14 standaard-certificeringen vanuit <code>src/data/certifications.json</code> in de database te zetten. Daarna kan de migratie-wizard de bestaande consultant-certs koppelen.</p>
+          <p>Ga naar <em>Standaard beheren</em> om certs handmatig toe te voegen, of klik op <em>↻ Seed master-lijst</em> om de 14 standaard-certificeringen vanuit <code>src/data/certifications.json</code> in de database te zetten.</p>
         </div>
       ) : view === 'team' ? (
         <TeamView
@@ -194,6 +224,7 @@ export default function CertificationsManager() {
           certs={certs}
           roleRelevance={roleRelevance}
           consultantCerts={consultantCerts}
+          roleOptions={roleOptions}
           filterRole={filterRole}
           setFilterRole={setFilterRole}
           teamCoverage={teamCoverage}
@@ -207,6 +238,7 @@ export default function CertificationsManager() {
           certs={certs}
           roleRelevance={roleRelevance}
           consultantCerts={consultantCerts}
+          roleOptions={roleOptions}
           onToggleAchieved={toggleAchieved}
           onSelectConsultant={setSelectedConsultantId}
           onUpdateRoleCode={async (id, code) => {
@@ -230,7 +262,7 @@ export default function CertificationsManager() {
 }
 
 // ─── TeamView sub-component ────────────────────────────────────────────
-function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, filterRole, setFilterRole, teamCoverage, topGaps, onSelectConsultant }) {
+function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, roleOptions, filterRole, setFilterRole, teamCoverage, topGaps, onSelectConsultant }) {
   const achievedSet = useMemo(() => {
     const s = new Set();
     for (const c of consultantCerts) if (c.achieved) s.add(`${c.consultant_id}::${c.cert_id}`);
@@ -248,7 +280,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
       <div className="cert-filter-bar">
         <span style={{ marginRight: '0.5rem', fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
         <button type="button" className={`cert-filter-btn ${filterRole === 'all' ? 'active' : ''}`} onClick={() => setFilterRole('all')}>Alle</button>
-        {ROLE_OPTIONS.map(opt => (
+        {(roleOptions || []).map(opt => (
           <button
             key={opt.code}
             type="button"
@@ -328,7 +360,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
 }
 
 // ─── DetailView sub-component ──────────────────────────────────────────
-function DetailView({ consultantId, members, certs, roleRelevance, consultantCerts, onToggleAchieved, onSelectConsultant, onUpdateRoleCode, onUpdateOtherCerts }) {
+function DetailView({ consultantId, members, certs, roleRelevance, consultantCerts, roleOptions, onToggleAchieved, onSelectConsultant, onUpdateRoleCode, onUpdateOtherCerts }) {
   const consultant = members.find(m => m.id === consultantId) || members[0];
 
   const [otherText, setOtherText] = useState('');
@@ -430,7 +462,7 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
         </select>
         <div className="cert-detail-role-bar">
           <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
-          {ROLE_OPTIONS.map(opt => (
+          {(roleOptions || []).map(opt => (
             <button
               key={opt.code}
               type="button"

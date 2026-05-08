@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
+  listSpecializations,
   listCertifications,
   setConsultantCertAchieved,
   setOtherCertifications,
@@ -37,15 +38,10 @@ const CONFIDENCE_COLOR = {
   low: '#D63A5C',
 };
 
-const ROLE_OPTIONS = [
-  { code: 'AE', label: 'Analytics Engineer' },
-  { code: 'DE', label: 'Data Engineer' },
-  { code: 'DSA', label: 'Data Solution Architect' },
-];
-
 export default function CertMigrationWizard({ onClose }) {
   const [members, setMembers] = useState([]);
   const [certs, setCerts] = useState([]);
+  const [roleOptions, setRoleOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -59,7 +55,8 @@ export default function CertMigrationWizard({ onClose }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [c, mRes] = await Promise.all([
+      const [s, c, mRes] = await Promise.all([
+        listSpecializations({ activeOnly: true }),
         listCertifications(),
         supabase
           .from('team_members')
@@ -73,6 +70,7 @@ export default function CertMigrationWizard({ onClose }) {
       } else {
         setMembers(mRes.data || []);
       }
+      setRoleOptions((s || []).map(x => ({ code: x.code, label: x.label })));
       setCerts(c);
       setLoading(false);
     })();
@@ -262,7 +260,7 @@ export default function CertMigrationWizard({ onClose }) {
             Interne specialisatie van deze Data Consultant — bepaalt welke certs verwacht worden in de gap-analyse. Onafhankelijk van de externe CV-rol hierboven.
           </p>
           <div className="cert-wizard-role-options">
-            {ROLE_OPTIONS.map(opt => (
+            {roleOptions.map(opt => (
               <label key={opt.code} className="cert-wizard-role-option">
                 <input
                   type="radio"
