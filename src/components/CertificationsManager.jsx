@@ -382,6 +382,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
         ))}
       </div>
 
+      <h3 className="cert-section-heading">Gap-analyse — team</h3>
       <div className="cert-aggregate-grid">
         <div className="cert-aggregate-card">
           <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.baselineComplete / teamCoverage.total) * 100) : 0}%</div>
@@ -409,6 +410,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
         </div>
       </div>
 
+      <h3 className="cert-section-heading">Cert-matrix per consultant</h3>
       <div className="cert-matrix-wrap">
         <table className="cert-matrix">
           <thead>
@@ -571,6 +573,7 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
         </div>
       </div>
 
+      <h3 className="cert-section-heading">Gap-analyse — {consultant.name}</h3>
       <div className="cert-detail-coverage">
         <div className="cert-detail-coverage-item">
           <span className="cert-detail-coverage-label">Baseline:</span>

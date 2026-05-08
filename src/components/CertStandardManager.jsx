@@ -267,10 +267,6 @@ function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRel
         </button>
       </div>
 
-      <div className="csm-section-note">
-        <strong>Wijzigingen worden direct opgeslagen.</strong> Tier en role-relevance werken meteen door in de teamview-matrix en gap-analyse. Een gedeactiveerde cert telt niet meer mee voor nieuwe gap-rapportages, maar eerder behaalde certs blijven zichtbaar in consultant-profielen.
-      </div>
-
       <div className="csm-table-wrap">
         <table className="csm-table">
           <thead>

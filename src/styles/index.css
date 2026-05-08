@@ -2738,6 +2738,18 @@ body::before {
   border-color: var(--teal);
 }
 
+.cert-section-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 1.2rem 0 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.cert-section-heading:first-child { margin-top: 0; }
+
 .cert-aggregate-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
