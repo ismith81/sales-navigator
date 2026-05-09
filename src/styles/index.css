@@ -3812,28 +3812,14 @@ body::before {
   flex-wrap: wrap;
 }
 
-/* Aggregaat-bucket-chips: gekleurde dot + count + label */
-.team-bucket-row {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+/* Specialisaties-card: single, niet full-width op desktop. */
+.team-spec-card {
+  max-width: 380px;
+  margin-bottom: 1.2rem;
 }
-.team-bucket-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.74rem;
-  color: var(--text-light);
+@media (max-width: 640px) {
+  .team-spec-card { max-width: none; }
 }
-.team-bucket-chip strong { color: var(--text); font-weight: 700; }
-.team-bucket-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.team-bucket-dot--now { background: #2DAA73; }
-.team-bucket-dot--soon { background: #ED8936; }
-.team-bucket-dot--later { background: var(--muted); }
 
 /* Team-card-grid (3 kolommen op desktop, 1 op mobile) */
 .team-grid {
@@ -3959,8 +3945,14 @@ body::before {
 }
 
 @media (max-width: 640px) {
-  .team-toolbar { flex-direction: column; align-items: stretch; }
-  .team-toolbar-right { justify-content: flex-end; }
+  .team-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .team-toolbar-right {
+    justify-content: flex-start; /* zelfde uitlijning als filter-pills boven */
+  }
 }
 .team-list {
   display: flex;

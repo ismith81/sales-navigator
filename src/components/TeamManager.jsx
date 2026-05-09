@@ -314,56 +314,24 @@ export default function TeamManager() {
         </div>
       )}
 
-      {/* ─── Aggregaat-cards ──────────────────────────────────────────── */}
-      <div className="cert-aggregate-grid">
-        <div className="cert-aggregate-card">
-          <div className="cert-aggregate-card-head">
-            <span className="cert-aggregate-card-label">Team-grootte</span>
-            <span className="cert-aggregate-card-percent">{stats.total}</span>
-          </div>
-          <div className="cert-aggregate-card-stats">
-            consultants in dit team
-          </div>
+      {/* ─── Specialisaties-card ──────────────────────────────────────
+          Team-grootte + beschikbaarheid weggelaten — info zit al in de
+          filter-pill-counts hierboven. Specialisaties zijn een aparte
+          dimensie die de filter niet toont, dus die houden we. */}
+      <div className="cert-aggregate-card team-spec-card">
+        <div className="cert-aggregate-card-head">
+          <span className="cert-aggregate-card-label">Specialisaties</span>
+          <span className="cert-aggregate-card-percent" style={{ fontSize: '0.95rem', fontFamily: "'Consolas', monospace" }}>
+            {Object.entries(stats.specs)
+              .filter(([code]) => code !== '—')
+              .map(([code, n]) => `${code} ${n}`)
+              .join(' · ') || '—'}
+          </span>
         </div>
-
-        <div className="cert-aggregate-card">
-          <div className="cert-aggregate-card-head">
-            <span className="cert-aggregate-card-label">Beschikbaarheid</span>
-            <span className="cert-aggregate-card-percent" style={{ fontSize: '1rem' }}>
-              {stats.buckets.now} nu
-            </span>
-          </div>
-          <div className="team-bucket-row">
-            <span className="team-bucket-chip">
-              <span className="team-bucket-dot team-bucket-dot--now" />
-              <strong>{stats.buckets.now || 0}</strong> nu
-            </span>
-            <span className="team-bucket-chip">
-              <span className="team-bucket-dot team-bucket-dot--soon" />
-              <strong>{stats.buckets.soon || 0}</strong> binnenkort
-            </span>
-            <span className="team-bucket-chip">
-              <span className="team-bucket-dot team-bucket-dot--later" />
-              <strong>{stats.buckets.later || 0}</strong> bezet
-            </span>
-          </div>
-        </div>
-
-        <div className="cert-aggregate-card">
-          <div className="cert-aggregate-card-head">
-            <span className="cert-aggregate-card-label">Specialisaties</span>
-            <span className="cert-aggregate-card-percent" style={{ fontSize: '0.95rem', fontFamily: "'Consolas', monospace" }}>
-              {Object.entries(stats.specs)
-                .filter(([code]) => code !== '—')
-                .map(([code, n]) => `${code} ${n}`)
-                .join(' · ') || '—'}
-            </span>
-          </div>
-          <div className="cert-aggregate-card-stats">
-            {stats.specs['—']
-              ? `${stats.specs['—']} zonder specialisatie toegewezen`
-              : 'iedereen heeft een specialisatie'}
-          </div>
+        <div className="cert-aggregate-card-stats">
+          {stats.specs['—']
+            ? `${stats.specs['—']} zonder specialisatie toegewezen`
+            : 'iedereen heeft een specialisatie'}
         </div>
       </div>
 
