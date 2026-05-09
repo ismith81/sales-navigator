@@ -372,7 +372,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
   return (
     <div className="cert-team-view">
       <div className="cert-filter-bar">
-        <span style={{ marginRight: '0.5rem', fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
+        <span className="cert-filter-label">Specialisatie:</span>
         <button type="button" className={`cert-filter-btn ${filterRole === 'all' ? 'active' : ''}`} onClick={() => setFilterRole('all')}>Alle</button>
         {(roleOptions || []).map(opt => (
           <button
@@ -380,8 +380,10 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
             type="button"
             className={`cert-filter-btn ${filterRole === opt.code ? 'active' : ''}`}
             onClick={() => setFilterRole(opt.code)}
+            title={opt.label}
           >
-            {opt.code} — {opt.label}
+            <span className="cert-filter-btn-code">{opt.code}</span>
+            <span className="cert-filter-btn-label"> — {opt.label}</span>
           </button>
         ))}
       </div>
@@ -599,13 +601,12 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
                   checked={achievedSet.has(cert.id)}
                   onChange={() => onToggleAchieved(consultant.id, cert.id, achievedSet.has(cert.id))}
                 />
-                <strong>{cert.id}</strong> {cert.name}
+                <strong className="cert-detail-id">{cert.id}</strong>
+                <span className="cert-detail-name">{cert.name}</span>
                 <span className={`cert-relevance-badge cert-relevance-badge--${relevance}`}>
                   {RELEVANCE_LABEL[relevance]}
                 </span>
-                <span style={{ marginLeft: '0.5rem', color: 'var(--muted)', fontSize: '0.78rem' }}>
-                  {cert.vendor}
-                </span>
+                <span className="cert-detail-vendor">{cert.vendor}</span>
               </label>
               {cert.notes && (
                 <div className="cert-detail-notes">{cert.notes}</div>

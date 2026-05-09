@@ -2716,6 +2716,16 @@ body::before {
   border: 1px dashed var(--border);
 }
 
+.cert-filter-label {
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .cert-filter-label { display: none; }
+  .cert-filter-btn-label { display: none; }
+}
+
 .cert-filter-bar {
   display: flex;
   align-items: center;
@@ -2870,12 +2880,17 @@ body::before {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
 }
 .cert-team-card-name {
   font-weight: 700;
   color: var(--navy);
   font-size: 0.95rem;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
+.cert-team-card-spec { flex-shrink: 0; }
 .cert-team-card-spec {
   font-family: 'Consolas', monospace;
   font-size: 0.7rem;
@@ -2897,9 +2912,7 @@ body::before {
   font-style: italic;
 }
 .cert-team-card-cta {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.85rem;
+  align-self: flex-end;
   font-size: 0.72rem;
   color: var(--teal);
   font-weight: 600;
@@ -3008,14 +3021,27 @@ body::before {
   font-size: 0.9rem;
   color: var(--navy);
   cursor: pointer;
+  flex-wrap: wrap;
 }
-.cert-detail-item input[type="checkbox"] { cursor: pointer; }
+.cert-detail-item input[type="checkbox"] { cursor: pointer; flex-shrink: 0; }
+.cert-detail-id { white-space: nowrap; flex-shrink: 0; }
+.cert-detail-name { flex: 1; min-width: 0; word-break: break-word; }
+.cert-detail-vendor {
+  margin-left: 0.5rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
 .cert-detail-notes {
   font-size: 0.78rem;
   color: var(--muted);
   margin-left: 1.7rem;
   margin-top: 0.15rem;
   font-style: italic;
+}
+@media (max-width: 768px) {
+  .cert-detail-notes { display: none; }
+  .cert-detail-vendor { display: none; }
+  .cert-detail-name { font-size: 0.85rem; }
 }
 .cert-relevance-badge {
   display: inline-block;
