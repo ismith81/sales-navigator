@@ -122,23 +122,22 @@ export default function CertificationsManager() {
   }, [members, filterRole]);
 
   // ─── Aggregaten ──────────────────────────────────────────────────────
-  // Optie B: aggregeer over het hele team — totaal verwacht en totaal
-  // behaald. Eerlijker dan "consultants compleet" omdat de oude formule
-  // consultants zonder enige expected-cert (bv. AE-specialistisch) als
-  // by-default-compleet telde, wat een vals-rooskleurig beeld gaf.
+  // "Compleet" = consultant heeft alle voor hem/haar verwachte certs in
+  // die tier behaald. Strikt: consultants zonder expected (bv. AE'ers
+  // op specialistisch in de huidige config) tellen NIET als compleet —
+  // ze hebben simpelweg 0/0 → percent = 0% (niet "by default klaar").
+  // useMemo-deps op certs/roleRelevance/consultantCerts: bij wijziging
+  // in Standaard beheren (tier of role-relevance) beweegt deze teller
+  // direct mee, geen extra werk nodig.
   const teamCoverage = useMemo(() => {
-    const stats = {
-      baseline: { expected: 0, achieved: 0 },
-      specialist: { expected: 0, achieved: 0 },
-    };
+    const stats = { baselineComplete: 0, specialistComplete: 0, total: 0 };
     for (const m of filteredMembers) {
       if (!m.role_code) continue;
+      stats.total++;
       const base = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'baseline' });
       const spec = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'specialist' });
-      stats.baseline.expected += base.expected;
-      stats.baseline.achieved += base.achieved;
-      stats.specialist.expected += spec.expected;
-      stats.specialist.achieved += spec.achieved;
+      if (base.expected > 0 && base.achieved === base.expected) stats.baselineComplete++;
+      if (spec.expected > 0 && spec.achieved === spec.expected) stats.specialistComplete++;
     }
     return stats;
   }, [filteredMembers, certs, roleRelevance, consultantCerts]);
@@ -405,16 +404,16 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
 
       <div className="cert-aggregate-grid">
         <CoverageCard
-          label="Baseline"
-          achieved={teamCoverage.baseline.achieved}
-          total={teamCoverage.baseline.expected}
-          unit="verwachte certs"
+          label="Baseline compleet"
+          achieved={teamCoverage.baselineComplete}
+          total={teamCoverage.total}
+          unit="consultants"
         />
         <CoverageCard
-          label="Specialistisch"
-          achieved={teamCoverage.specialist.achieved}
-          total={teamCoverage.specialist.expected}
-          unit="verwachte certs"
+          label="Specialistisch compleet"
+          achieved={teamCoverage.specialistComplete}
+          total={teamCoverage.total}
+          unit="consultants"
         />
       </div>
 
@@ -543,7 +542,11 @@ function CoverageCard({ label, achieved, total, percentOverride, unit }) {
         />
       </div>
       <div className="cert-aggregate-card-stats">
-        <strong>{achieved}</strong> van <strong>{safeTotal}</strong>{unit ? ` ${unit}` : ''}
+        {unit ? (
+          <><strong>{achieved}</strong> van de <strong>{safeTotal}</strong> {unit}</>
+        ) : (
+          <><strong>{achieved}</strong> van <strong>{safeTotal}</strong></>
+        )}
       </div>
     </div>
   );
