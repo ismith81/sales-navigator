@@ -3817,8 +3817,8 @@ body::before {
 .team-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
 }
 .team-toolbar-filters {
   display: flex;
