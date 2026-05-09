@@ -700,3 +700,47 @@ Volledig responsive — alle tabel-views vervangen door card-layouts:
 - `/api/list-models` diagnostic kan op termijn weg.
 - Mistral POC blijft geparkeerd.
 - Mic-feature upgrade (Whisper / Gemini Audio) — uit 2026-05-02-sessie.
+
+## Status (sessie 2026-05-09 — Team-pagina design-refresh)
+
+Korte vervolg-sessie na de cert-sessie. PR #39 gemerged: `Beheer → Team` in lijn gebracht met de cert-design-taal voor visuele cohesie tussen de twee admin-modules.
+
+### UI-wijzigingen (`TeamManager.jsx`)
+- **Toolbar in twee rijen** (zelfde patroon op desktop + mobiel via flex-column):
+  - Rij 1: `+ CV uploaden` + `+ Nieuw teamlid` (paired secondary/primary CTAs) + tandwiel rechts uitgelijnd via `margin-left: auto`
+  - Rij 2: filter-pills met avail-bucket (Alle / Nu / Binnenkort / Bezet) — counts in parens
+  - Filter-labels responsive: korte versie op ≤640px (`Nu`), volle versie op desktop (`Nu beschikbaar`). Pattern uit cert-page (`team-filter-mobile` / `team-filter-desktop` met display-toggle).
+- **Specialisaties-aggregaat-card** als enige overblijvende statistiek-card (max-width 380px). Andere aggregaten weggelaten — `Team-grootte` en `Beschikbaarheid` dupliceerden info uit de filter-pill-counts.
+- **Card-grid** (`auto-fill minmax(320px, 1fr)`) vervangt de oude flat rows. Per card: naam + avail-badge + role-tekst + (optioneel) huidige client + onderaan CV-status-chip + ✏️/🗑️-iconen onder een divider.
+- **Geavanceerd-popover** voor semantic-embedding-acties (was collapsed `<details>`). SVG-iconen (database = embed ontbrekende, refresh-cw = herbouw alle); de "herbouw alle"-actie als `--danger` gestyled (rood, font-weight 600) want destructief.
+- **Skill-tags weggelaten** voor nu — wacht op een aparte PR die de overlap tussen `kernskills` en `technologies` adresseert. Geen kunstmatige afhankelijkheid.
+
+### Nieuwe herbruikbare CSS
+- `.csm-btn-secondary` — outline-variant met identieke afmetingen (`0.45rem 0.9rem` padding, `0.8rem` font) als `.csm-btn-primary`. Bedoeld voor paired CTAs (primary + secondary naast elkaar). Eerdere `.btn-add-small` is kleiner en past niet visueel naast `.csm-btn-primary`.
+- `.team-filter-mobile` / `.team-filter-desktop` — display-toggle voor responsive filter-labels.
+
+### Data-laag
+- `listTeamMembers` haalt nu ook `role_code` op (FK naar `specializations`). Nodig voor de specialisaties-card.
+
+### Bewuste keuzes (na user-driven design-iteratie)
+- **Filter-counts blijven in pills** (eerder weggehaald omdat aggregaat-cards die info ook gaven; nu cards weg dus counts naar pills toe).
+- **Tandwiel apart van CTAs** — eerder hing 'ie naast `+ Nieuw teamlid` op mobiel waardoor 't oogde als primary action. Via `margin-left: auto` rechts geduwd, visueel apart.
+- **CTA-rij boven filter-rij** — primary actie ('Nieuw teamlid toevoegen') op het visueel zwaartepunt, filters daaronder als secundaire control.
+
+### Sessie-resultaat (PR-overzicht, 2026-05-09)
+| PR | Onderwerp |
+|---|---|
+| #38 | AGENTS.md: sessie-status 2026-05-03 t/m 2026-05-09 — cert-standaard PR gemerged |
+| #39 | **Team-pagina design refresh — in lijn met Certificeringen** (squash-merged, 8 commits) |
+
+### Bekende beperkingen / vervolgwerk (na 2026-05-09)
+**Direct aansluitend:**
+- Aparte PR voor de overlap tussen `kernskills` en `technologies` op team-profielen — bestaat als pending-werk uit deze sessie. Zodra opgelost: skill-tags terug naar de team-cards (eerste 3 kernskills + `+N`-badge).
+
+**Onveranderd vervolg-werk (uit eerdere sessies):**
+- Audit-backlog (availability-duplicatie + case-mapping refactor) wachtend op tests.
+- Embedding-kwaliteit-NL upgrade-pad naar OpenAI text-embedding-3-small wachtend op signaal.
+- `/api/list-models` diagnostic kan op termijn weg.
+- Mistral POC blijft geparkeerd.
+- Mic-feature upgrade (Whisper / Gemini Audio) — uit 2026-05-02-sessie.
+- Cert-feature open punten (permissioning, Overig-tier custom relevance, JSON-bootstrap-only-question) — uit 2026-05-03/09-sessie.
