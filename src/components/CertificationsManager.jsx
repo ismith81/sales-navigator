@@ -372,7 +372,8 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
   const certsByTier = useMemo(() => {
     const baseline = certs.filter(c => c.tier === 'baseline' && c.active !== false);
     const specialist = certs.filter(c => c.tier === 'specialist' && c.active !== false);
-    return { baseline, specialist };
+    const overig = certs.filter(c => c.tier === 'overig' && c.active !== false);
+    return { baseline, specialist, overig };
   }, [certs]);
 
   return (
@@ -430,15 +431,19 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
               <th rowSpan={2}>Specialisatie</th>
               <th colSpan={certsByTier.baseline.length}>Baseline</th>
               <th colSpan={certsByTier.specialist.length}>Specialistisch</th>
+              {certsByTier.overig.length > 0 && (
+                <th colSpan={certsByTier.overig.length}>Overig</th>
+              )}
             </tr>
             <tr>
               {certsByTier.baseline.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
               {certsByTier.specialist.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
+              {certsByTier.overig.map(c => <th key={c.id} title={c.name} className="cert-matrix-cert-th">{c.id}</th>)}
             </tr>
           </thead>
           <tbody>
             {members.length === 0 ? (
-              <tr><td colSpan={2 + certsByTier.baseline.length + certsByTier.specialist.length}>Geen consultants in deze filter.</td></tr>
+              <tr><td colSpan={2 + certsByTier.baseline.length + certsByTier.specialist.length + certsByTier.overig.length}>Geen consultants in deze filter.</td></tr>
             ) : members.map(m => (
               <tr key={m.id} className="cert-matrix-row" onClick={() => onSelectConsultant(m.id)}>
                 <td className="cert-matrix-name-td">{m.name}</td>
@@ -449,6 +454,11 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
                   </td>
                 ))}
                 {certsByTier.specialist.map(c => (
+                  <td key={c.id} className="cert-matrix-cell">
+                    {achievedSet.has(`${m.id}::${c.id}`) ? '✓' : ''}
+                  </td>
+                ))}
+                {certsByTier.overig.map(c => (
                   <td key={c.id} className="cert-matrix-cell">
                     {achievedSet.has(`${m.id}::${c.id}`) ? '✓' : ''}
                   </td>
@@ -602,6 +612,38 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
     );
   }
 
+  // Overig-tier: niet in gap-analyse — toon alle actieve overig-certs
+  // ongeacht specialisatie, met checkbox voor achieved-status. Geen
+  // relevance-badge want het concept past hier niet.
+  const renderOverig = () => {
+    const list = certs.filter(c => c.tier === 'overig' && c.active !== false);
+    if (list.length === 0) return null;
+    return (
+      <section className="cert-detail-section">
+        <h3>Overig</h3>
+        <p style={{ color: 'var(--muted)', fontSize: '0.78rem', margin: '0 0 0.6rem' }}>
+          Aanvullende certs — informatief, telt niet mee in de gap-analyse.
+        </p>
+        <ul className="cert-detail-list">
+          {list.map(cert => (
+            <li key={cert.id} className="cert-detail-item">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={achievedSet.has(cert.id)}
+                  onChange={() => onToggleAchieved(consultant.id, cert.id, achievedSet.has(cert.id))}
+                />
+                <strong className="cert-detail-id">{cert.id}</strong>
+                <span className="cert-detail-name">{cert.name}</span>
+                <span className="cert-detail-vendor">{cert.vendor}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  };
+
   const renderTier = (tier, label) => {
     const list = certs
       .filter(c => c.tier === tier && c.active !== false)
@@ -696,6 +738,7 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
 
       {renderTier('baseline', 'Baseline')}
       {renderTier('specialist', 'Specialistisch')}
+      {renderOverig()}
 
       <section className="cert-detail-section">
         <h3>Overige certificeringen (niet-standaard)</h3>

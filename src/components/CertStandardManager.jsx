@@ -43,6 +43,14 @@ const RELEVANCE_OPTIONS = [
   { value: 'not_applicable', label: 'N.v.t.' },
 ];
 
+// Display-label voor tier-section-dividers in tabel/cards.
+function tierLabel(tier) {
+  if (tier === 'baseline') return 'Baseline';
+  if (tier === 'specialist') return 'Specialistisch';
+  if (tier === 'overig') return 'Overig';
+  return tier;
+}
+
 export default function CertStandardManager({ onChange }) {
   const [sub, setSub] = useState('certs'); // 'certs' | 'specs'
   const [specs, setSpecs] = useState([]);
@@ -247,8 +255,11 @@ export default function CertStandardManager({ onChange }) {
 // ─── Certs-subview ────────────────────────────────────────────────────────
 function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRelevanceChange, onActiveChange, onEditCert, onAddCert }) {
   const sorted = useMemo(() => {
+    const tierRank = { baseline: 0, specialist: 1, overig: 2 };
     return [...certs].sort((a, b) => {
-      if (a.tier !== b.tier) return a.tier === 'baseline' ? -1 : 1;
+      const ar = tierRank[a.tier] ?? 99;
+      const br = tierRank[b.tier] ?? 99;
+      if (ar !== br) return ar - br;
       return a.id.localeCompare(b.id);
     });
   }, [certs]);
@@ -334,7 +345,7 @@ function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevan
     if (c.tier !== last) {
       blocks.push(
         <div key={`hdr-${c.tier}`} className="csm-card-tier-header">
-          {c.tier === 'baseline' ? 'Baseline' : 'Specialistisch'}
+          {tierLabel(c.tier)}
         </div>
       );
       last = c.tier;
@@ -373,6 +384,7 @@ function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevan
             >
               <option value="baseline">Baseline</option>
               <option value="specialist">Specialistisch</option>
+              <option value="overig">Overig</option>
             </select>
           </div>
 
@@ -424,7 +436,7 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
       blocks.push(
         <tr key={`hdr-${c.tier}`}>
           <td colSpan={6 + activeSpecs.length} className="csm-tier-divider">
-            {c.tier === 'baseline' ? 'Baseline' : 'Specialistisch'}
+            {tierLabel(c.tier)}
           </td>
         </tr>
       );

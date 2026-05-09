@@ -9,6 +9,10 @@
     "specialist": {
       "label": "Specialistisch",
       "description": "Specialisatie-specifieke verdieping voor niveau 3-4 klantvragen. Gekoppeld aan specialisatie; niet verwacht buiten de eigen specialisatie."
+    },
+    "overig": {
+      "label": "Overig",
+      "description": "Aanvullende certificeringen die wel gestandaardiseerd worden bijgehouden, maar niet meetellen in de gap-analyse — informatief tracken van behaalde certs buiten de hoofdfocus."
     }
   },
   "relevance_levels": {

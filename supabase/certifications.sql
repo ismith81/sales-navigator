@@ -74,7 +74,7 @@ create table if not exists public.certifications (
   id text primary key,
   name text not null,
   vendor text not null,
-  tier text not null check (tier in ('baseline', 'specialist')),
+  tier text not null check (tier in ('baseline', 'specialist', 'overig')),
   active boolean not null default true,
   notes text,
   url text,
@@ -84,6 +84,14 @@ create table if not exists public.certifications (
 
 -- url-kolom voor bestaande tabellen die zonder de kolom zijn aangemaakt.
 alter table public.certifications add column if not exists url text;
+
+-- Tier-CHECK update: bij oudere installs stond ('baseline','specialist').
+-- Drop + recreate idempotent om 'overig' toe te voegen.
+alter table public.certifications
+  drop constraint if exists certifications_tier_check;
+alter table public.certifications
+  add constraint certifications_tier_check
+  check (tier in ('baseline', 'specialist', 'overig'));
 
 -- ─── 4. certification_role_relevance ──────────────────────────────────────
 -- Per cert per specialisatie een relevance-niveau. Aparte tabel zodat de
