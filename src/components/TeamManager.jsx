@@ -79,13 +79,20 @@ const RefreshIcon = () => (
   </svg>
 );
 
-// Filter-pills voor avail-bucket. 'all' is geen bucket maar reset-keuze.
+// Filter-pills voor avail-bucket. Op mobile alleen short-label, op
+// desktop full label — patroon uit cert-page (AE / AE — Analytics Engineer).
 const BUCKET_ORDER = ['all', 'now', 'soon', 'later'];
-const BUCKET_LABEL = {
-  all: 'Alle',
+const BUCKET = {
+  all:   { short: 'Alle',       long: 'Alle' },
+  now:   { short: 'Nu',         long: 'Nu beschikbaar' },
+  soon:  { short: 'Binnenkort', long: 'Bijna beschikbaar' },
+  later: { short: 'Bezet',      long: 'Bezet' },
+};
+const BUCKET_TITLE = {
+  all: 'Alle teamleden',
   now: 'Nu beschikbaar',
-  soon: 'Bijna beschikbaar',
-  later: 'Bezet',
+  soon: 'Bijna beschikbaar (≤ 3 maanden)',
+  later: 'Bezet (> 3 maanden of einddatum onbekend)',
 };
 
 export default function TeamManager() {
@@ -225,19 +232,18 @@ export default function TeamManager() {
       {/* ─── Toolbar ──────────────────────────────────────────────────── */}
       <div className="team-toolbar">
         <div className="team-toolbar-left">
-          {BUCKET_ORDER.map(b => {
-            const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
-            return (
-              <button
-                key={b}
-                type="button"
-                className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
-                onClick={() => setFilterBucket(b)}
-              >
-                {BUCKET_LABEL[b]} ({count})
-              </button>
-            );
-          })}
+          {BUCKET_ORDER.map(b => (
+            <button
+              key={b}
+              type="button"
+              className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
+              onClick={() => setFilterBucket(b)}
+              title={BUCKET_TITLE[b]}
+            >
+              <span className="team-filter-mobile">{BUCKET[b].short}</span>
+              <span className="team-filter-desktop">{BUCKET[b].long}</span>
+            </button>
+          ))}
         </div>
         <div className="team-toolbar-right">
           <button

@@ -3812,6 +3812,15 @@ body::before {
   flex-wrap: wrap;
 }
 
+/* Filter-pill labels: kort op mobile, lang op desktop.
+   Pattern uit cert-page (.cert-filter-btn-code / -label). */
+.team-filter-mobile { display: none; }
+.team-filter-desktop { display: inline; }
+@media (max-width: 640px) {
+  .team-filter-mobile { display: inline; }
+  .team-filter-desktop { display: none; }
+}
+
 /* Specialisaties-card: single, niet full-width op desktop. */
 .team-spec-card {
   max-width: 380px;
