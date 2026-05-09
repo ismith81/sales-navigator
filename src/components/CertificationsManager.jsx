@@ -660,7 +660,6 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
           {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
         <div className="cert-detail-role-bar">
-          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Specialisatie:</span>
           {(roleOptions || []).map(opt => (
             <button
               key={opt.code}

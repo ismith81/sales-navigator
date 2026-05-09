@@ -366,24 +366,14 @@ function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevan
         <div className="csm-card-controls">
           <div className="csm-card-control">
             <span className="csm-card-control-label">Tier</span>
-            <div className="csm-tier-radio">
-              <input
-                type="radio"
-                name={`m-tier-${c.id}`}
-                id={`m-tier-${c.id}-base`}
-                checked={c.tier === 'baseline'}
-                onChange={() => onTierChange(c.id, 'baseline')}
-              />
-              <label htmlFor={`m-tier-${c.id}-base`}>Baseline</label>
-              <input
-                type="radio"
-                name={`m-tier-${c.id}`}
-                id={`m-tier-${c.id}-spec`}
-                checked={c.tier === 'specialist'}
-                onChange={() => onTierChange(c.id, 'specialist')}
-              />
-              <label htmlFor={`m-tier-${c.id}-spec`}>Spec.</label>
-            </div>
+            <select
+              className="csm-tier-select"
+              value={c.tier}
+              onChange={(e) => onTierChange(c.id, e.target.value)}
+            >
+              <option value="baseline">Baseline</option>
+              <option value="specialist">Specialistisch</option>
+            </select>
           </div>
 
           <div className="csm-card-control">
