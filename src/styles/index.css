@@ -3263,12 +3263,14 @@ body::before {
 /* ─── Standaard beheren (CertStandardManager) ──────────────────────────── */
 .csm-wrap { animation: fadeUp 0.3s ease; }
 
-/* Responsive: tabel op desktop, card-layout op mobile */
-.csm-mobile-only { display: none; }
-.csm-desktop-only { display: block; }
+/* Responsive: tabel op desktop, card-layout op mobile.
+   !important nodig omdat .csm-cards / .cert-team-cards display:flex
+   anders deze utility-classes overrulen door cascade-volgorde. */
+.csm-mobile-only { display: none !important; }
+.csm-desktop-only { display: block !important; }
 @media (max-width: 768px) {
-  .csm-mobile-only { display: block; }
-  .csm-desktop-only { display: none; }
+  .csm-mobile-only { display: flex !important; }
+  .csm-desktop-only { display: none !important; }
 }
 
 .csm-cards {
