@@ -229,9 +229,11 @@ export default function TeamManager() {
 
   return (
     <div className="team-manager">
-      {/* ─── Toolbar ──────────────────────────────────────────────────── */}
+      {/* ─── Toolbar ──────────────────────────────────────────────────
+          Twee rijen: filters + tandwiel rechts boven (admin-actie,
+          visueel apart van de CTAs); CTA-knoppen op tweede rij. */}
       <div className="team-toolbar">
-        <div className="team-toolbar-left">
+        <div className="team-toolbar-filters">
           {BUCKET_ORDER.map(b => {
             const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
             return (
@@ -248,25 +250,7 @@ export default function TeamManager() {
               </button>
             );
           })}
-        </div>
-        <div className="team-toolbar-right">
-          <button
-            type="button"
-            className="btn-add-small"
-            onClick={startFromCv}
-            disabled={!!parseStatus}
-          >
-            {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
-          </button>
-          <button
-            type="button"
-            className="csm-btn-primary"
-            onClick={startNew}
-            disabled={!!parseStatus}
-          >
-            ＋ Nieuw teamlid
-          </button>
-          <div className="cert-advanced-wrap">
+          <div className="cert-advanced-wrap team-toolbar-gear">
             <button
               type="button"
               className="cert-advanced-trigger"
@@ -308,6 +292,24 @@ export default function TeamManager() {
               </>
             )}
           </div>
+        </div>
+        <div className="team-toolbar-actions">
+          <button
+            type="button"
+            className="btn-add-small"
+            onClick={startFromCv}
+            disabled={!!parseStatus}
+          >
+            {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
+          </button>
+          <button
+            type="button"
+            className="csm-btn-primary"
+            onClick={startNew}
+            disabled={!!parseStatus}
+          >
+            ＋ Nieuw teamlid
+          </button>
         </div>
       </div>
 

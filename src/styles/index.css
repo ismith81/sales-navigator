@@ -3788,28 +3788,30 @@ body::before {
 }
 
 /* ─── Nieuwe Team-pagina (in lijn met Certificeringen) ─────────────── */
-/* Toolbar: filter-pills links, primary CTA + gear rechts. Hergebruikt
-   .cert-filter-btn + .cert-advanced-* uit Certificeringen voor cohesie. */
+/* Toolbar: twee rijen.
+   Rij 1: filter-pills + tandwiel-icoon rechts (admin-actie, visueel
+          apart van CTA's).
+   Rij 2: + CV uploaden / + Nieuw teamlid (action-knoppen). */
 .team-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
-.team-toolbar-left {
+.team-toolbar-filters {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
-  flex: 1;
-  min-width: 0;
+  align-items: center;
 }
-.team-toolbar-right {
+.team-toolbar-gear {
+  margin-left: auto; /* duwt het tandwiel naar rechts */
+}
+.team-toolbar-actions {
   display: flex;
   gap: 0.5rem;
-  align-items: center;
-  flex-shrink: 0;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Filter-pill labels: kort op mobile, lang op desktop.
@@ -3953,16 +3955,6 @@ body::before {
   gap: 0.5rem;
 }
 
-@media (max-width: 640px) {
-  .team-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  .team-toolbar-right {
-    justify-content: flex-start; /* zelfde uitlijning als filter-pills boven */
-  }
-}
 .team-list {
   display: flex;
   flex-direction: column;
