@@ -232,18 +232,22 @@ export default function TeamManager() {
       {/* ─── Toolbar ──────────────────────────────────────────────────── */}
       <div className="team-toolbar">
         <div className="team-toolbar-left">
-          {BUCKET_ORDER.map(b => (
-            <button
-              key={b}
-              type="button"
-              className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
-              onClick={() => setFilterBucket(b)}
-              title={BUCKET_TITLE[b]}
-            >
-              <span className="team-filter-mobile">{BUCKET[b].short}</span>
-              <span className="team-filter-desktop">{BUCKET[b].long}</span>
-            </button>
-          ))}
+          {BUCKET_ORDER.map(b => {
+            const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
+            return (
+              <button
+                key={b}
+                type="button"
+                className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
+                onClick={() => setFilterBucket(b)}
+                title={BUCKET_TITLE[b]}
+              >
+                <span className="team-filter-mobile">{BUCKET[b].short}</span>
+                <span className="team-filter-desktop">{BUCKET[b].long}</span>
+                <span className="team-filter-count"> ({count})</span>
+              </button>
+            );
+          })}
         </div>
         <div className="team-toolbar-right">
           <button
