@@ -4,6 +4,7 @@ import ImportCase from './ImportCase';
 import FilterManager from './FilterManager';
 import PersonaManager from './PersonaManager';
 import TeamManager from './TeamManager';
+import CertificationsManager from './CertificationsManager';
 import { exportCaseToDocx } from '../utils/exportCase';
 import { PersonaIcon } from '../lib/personaIcons.jsx';
 
@@ -215,6 +216,10 @@ export default function CaseManager({ section = 'cases', cases, filters, topics,
 
       {section === 'team' && (
         <TeamManager />
+      )}
+
+      {section === 'certs' && (
+        <CertificationsManager />
       )}
 
       {/* Backup / Restore — inklapbaar, zeldzame beheer-actie. Alleen relevant

@@ -1,0 +1,208 @@
+{
+  "$schema_version": "1.1",
+  "description": "Certificeringsstandaard Data & Analytics team. Tier classificatie: baseline = gedeelde basis voor alle Data Consultants, voldoende voor klanten op niveau 1-2 van de maturity matrix. Specialistisch = verdiepingscerts gekoppeld aan specialisatie, relevant voor klanten op niveau 3-4. Sinds v1.1: optioneel url-veld per cert (clickable naam in Beheer-UI), specialisaties komen uit de DB-tabel public.specializations.",
+  "tiers": {
+    "baseline": {
+      "label": "Baseline",
+      "description": "Gedeelde basis voor het hele team. Stelt elke Data Consultant in staat om niveau 1-2 klanten te helpen op zowel Analytics Engineering als Data Engineering vlak (T-shape principe)."
+    },
+    "specialist": {
+      "label": "Specialistisch",
+      "description": "Specialisatie-specifieke verdieping voor niveau 3-4 klantvragen. Gekoppeld aan specialisatie; niet verwacht buiten de eigen specialisatie."
+    },
+    "overig": {
+      "label": "Overig",
+      "description": "Aanvullende certificeringen die wel gestandaardiseerd worden bijgehouden, maar niet meetellen in de gap-analyse — informatief tracken van behaalde certs buiten de hoofdfocus."
+    }
+  },
+  "relevance_levels": {
+    "expected": "Verwacht voor de specialisatie op deze tier",
+    "recommended": "Aanbevolen / persoonlijke verdieping - waardevol maar niet verplicht",
+    "not_applicable": "Niet relevant voor deze specialisatie"
+  },
+  "certifications": [
+    {
+      "id": "DP-900",
+      "name": "Azure Data Fundamentals",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-data-fundamentals/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "AI-900",
+      "name": "Azure AI Fundamentals",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-ai-fundamentals/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "SC-900",
+      "name": "Security, Compliance & Identity Fundamentals",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/security-compliance-and-identity-fundamentals/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "PL-300",
+      "name": "Power BI Data Analyst Associate",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/data-analyst-associate/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "recommended"
+      }
+    },
+    {
+      "id": "DP-600",
+      "name": "Fabric Analytics Engineer Associate",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/fabric-analytics-engineer-associate/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "DP-700",
+      "name": "Fabric Data Engineer Associate",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/fabric-data-engineer-associate/",
+      "role_relevance": {
+        "AE": "expected",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "AZ-400",
+      "name": "DevOps Engineer Expert",
+      "vendor": "Microsoft",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/devops-engineer/",
+      "role_relevance": {
+        "AE": "recommended",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "DBX-FUND",
+      "name": "Databricks Fundamentals",
+      "vendor": "Databricks",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://www.databricks.com/learn/certification/fundamentals",
+      "role_relevance": {
+        "AE": "not_applicable",
+        "DE": "recommended",
+        "DSA": "recommended"
+      }
+    },
+    {
+      "id": "DBX-DE-A",
+      "name": "Databricks Certified Data Engineer Associate",
+      "vendor": "Databricks",
+      "tier": "baseline",
+      "active": true,
+      "url": "https://www.databricks.com/learn/certification/data-engineer-associate",
+      "role_relevance": {
+        "AE": "not_applicable",
+        "DE": "recommended",
+        "DSA": "not_applicable"
+      }
+    },
+    {
+      "id": "AZ-305",
+      "name": "Designing Microsoft Azure Infrastructure Solutions",
+      "vendor": "Microsoft",
+      "tier": "specialist",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-solutions-architect/",
+      "role_relevance": {
+        "AE": "not_applicable",
+        "DE": "recommended",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "AZ-500",
+      "name": "Azure Security Engineer Associate",
+      "vendor": "Microsoft",
+      "tier": "specialist",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-security-engineer/",
+      "role_relevance": {
+        "AE": "recommended",
+        "DE": "expected",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "AI-102",
+      "name": "Azure AI Engineer Associate",
+      "vendor": "Microsoft",
+      "tier": "specialist",
+      "active": true,
+      "url": "https://learn.microsoft.com/credentials/certifications/azure-ai-engineer/",
+      "notes": "Aanbevolen, niet verwacht. Examen breed van scope (Computer Vision, Speech, Document Intelligence) waardoor slechts beperkt deel relevant is voor Fabric Data Agents. Heroverwegen wanneer Microsoft een specifieke Fabric AI cert uitbrengt.",
+      "role_relevance": {
+        "AE": "recommended",
+        "DE": "recommended",
+        "DSA": "recommended"
+      }
+    },
+    {
+      "id": "CDMP",
+      "name": "DAMA Certified Data Management Professional",
+      "vendor": "DAMA",
+      "tier": "specialist",
+      "active": true,
+      "url": "https://cdmp.info/",
+      "role_relevance": {
+        "AE": "not_applicable",
+        "DE": "not_applicable",
+        "DSA": "expected"
+      }
+    },
+    {
+      "id": "DBX-DE-P",
+      "name": "Databricks Certified Data Engineer Professional",
+      "vendor": "Databricks",
+      "tier": "specialist",
+      "active": true,
+      "url": "https://www.databricks.com/learn/certification/data-engineer-professional",
+      "role_relevance": {
+        "AE": "not_applicable",
+        "DE": "recommended",
+        "DSA": "not_applicable"
+      }
+    }
+  ]
+}

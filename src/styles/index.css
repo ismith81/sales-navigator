@@ -2674,6 +2674,1108 @@ body::before {
   background: rgba(237,23,75,0.06);
   color: var(--accent, #ED174B);
 }
+
+/* ── Beheer → Certificeringen ─────────────────────────────────────────── */
+.cert-manager { animation: fadeUp 0.3s ease; }
+.cert-manager-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.cert-manager-toolbar-left {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.cert-manager-toolbar-right {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.cert-tab-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--navy);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cert-tab-btn.active {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+.cert-tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .cert-manager-toolbar-left { flex-wrap: nowrap; }
+  .cert-tab-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.74rem;
+  }
+}
+
+.cert-empty {
+  padding: 2rem 1.2rem;
+  text-align: center;
+  color: var(--text-light);
+  background: var(--bg-soft, #f5f7fa);
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+}
+
+/* Filter-label permanent verborgen — context (drie spec-knoppen) maakt
+   functie al duidelijk. Op mobile worden ook de full-name labels op de
+   knoppen zelf verborgen, alleen de codes blijven. */
+.cert-filter-label { display: none; }
+@media (max-width: 640px) {
+  .cert-filter-btn-label { display: none; }
+}
+
+.cert-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.cert-filter-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--navy);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.cert-filter-btn.active {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+
+.cert-section-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 1.2rem 0 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.cert-section-heading:first-child { margin-top: 0; }
+
+.cert-aggregate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.2rem;
+}
+.cert-aggregate-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.cert-aggregate-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.cert-aggregate-card-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+}
+.cert-aggregate-card-percent {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.cert-aggregate-card-stats {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.cert-aggregate-card-stats strong { color: var(--text); }
+
+/* Top-gaps als eigen sectie onder de coverage-cards */
+.cert-top-gaps-block {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.95rem 1.05rem;
+  margin-bottom: 1.2rem;
+}
+.cert-top-gaps-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  margin-bottom: 0.6rem;
+}
+.cert-top-gaps {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  color: var(--navy);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.cert-top-gaps-detail {
+  margin-left: 0.5rem;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+.cert-matrix-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+.cert-matrix {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+.cert-matrix th,
+.cert-matrix td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.cert-matrix thead th {
+  background: rgba(49,183,185,0.06);
+  font-weight: 700;
+  color: var(--navy);
+}
+.cert-matrix-name-th,
+.cert-matrix-name-td {
+  text-align: left;
+  white-space: nowrap;
+  font-weight: 600;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+}
+.cert-matrix-name-th { background: rgba(49,183,185,0.06); }
+.cert-matrix-cert-th {
+  font-size: 0.7rem;
+  white-space: nowrap;
+  padding: 0.35rem 0.4rem;
+}
+.cert-matrix-row { cursor: pointer; }
+.cert-matrix-row:hover td { background: var(--bg-soft, #f5f7fa); }
+.cert-matrix-cell {
+  color: var(--teal);
+  font-weight: 700;
+}
+.cert-matrix-role-td {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── DetailView ─────────────────────────────────────────────────────── */
+/* ─── Mobile consultant-cards (Teamview replacement op <=768px) ────────── */
+.cert-team-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.cert-team-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.cert-team-card:hover {
+  border-color: var(--teal);
+  box-shadow: 0 2px 8px rgba(49,183,185,0.1);
+}
+.cert-team-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.cert-team-card-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.cert-team-card-spec { flex-shrink: 0; }
+.cert-team-card-spec {
+  font-family: 'Consolas', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(49,183,185,0.1);
+  color: var(--teal-dim, #2A9FA1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+.cert-team-card-spec--none {
+  background: rgba(44,60,82,0.06);
+  color: var(--muted);
+  font-family: inherit;
+  font-weight: 400;
+}
+.cert-team-card-empty {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+.cert-team-card-cta {
+  align-self: flex-end;
+  font-size: 0.72rem;
+  color: var(--teal);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cert-coverage-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cert-coverage-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.cert-coverage-bar-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+}
+.cert-coverage-bar-stats {
+  font-size: 0.78rem;
+  color: var(--text);
+}
+.cert-coverage-bar-stats strong { color: var(--navy); }
+.cert-coverage-bar-track {
+  height: 6px;
+  background: rgba(44,60,82,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cert-coverage-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.cert-coverage-bar-fill--complete { background: #2DAA73; }
+
+.cert-detail-view { display: flex; flex-direction: column; gap: 1rem; }
+.cert-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.cert-detail-select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.92rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--navy);
+}
+.cert-detail-role-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.cert-detail-coverage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--bg-soft, #f5f7fa);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.cert-detail-coverage-label {
+  color: var(--muted);
+  margin-right: 0.35rem;
+}
+.cert-detail-coverage-pct {
+  color: var(--teal);
+  margin-left: 0.4rem;
+  font-weight: 600;
+}
+.cert-detail-section {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+}
+.cert-detail-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+.cert-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.cert-detail-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--navy);
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+.cert-detail-item input[type="checkbox"] { cursor: pointer; flex-shrink: 0; }
+.cert-detail-id { white-space: nowrap; flex-shrink: 0; }
+.cert-detail-name { flex: 1; min-width: 0; word-break: break-word; }
+/* Vendor permanent verborgen op cert-detail-rij — Microsoft/Databricks/
+   DAMA staat al in Standaard beheren-tabel; op detail-niveau is 't ruis. */
+.cert-detail-vendor { display: none; }
+/* Notes permanent verborgen in lijsten — beschikbaar via ✏️-edit-modal.
+   Houdt cert-rijen homogeen van hoogte; voorkomt dichte UI als veel
+   certs notitie-tekst zouden hebben. */
+.cert-detail-notes { display: none; }
+@media (max-width: 768px) {
+  .cert-detail-name { font-size: 0.85rem; }
+}
+.cert-relevance-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.4rem;
+  font-weight: 600;
+}
+.cert-relevance-badge--expected {
+  background: rgba(49,183,185,0.12);
+  color: var(--teal);
+}
+.cert-relevance-badge--recommended {
+  background: rgba(240,163,58,0.12);
+  color: #b76b16;
+}
+
+/* ── Migratie-wizard ────────────────────────────────────────────────── */
+.cert-wizard-box {
+  width: min(720px, 100%);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
+}
+.cert-wizard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.8rem;
+}
+.cert-wizard-section {
+  margin-bottom: 1rem;
+}
+.cert-wizard-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.cert-wizard-role {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+.cert-wizard-role-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.cert-wizard-role-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--navy);
+  cursor: pointer;
+}
+.cert-wizard-match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.cert-wizard-match-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-soft, #f5f7fa);
+}
+.cert-wizard-match-input code {
+  font-size: 0.85rem;
+  color: var(--navy);
+  background: #fff;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+.cert-wizard-match-suggestion {
+  font-size: 0.85rem;
+  color: var(--navy);
+  margin: 0.35rem 0;
+}
+.cert-wizard-confidence {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+}
+.cert-wizard-match-controls {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  flex-wrap: wrap;
+}
+.cert-wizard-textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--navy);
+  resize: vertical;
+}
+.cert-wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* ─── Geavanceerd-dropdown in cert-toolbar ─────────────────────────────── */
+/* Tandwiel-icoon trigger — visueel apart van de tab-knoppen, signaleert
+   'meta-acties' (settings/admin) i.p.v. 'navigatie'. */
+.cert-advanced-trigger {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.cert-advanced-trigger:hover {
+  color: var(--navy);
+  background: var(--bg-soft, #F5F7FA);
+  border-color: var(--border);
+}
+.cert-advanced-trigger[aria-expanded="true"] {
+  color: var(--teal);
+  background: rgba(49,183,185,0.08);
+  border-color: rgba(49,183,185,0.3);
+}
+
+.cert-advanced-wrap { position: relative; display: inline-block; }
+.cert-advanced-backdrop {
+  position: fixed; inset: 0; z-index: 5;
+}
+.cert-advanced-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 6;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(44,60,82,0.12);
+  width: max-content;
+  min-width: 280px;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.4rem;
+  animation: fadeUp 0.15s ease;
+}
+.cert-advanced-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.3;
+}
+.cert-advanced-item:hover { background: var(--bg-soft, #F5F7FA); }
+.cert-advanced-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.cert-advanced-item small {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.cert-advanced-item--danger { color: var(--accent); font-weight: 600; }
+.cert-advanced-item--danger:hover { background: rgba(237,23,75,0.06); }
+.cert-advanced-item--danger small { color: var(--text-light); }
+
+/* ─── Standaard beheren (CertStandardManager) ──────────────────────────── */
+.csm-wrap { animation: fadeUp 0.3s ease; }
+
+/* Responsive: tabel op desktop, card-layout op mobile.
+   !important nodig omdat .csm-cards / .cert-team-cards display:flex
+   anders deze utility-classes overrulen door cascade-volgorde. */
+.csm-mobile-only { display: none !important; }
+.csm-desktop-only { display: block !important; }
+@media (max-width: 768px) {
+  .csm-mobile-only { display: flex !important; }
+  .csm-desktop-only { display: none !important; }
+}
+
+.csm-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.csm-card-tier-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal-dim, #2A9FA1);
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.csm-card-tier-header:first-child { margin-top: 0; }
+
+.csm-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.csm-card.csm-deprecated { opacity: 0.55; }
+
+.csm-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.csm-card-head > .csm-cert-id,
+.csm-card-head > .csm-spec-code {
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+}
+.csm-card-title-block {
+  flex: 1;
+  min-width: 0; /* zodat lange names breken i.p.v. overflow */
+}
+.csm-card-title-block .csm-cert-name,
+.csm-card-title-block .csm-cert-link {
+  font-size: 0.92rem;
+  display: block;
+  word-break: break-word;
+}
+.csm-card-title-block .csm-cert-vendor {
+  font-size: 0.72rem;
+  margin-top: 0.15rem;
+}
+
+.csm-card-controls {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.csm-card-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.csm-card-control-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.csm-card-relevance {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+.csm-card-relevance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  background: var(--bg-soft, #F5F7FA);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+}
+.csm-card-relevance-row .csm-card-control-label {
+  font-family: 'Consolas', monospace;
+  font-size: 0.75rem;
+  color: var(--navy);
+}
+.csm-card-relevance-row .csm-relevance {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  .csm-card-relevance { grid-template-columns: 1fr; }
+}
+
+/* Segmented control — visueel duidelijk een sub-control binnen één view,
+   niet nóg een tab-rij van top-level navigatie. */
+.csm-subnav {
+  display: inline-flex;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  background: var(--bg-soft, #F5F7FA);
+}
+.csm-subtab {
+  border: none;
+  background: transparent;
+  color: var(--text-light);
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.csm-subtab:hover { color: var(--navy); }
+.csm-subtab.active {
+  color: var(--navy);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(44,60,82,0.08);
+}
+
+.csm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .csm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+.csm-counter {
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.csm-section-note {
+  background: var(--tag-bg, rgba(49,183,185,0.08));
+  border-left: 3px solid var(--teal);
+  padding: 0.55rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+.csm-section-note strong { color: var(--teal-dim, #2A9FA1); }
+
+.csm-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+.csm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.csm-table th, .csm-table td {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.csm-table thead th {
+  background: rgba(49,183,185,0.06);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.csm-table tbody tr:hover td { background: var(--bg-soft, #F5F7FA); }
+.csm-table tbody tr:last-child td { border-bottom: none; }
+.csm-deprecated { opacity: 0.5; }
+.csm-deprecated td:not(:last-child):not(:nth-last-child(2)) { text-decoration: line-through; }
+
+.csm-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+.csm-tier-divider {
+  background: rgba(49,183,185,0.06);
+  font-weight: 700;
+  color: var(--teal-dim, #2A9FA1);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.csm-cert-id {
+  font-family: 'Consolas', monospace;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 0.82rem;
+  white-space: nowrap; /* voorkomt wrap op hyphens (DBX-DE-A) */
+}
+
+/* Naam-cell met ellipsis: lange titels (DAMA, Databricks Pro) blijven
+   op één regel; volledige tekst zichtbaar via title-tooltip op hover.
+   Mobile gebruikt een ander DOM (.csm-cards), dus niet beïnvloed. */
+.csm-name-wrap {
+  display: block;
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.csm-cert-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.85rem;
+  display: inline-block;
+}
+.csm-cert-link {
+  color: var(--teal-dim, #2A9FA1);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-bottom: 1px dotted rgba(49,183,185,0.4);
+  display: inline-block;
+}
+.csm-cert-link:hover { color: var(--teal); border-bottom-color: var(--teal); }
+.csm-link-icon { font-size: 0.7rem; opacity: 0.6; margin-left: 0.15rem; }
+.csm-cert-note {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-style: italic;
+  margin-top: 0.15rem;
+  max-width: 400px;
+  line-height: 1.4;
+}
+.csm-cert-vendor {
+  color: var(--text-light);
+  font-size: 0.75rem;
+}
+
+/* Tier-select — visueel zelfde gewicht als de relevance-dropdowns
+   ernaast, geen aparte segmented-control taal in elke tabel-rij. */
+.csm-tier-select {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.78rem;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+/* Relevance dropdown */
+.csm-relevance {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.74rem;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 100px;
+}
+.csm-relevance--expected { border-color: var(--teal); color: var(--teal); font-weight: 700; }
+.csm-relevance--recommended { border-color: var(--orange, #ED8936); color: var(--orange, #ED8936); }
+.csm-relevance--not_applicable { color: var(--muted); border-color: var(--border); }
+
+/* Active toggle */
+.csm-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+.csm-toggle input { opacity: 0; width: 0; height: 0; }
+.csm-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(44,60,82,0.2);
+  border-radius: 20px;
+  transition: 0.2s;
+}
+.csm-toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px; width: 16px;
+  left: 2px; top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.csm-toggle input:checked + .csm-toggle-slider { background: var(--teal); }
+.csm-toggle input:checked + .csm-toggle-slider::before { transform: translateX(16px); }
+
+/* Edit-icoon-knop in laatste cel */
+.csm-row-edit {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: var(--teal);
+  padding: 0.3rem 0.45rem;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.csm-row-edit:hover {
+  background: rgba(49,183,185,0.08);
+  border-color: rgba(49,183,185,0.3);
+}
+.csm-row-edit svg { width: 14px; height: 14px; }
+
+/* Specialisatie-tabel-cel-input */
+.csm-spec-input {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: inherit;
+  width: 100%;
+  border-radius: 4px;
+}
+.csm-spec-input:hover { background: rgba(44,60,82,0.03); }
+.csm-spec-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.csm-spec-code {
+  font-family: 'Consolas', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--navy);
+}
+.csm-spec-count {
+  text-align: center;
+  font-weight: 700;
+  color: var(--teal-dim, #2A9FA1);
+}
+.csm-spec-count-zero { color: var(--muted); font-weight: 400; }
+
+/* CertStandardManager modals */
+.csm-modal {
+  width: 540px;
+  max-width: 92vw;
+  padding: 1.5rem 1.7rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@media (max-width: 640px) {
+  .csm-modal {
+    padding: 1.2rem 1rem;
+  }
+}
+.csm-form { margin-top: 1rem; }
+.csm-form-row { margin-bottom: 0.85rem; }
+.csm-form-row label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+}
+.csm-form-row input[type=text],
+.csm-form-row select,
+.csm-form-row textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+}
+.csm-form-row input[type=text]:focus,
+.csm-form-row select:focus,
+.csm-form-row textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(49,183,185,0.15);
+}
+.csm-form-row input[disabled] {
+  background: var(--bg-soft, #F5F7FA);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.csm-form-hint {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+  display: block;
+  line-height: 1.4;
+}
+.csm-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-bottom: 0.85rem;
+}
+.csm-form-grid label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+}
+.csm-form-grid input[type=text],
+.csm-form-grid select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+}
+.csm-form-relevance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+.csm-form-relevance-grid select {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: #fff;
+  font-family: inherit;
+}
+.csm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+.btn-cancel:hover {
+  border-color: var(--text-light);
+  color: var(--text);
+}
+.csm-btn-primary {
+  background: var(--teal);
+  border: 1px solid var(--teal);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.csm-btn-primary:hover { background: var(--teal-dim, #2A9FA1); }
+
 .team-empty {
   padding: 1.5rem 1.2rem;
   text-align: center;
