@@ -3441,14 +3441,6 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
-  /* Geef visuele hint dat de tabel horizontaal scrollbaar is op mobile */
-  background-image:
-    linear-gradient(to right, #fff 30%, rgba(255,255,255,0)),
-    linear-gradient(to right, rgba(0,0,0,0.04), #fff 70%);
-  background-position: 0 0, 100% 0;
-  background-repeat: no-repeat;
-  background-size: 30px 100%, 30px 100%;
-  background-attachment: local, local;
 }
 .csm-table {
   width: 100%;
