@@ -420,8 +420,6 @@ function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevan
             );
           })}
         </div>
-
-        {c.notes && <div className="csm-cert-note">{c.notes}</div>}
       </div>
     );
   }
@@ -453,7 +451,6 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
           ) : (
             <span className="csm-cert-name">{c.name}</span>
           )}
-          {c.notes && <div className="csm-cert-note">{c.notes}</div>}
         </td>
         <td><span className="csm-cert-vendor">{c.vendor}</span></td>
         <td>
@@ -527,10 +524,6 @@ function SpecsSubview({ specs, memberCounts, onFieldChange, onActiveChange, onAd
         <button type="button" className="csm-btn-primary" onClick={onAddSpec}>
           ＋ Nieuwe specialisatie
         </button>
-      </div>
-
-      <div className="csm-section-note">
-        <strong>Specialisaties drijven de gap-analyse.</strong> Elke nieuwe specialisatie krijgt automatisch een kolom in de Certificeringen-tabel en een filter-knop in de teamview-matrix. Hernoemen werkt direct overal door — geen redeploy nodig. Een gedeactiveerde specialisatie verdwijnt uit de UI maar bestaande consultant-toewijzingen blijven intact.
       </div>
 
       {/* Desktop: tabel */}

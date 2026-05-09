@@ -3070,16 +3070,11 @@ body::before {
 /* Vendor permanent verborgen op cert-detail-rij — Microsoft/Databricks/
    DAMA staat al in Standaard beheren-tabel; op detail-niveau is 't ruis. */
 .cert-detail-vendor { display: none; }
-.cert-detail-notes {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-left: 1.7rem;
-  margin-top: 0.15rem;
-  font-style: italic;
-}
+/* Notes permanent verborgen in lijsten — beschikbaar via ✏️-edit-modal.
+   Houdt cert-rijen homogeen van hoogte; voorkomt dichte UI als veel
+   certs notitie-tekst zouden hebben. */
+.cert-detail-notes { display: none; }
 @media (max-width: 768px) {
-  .cert-detail-notes { display: none; }
-  .cert-detail-vendor { display: none; }
   .cert-detail-name { font-size: 0.85rem; }
 }
 .cert-relevance-badge {
