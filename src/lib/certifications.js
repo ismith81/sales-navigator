@@ -141,6 +141,8 @@ export async function setConsultantRoleCode(consultantId, roleCode) {
 
 // ─── Mutators voor Standaard beheren-UI ──────────────────────────────────
 
+const VALID_TIERS = ['baseline', 'specialist', 'overig'];
+
 // Insert/upsert van een cert vanuit de beheer-UI. Voor "Nieuwe certificering"
 // gebruikt de UI insert; voor naam/vendor/url/notes-edits gebruikt 'm update.
 // Beide via één upsert zodat de UI eenvoudig blijft.
@@ -150,7 +152,7 @@ export async function upsertCertification(cert) {
     id: String(cert.id).trim(),
     name: cert.name || '',
     vendor: cert.vendor || '',
-    tier: cert.tier === 'specialist' ? 'specialist' : 'baseline',
+    tier: VALID_TIERS.includes(cert.tier) ? cert.tier : 'baseline',
     active: cert.active !== false,
     notes: cert.notes || null,
     url: cert.url || null,
@@ -167,10 +169,10 @@ export async function upsertCertification(cert) {
 
 // Toggle 'tier' voor een cert (baseline ↔ specialist).
 export async function setCertificationTier(certId, tier) {
-  const value = tier === 'specialist' ? 'specialist' : 'baseline';
+  if (!VALID_TIERS.includes(tier)) return { error: `Ongeldige tier: ${tier}` };
   const { error } = await supabase
     .from('certifications')
-    .update({ tier: value })
+    .update({ tier })
     .eq('id', certId);
   if (error) return { error: error.message };
   return { ok: true };
