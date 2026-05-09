@@ -193,12 +193,18 @@ export default function CertificationsManager() {
           <div className="cert-advanced-wrap">
             <button
               type="button"
-              className="btn-add-small"
+              className="cert-advanced-trigger"
               onClick={() => setShowAdvanced(v => !v)}
               aria-expanded={showAdvanced}
               aria-haspopup="menu"
+              aria-label="Geavanceerde acties"
+              title="Geavanceerde acties (migratie, seed)"
             >
-              ⋯ Geavanceerd
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                   strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
             </button>
             {showAdvanced && (
               <>
@@ -388,35 +394,32 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
         ))}
       </div>
 
-      <h3 className="cert-section-heading">Gap-analyse — team</h3>
       <div className="cert-aggregate-grid">
-        <div className="cert-aggregate-card">
-          <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.baselineComplete / teamCoverage.total) * 100) : 0}%</div>
-          <div className="cert-aggregate-label">Baseline compleet</div>
-          <div className="cert-aggregate-sub">{teamCoverage.baselineComplete} van {teamCoverage.total} consultants</div>
-        </div>
-        <div className="cert-aggregate-card">
-          <div className="cert-aggregate-value">{teamCoverage.total > 0 ? Math.round((teamCoverage.specialistComplete / teamCoverage.total) * 100) : 0}%</div>
-          <div className="cert-aggregate-label">Specialistisch compleet</div>
-          <div className="cert-aggregate-sub">{teamCoverage.specialistComplete} van {teamCoverage.total} consultants</div>
-        </div>
-        <div className="cert-aggregate-card cert-aggregate-card--gaps">
-          <div className="cert-aggregate-label" style={{ marginBottom: '0.4rem' }}>Top gaps</div>
-          {topGaps.length === 0 ? (
-            <div className="cert-aggregate-sub">Geen openstaande gaps 🎉</div>
-          ) : (
-            <ol className="cert-top-gaps">
-              {topGaps.map(g => (
-                <li key={g.cert.id}>
-                  <strong>{g.cert.id}</strong> — {g.missingCount} van {g.applicableCount} mist
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
+        <CoverageCard
+          label="Baseline compleet"
+          achieved={teamCoverage.baselineComplete}
+          total={teamCoverage.total}
+        />
+        <CoverageCard
+          label="Specialistisch compleet"
+          achieved={teamCoverage.specialistComplete}
+          total={teamCoverage.total}
+        />
       </div>
 
-      <h3 className="cert-section-heading">Cert-matrix per consultant</h3>
+      {topGaps.length > 0 && (
+        <div className="cert-top-gaps-block">
+          <div className="cert-top-gaps-label">Top gaps</div>
+          <ol className="cert-top-gaps">
+            {topGaps.map(g => (
+              <li key={g.cert.id}>
+                <strong>{g.cert.id}</strong>
+                <span className="cert-top-gaps-detail">{g.missingCount} van {g.applicableCount} consultants mist deze cert</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {/* Desktop: matrix-tabel. Verborgen op <=768px. */}
       <div className="cert-matrix-wrap csm-desktop-only">
@@ -493,6 +496,34 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// Desktop-versie: card met label, achieved/total + groot percentage en
+// progress-bar. Wordt zowel in Teamview-aggregaat als detail-coverage
+// gebruikt — homogene visuele taal voor coverage.
+function CoverageCard({ label, achieved, total, percentOverride }) {
+  const safeTotal = total || 0;
+  const percent = percentOverride !== undefined
+    ? percentOverride
+    : (safeTotal === 0 ? 0 : Math.round((achieved / safeTotal) * 100));
+  const isComplete = safeTotal > 0 && achieved === safeTotal;
+  return (
+    <div className="cert-aggregate-card">
+      <div className="cert-aggregate-card-head">
+        <span className="cert-aggregate-card-label">{label}</span>
+        <span className="cert-aggregate-card-percent">{percent}%</span>
+      </div>
+      <div className="cert-coverage-bar-track">
+        <div
+          className={`cert-coverage-bar-fill ${isComplete ? 'cert-coverage-bar-fill--complete' : ''}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="cert-aggregate-card-stats">
+        <strong>{achieved}</strong> van <strong>{safeTotal}</strong>
       </div>
     </div>
   );
@@ -649,18 +680,19 @@ function DetailView({ consultantId, members, certs, roleRelevance, consultantCer
         </div>
       </div>
 
-      <h3 className="cert-section-heading">Gap-analyse — {consultant.name}</h3>
-      <div className="cert-detail-coverage">
-        <div className="cert-detail-coverage-item">
-          <span className="cert-detail-coverage-label">Baseline:</span>
-          <strong>{baselineCoverage.achieved} / {baselineCoverage.expected}</strong>
-          <span className="cert-detail-coverage-pct">({baselineCoverage.percent}%)</span>
-        </div>
-        <div className="cert-detail-coverage-item">
-          <span className="cert-detail-coverage-label">Specialistisch:</span>
-          <strong>{specialistCoverage.achieved} / {specialistCoverage.expected}</strong>
-          <span className="cert-detail-coverage-pct">({specialistCoverage.percent}%)</span>
-        </div>
+      <div className="cert-aggregate-grid">
+        <CoverageCard
+          label="Baseline"
+          achieved={baselineCoverage.achieved}
+          total={baselineCoverage.expected}
+          percentOverride={baselineCoverage.percent}
+        />
+        <CoverageCard
+          label="Specialistisch"
+          achieved={specialistCoverage.achieved}
+          total={specialistCoverage.expected}
+          percentOverride={specialistCoverage.percent}
+        />
       </div>
 
       {renderTier('baseline', 'Baseline')}

@@ -2716,13 +2716,11 @@ body::before {
   border: 1px dashed var(--border);
 }
 
-.cert-filter-label {
-  margin-right: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
+/* Filter-label permanent verborgen — context (drie spec-knoppen) maakt
+   functie al duidelijk. Op mobile worden ook de full-name labels op de
+   knoppen zelf verborgen, alleen de codes blijven. */
+.cert-filter-label { display: none; }
 @media (max-width: 640px) {
-  .cert-filter-label { display: none; }
   .cert-filter-btn-label { display: none; }
 }
 
@@ -2762,7 +2760,7 @@ body::before {
 
 .cert-aggregate-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.85rem;
   margin-bottom: 1.2rem;
 }
@@ -2771,34 +2769,64 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-.cert-aggregate-card--gaps { grid-column: span 1; }
-.cert-aggregate-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--teal);
-  line-height: 1;
+.cert-aggregate-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
-.cert-aggregate-label {
-  font-size: 0.75rem;
+.cert-aggregate-card-label {
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--muted);
-  margin: 0.4rem 0 0.2rem;
-}
-.cert-aggregate-sub {
-  font-size: 0.82rem;
   color: var(--text-light);
+}
+.cert-aggregate-card-percent {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.cert-aggregate-card-stats {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.cert-aggregate-card-stats strong { color: var(--text); }
+
+/* Top-gaps als eigen sectie onder de coverage-cards */
+.cert-top-gaps-block {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.95rem 1.05rem;
+  margin-bottom: 1.2rem;
+}
+.cert-top-gaps-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  margin-bottom: 0.6rem;
 }
 .cert-top-gaps {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: 1.2rem;
   font-size: 0.85rem;
   color: var(--navy);
-  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
-
+.cert-top-gaps-detail {
+  margin-left: 0.5rem;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
 .cert-matrix-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -3026,11 +3054,9 @@ body::before {
 .cert-detail-item input[type="checkbox"] { cursor: pointer; flex-shrink: 0; }
 .cert-detail-id { white-space: nowrap; flex-shrink: 0; }
 .cert-detail-name { flex: 1; min-width: 0; word-break: break-word; }
-.cert-detail-vendor {
-  margin-left: 0.5rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
+/* Vendor permanent verborgen op cert-detail-rij — Microsoft/Databricks/
+   DAMA staat al in Standaard beheren-tabel; op detail-niveau is 't ruis. */
+.cert-detail-vendor { display: none; }
 .cert-detail-notes {
   font-size: 0.78rem;
   color: var(--muted);
@@ -3162,6 +3188,31 @@ body::before {
 }
 
 /* ─── Geavanceerd-dropdown in cert-toolbar ─────────────────────────────── */
+/* Tandwiel-icoon trigger — visueel apart van de tab-knoppen, signaleert
+   'meta-acties' (settings/admin) i.p.v. 'navigatie'. */
+.cert-advanced-trigger {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.cert-advanced-trigger:hover {
+  color: var(--navy);
+  background: var(--bg-soft, #F5F7FA);
+  border-color: var(--border);
+}
+.cert-advanced-trigger[aria-expanded="true"] {
+  color: var(--teal);
+  background: rgba(49,183,185,0.08);
+  border-color: rgba(49,183,185,0.3);
+}
+
 .cert-advanced-wrap { position: relative; display: inline-block; }
 .cert-advanced-backdrop {
   position: fixed; inset: 0; z-index: 5;
@@ -3322,35 +3373,33 @@ body::before {
   .csm-card-relevance { grid-template-columns: 1fr; }
 }
 
+/* Segmented control — visueel duidelijk een sub-control binnen één view,
+   niet nóg een tab-rij van top-level navigatie. */
 .csm-subnav {
-  display: flex;
-  gap: 0.3rem;
+  display: inline-flex;
   margin-bottom: 1.2rem;
-  padding-bottom: 0.7rem;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  background: var(--bg-soft, #F5F7FA);
 }
 .csm-subtab {
   border: none;
   background: transparent;
   color: var(--text-light);
-  padding: 0.45rem 1rem;
+  padding: 0.4rem 1rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-family: inherit;
   border-radius: 6px;
   font-weight: 600;
-  position: relative;
+  transition: all 0.15s;
 }
-.csm-subtab:hover { background: rgba(44,60,82,0.04); color: var(--navy); }
-.csm-subtab.active { color: var(--teal); background: rgba(49,183,185,0.08); }
-.csm-subtab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -0.7rem;
-  left: 1rem; right: 1rem;
-  height: 2px;
-  background: var(--teal);
-  border-radius: 2px;
+.csm-subtab:hover { color: var(--navy); }
+.csm-subtab.active {
+  color: var(--navy);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(44,60,82,0.08);
 }
 
 .csm-header {
@@ -3475,27 +3524,18 @@ body::before {
   font-size: 0.75rem;
 }
 
-/* Tier inline radio (Baseline / Spec.) */
-.csm-tier-radio {
-  display: inline-flex;
+/* Tier-select — visueel zelfde gewicht als de relevance-dropdowns
+   ernaast, geen aparte segmented-control taal in elke tabel-rij. */
+.csm-tier-select {
   border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.csm-tier-radio input { display: none; }
-.csm-tier-radio label {
-  padding: 0.3rem 0.55rem;
-  cursor: pointer;
-  font-size: 0.72rem;
+  border-radius: 5px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.78rem;
   background: #fff;
-  color: var(--text-light);
-  border-right: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
   font-weight: 600;
-}
-.csm-tier-radio label:last-of-type { border-right: none; }
-.csm-tier-radio input:checked + label {
-  background: var(--teal);
-  color: #fff;
 }
 
 /* Relevance dropdown */
@@ -3539,7 +3579,7 @@ body::before {
   border-radius: 50%;
   transition: 0.2s;
 }
-.csm-toggle input:checked + .csm-toggle-slider { background: #2DAA73; }
+.csm-toggle input:checked + .csm-toggle-slider { background: var(--teal); }
 .csm-toggle input:checked + .csm-toggle-slider::before { transform: translateX(16px); }
 
 /* Edit-icoon-knop in laatste cel */

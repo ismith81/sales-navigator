@@ -262,7 +262,7 @@ function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRel
         <div className="csm-counter">
           {activeCount} actief · {inactiveCount} gedeactiveerd
         </div>
-        <button type="button" className="btn-add-small" onClick={onAddCert}>
+        <button type="button" className="csm-btn-primary" onClick={onAddCert}>
           ＋ Nieuwe certificering
         </button>
       </div>
@@ -455,24 +455,14 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
         </td>
         <td><span className="csm-cert-vendor">{c.vendor}</span></td>
         <td>
-          <div className="csm-tier-radio">
-            <input
-              type="radio"
-              name={`tier-${c.id}`}
-              id={`tier-${c.id}-base`}
-              checked={c.tier === 'baseline'}
-              onChange={() => onTierChange(c.id, 'baseline')}
-            />
-            <label htmlFor={`tier-${c.id}-base`}>Baseline</label>
-            <input
-              type="radio"
-              name={`tier-${c.id}`}
-              id={`tier-${c.id}-spec`}
-              checked={c.tier === 'specialist'}
-              onChange={() => onTierChange(c.id, 'specialist')}
-            />
-            <label htmlFor={`tier-${c.id}-spec`}>Spec.</label>
-          </div>
+          <select
+            className="csm-tier-select"
+            value={c.tier}
+            onChange={(e) => onTierChange(c.id, e.target.value)}
+          >
+            <option value="baseline">Baseline</option>
+            <option value="specialist">Specialistisch</option>
+          </select>
         </td>
         {activeSpecs.map(s => {
           const cur = relevanceByCert.get(c.id)?.[s.code] || 'not_applicable';
@@ -531,7 +521,7 @@ function SpecsSubview({ specs, memberCounts, onFieldChange, onActiveChange, onAd
         <div className="csm-counter">
           {activeCount} actief · {inactiveCount} gedeactiveerd
         </div>
-        <button type="button" className="btn-add-small" onClick={onAddSpec}>
+        <button type="button" className="csm-btn-primary" onClick={onAddSpec}>
           ＋ Nieuwe specialisatie
         </button>
       </div>
