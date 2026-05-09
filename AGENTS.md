@@ -619,3 +619,84 @@ Onveranderd t.o.v. 2026-05-01:
 
 Nieuw geïdentificeerd in deze sessie:
 - **Mic-feature upgrade**: Whisper API (OpenAI) of Gemini Audio voor betere NL-kwaliteit zodra Web Speech API tekortschiet voor sales-jargon. Plus: auto-send na X sec stilte als UX-polish; mic-knop in welcome-screen voor totaal hands-free starten.
+
+## Status (sessie 2026-05-03 t/m 2026-05-09 — certificeringsstandaard + gap-analyse)
+
+Eén grote PR (#37) over zes kalenderdagen, 25 commits. Implementeerde een complete cert-tracking-feature voor het Data & Analytics team: master-list, gap-analyse per consultant, beheer voor competentie-leads, en een eenmalige migratie-wizard vanuit de oude vrije-tekst-array. Veel iteratie omdat scope onderweg meegroeide met user-feedback (specialisaties dynamisch maken, derde tier "Overig", design-cleanup, mobile cards, etc).
+
+### Schema (`supabase/certifications.sql`, idempotent)
+- **`specializations`-tabel** (eigen tabel, niet CHECK-constraint) — competentie-leads kunnen runtime nieuwe specialisaties toevoegen/hernoemen zonder ALTER TABLE. `team_members.role_code` en `certification_role_relevance.role` zijn FK's naar `specializations(code)` met `ON UPDATE CASCADE`. Bootstrap met AE/DE/DSA.
+- **`certifications` master-tabel** met `tier` (`baseline` | `specialist` | `overig`) + `url`-kolom voor vendor-leerpaden + `notes`-veld + `active`-flag.
+- **`certification_role_relevance`** junction (cert × spec → expected/recommended/not_applicable).
+- **`consultant_certifications`** junction (consultant × cert → achieved boolean).
+- **`team_members`** krijgt `role_code` (FK) + `other_certifications text[]` voor extras buiten de standaard.
+- RLS authenticated-all op alle nieuwe tabellen, `updated_at`-triggers consistent met team_members.
+
+### Architectonische keuzes
+1. **`role_code` naast vrije `role`-tekst** — geen vervanging. Nova's match-flow op vrije text + UI blijven werken; de `role_code` is uitsluitend voor gap-analyse.
+2. **Junction-tabel voor gap-analyse, bestaande `certifications text[]` blijft** — Nova matcht nog steeds op de array; junction is uitsluitend gap-analyse-input.
+3. **Specialisaties als eigen DB-tabel** (Optie A uit overleg) i.p.v. CHECK-constraint of JSON-bootstrap — competentie-leads kunnen via UI volledig zelfstandig.
+4. **Tier "Overig"** (Optie A informatief) — voor certs die competentie-leads gestandaardiseerd willen tracken zonder dat ze meetellen in baseline/specialist coverage. Conditioneel rendering: section-divider + matrix-kolom verschijnen alleen als er actieve overig-certs zijn.
+5. **Gap-analyse client-side** — geen RPC, schaal triviaal bij ~12 consultants × 14 certs.
+6. **Migratie als interactieve wizard** — sales bevestigt per consultant de fuzzy-matches met confidence-kleur (high/medium/low), niet een rapport-script. Re-runnable per consultant. Sales kiest expliciet AE/DE/DSA — geen auto-guess op vrije role-tekst.
+
+### UI (Beheer → Certificeringen)
+Drie hoofd-tabs:
+- **Teamview** — matrix consultants × certs (drie kolom-groepen: Baseline / Specialistisch / Overig conditioneel). Coverage-cards "X van de Y consultants compleet" met progress-bar; Top Gaps als losse sectie eronder. Specialisatie-filter (compact: alleen codes op mobile).
+- **Per consultant** — coverage-cards (Baseline / Specialistisch) per persoon + checkbox-lijst van alle relevante certs gegroepeerd per tier. Vrije-tekst-veld voor "Overige certificeringen (niet-standaard)".
+- **Standaard beheren** — sub-tabs Certificeringen / Specialisaties (segmented control). Master-list CRUD met inline-bewerk voor tier-dropdown en relevance-dropdowns; modal voor nieuwe certs/specs en voor naam/vendor/url/notitie. Soft-delete via active-toggle (geen hard-delete; consultant-toewijzingen blijven intact).
+
+Plus achter **⋯ Geavanceerd** (tandwiel-icoon rechts in toolbar):
+- 🪄 Migratie-wizard (eenmalige conversie vrije-tekst → gestructureerde rijen)
+- ↻ Seed master-lijst (type-to-confirm dialog: typt "seed" om destructieve seed-actie te bevestigen)
+
+### Aggregaat-coverage definitie
+Strikt: een consultant telt als "compleet" voor een tier als hij ALLE Verwacht-certs voor zijn specialisatie in die tier heeft behaald. Consultants zonder expected (bv. AE'ers op specialistisch in huidige config) tellen niet als by-default-compleet. `useMemo`-deps op certs/roleRelevance/consultantCerts: bij wijziging in beheer (tier-verschuiving of relevance Aanbevolen → Verwacht) beweegt de teller direct mee.
+
+### Mobile (≤768px)
+Volledig responsive — alle tabel-views vervangen door card-layouts:
+- Teamview: consultant-cards met coverage-bars + spec-badge + → Detail link
+- Standaard beheren: cert-cards en spec-cards met inline controls
+- DOM-truc: `csm-mobile-only` / `csm-desktop-only` met `!important` op de display-state, omdat `.csm-cards { display: flex }` cascade-prioriteit had over de utility-class
+
+### Design-cleanup (na user-driven design-review)
+10 punten doorgevoerd voor minimalistische, homogene visuele taal:
+- Sub-tabs als segmented control (witte pill in grijze rail), niet nog een tab-rij van top-level
+- Uppercase sectiekoppen weg (context spreekt voor zichzelf)
+- ⋯ Geavanceerd-pill → tandwiel-icoon (subtieler, signaleert meta-actie)
+- `+ Nieuwe certificering` als gevulde primary-button (was outline)
+- Tier-radio → select dropdown (visueel zelfde gewicht als relevance-dropdowns ernaast)
+- Filter-label "Specialisatie:" weg — context maakt 't duidelijk
+- Active-toggle teal (was groen) — palet-cohesie
+- Coverage-cards uniform: label + percent + progress-bar + stats
+- Top Gaps als eigen sectie, niet ingeklemd tussen coverage-cards
+- Ellipsis met hover-tooltip voor lange cert-namen op desktop
+
+### Bugs & lessons
+- **Defensive ternary-validatie op enums = anti-pattern.** `tier === 'specialist' ? 'specialist' : 'baseline'` mapte stilletjes alle waarden behalve 'specialist' naar 'baseline' — toen Optie A 'overig' toevoegde werd elke tier='overig'-update silent geconverteerd, PATCH gaf 204 (succes op tier='baseline'), geen error. Vervangen door `VALID_TIERS`-array + `includes()` validatie. Toekomst-bestendig: nieuwe tier = één regel uitbreiden.
+- **CSS cascade-volgorde**: `.csm-mobile-only { display: none }` werd overruled door later-gedefinieerde `.csm-cards { display: flex }`. Beide selectors hebben dezelfde specificiteit (010), volgorde wint. Standaard responsive utility-pattern: `!important` op de display-state.
+- **React controlled select** shadowt DOM-value: directe `select.value = 'overig'` of `form_input` (Claude-in-Chrome MCP) triggert geen onChange omdat React zijn eigen value-tracking heeft. Fix bij automation: vind de React-fiber-key en roep `props.onChange({target: {value}})` direct aan.
+- **Vercel deployment-protection bypass-token** werkt voor self-validation tijdens iteratie — `?x-vercel-protection-bypass=<token>&x-vercel-set-bypass-cookie=true`. Token in Vercel-settings → Deployment Protection → Protection Bypass for Automation. Workflow-versneller: na een push kan Claude in Chrome (mobile-emulation via DevTools Ctrl+Shift+M) zelf de visuele check doen vóór telefoon-validatie nodig is.
+
+### Sessie-resultaat (PR-overzicht, 2026-05-03 t/m 2026-05-09)
+| PR | Onderwerp |
+|---|---|
+| #37 | **Beheer: certificeringsstandaard + gap-analyse per consultant** (squash-merged, 25 commits) |
+
+### Bekende beperkingen / vervolgwerk (na 2026-05-09)
+**Direct na merge handmatig:**
+- `supabase/certifications.sql` opnieuw draaien op productie — bevat idempotente DROP+RECREATE van de tier-CHECK-constraint (uitgebreid met 'overig'). Veilig op een al gedraaide DB.
+- DB-staat na user-testing: AI-102 + AI-900 staan op tier='overig' (test van de Overig-flow). Per `certifications.json` is hun canonical tier 'specialist' resp. 'baseline'. Sales kan 't via UI terugzetten als gewenst, of via ⋯ Geavanceerd → Seed master-lijst (overschrijft alles vanuit JSON).
+- Sales overdragen: per consultant doorlopen via Migratie-wizard, of handmatig in Standaard beheren / Per consultant.
+
+**Open potentieel werk (geen prio):**
+- Permissioning op Standaard beheren — nu authenticated-all. Als competentie-leads-only-pattern een beperking moet worden: aparte RLS-policy met user-role check.
+- Custom relevance-niveaus per specialisatie voor Overig-tier — nu inheriting Verwacht/Aanbevolen/N.v.t. die voor "informatieve tracking" minder zinvol zijn.
+- `certifications.json` als bootstrap-only — competentie-leads voegen via UI toe, JSON wordt out-of-sync. Optie: één-richting-sync of JSON volledig laten varen na initial seed.
+
+**Onveranderd vervolg-werk (van eerdere sessies):**
+- Audit-backlog (availability-duplicatie + case-mapping refactor) wachtend op tests.
+- Embedding-kwaliteit-NL upgrade-pad naar OpenAI text-embedding-3-small wachtend op signaal.
+- `/api/list-models` diagnostic kan op termijn weg.
+- Mistral POC blijft geparkeerd.
+- Mic-feature upgrade (Whisper / Gemini Audio) — uit 2026-05-02-sessie.
