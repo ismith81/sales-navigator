@@ -464,6 +464,7 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
           >
             <option value="baseline">Baseline</option>
             <option value="specialist">Specialistisch</option>
+            <option value="overig">Overig</option>
           </select>
         </td>
         {activeSpecs.map(s => {
@@ -733,6 +734,7 @@ function CertModal({ mode, cert, activeSpecs, onClose, onSave }) {
               <select value={form.tier} onChange={(e) => update('tier', e.target.value)}>
                 <option value="baseline">Baseline</option>
                 <option value="specialist">Specialistisch</option>
+                <option value="overig">Overig</option>
               </select>
             </div>
           </div>
