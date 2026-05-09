@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   listTeamMembers,
   createTeamMember,
@@ -11,9 +11,83 @@ import {
 } from '../lib/teamMembers';
 import TeamMemberEditor from './TeamMemberEditor';
 
-// Beheer-tab voor consultant-profielen ("Team"). Toont een lijst en routeert
-// klikken naar de editor. Knoppen: + Nieuw teamlid (lege editor) en + CV
-// uploaden (PDF → parse → prefill editor).
+// Beheer-tab voor consultant-profielen ("Team"). Layout in lijn met
+// Beheer → Certificeringen:
+//   - Toolbar: filter-pills (avail-bucket) links, primary CTA + gear rechts
+//   - Aggregaat-cards: team-grootte, beschikbaarheid, specialisaties
+//   - Card-grid voor team-leden i.p.v. flat rows
+//   - Gear-popover voor zelden-gebruikte semantic-embedding-acties
+// Skills-tags bewust weggelaten — komt terug zodra kernskills/technologies-
+// overlap is opgelost in een aparte PR.
+
+const EditIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="14" height="14"
+       aria-hidden="true">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="14" height="14"
+       aria-hidden="true">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+  </svg>
+);
+const CvIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="11" height="11"
+       aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+const ClientIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 21h18"/>
+    <path d="M5 21V7l7-4 7 4v14"/>
+    <path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>
+  </svg>
+);
+const GearIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="18" height="18"
+       aria-hidden="true">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+const DatabaseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="14" height="14"
+       aria-hidden="true">
+    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+    <path d="M3 5v14a9 3 0 0 0 18 0V5"/>
+    <path d="M3 12a9 3 0 0 0 18 0"/>
+  </svg>
+);
+const RefreshIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" width="14" height="14"
+       aria-hidden="true">
+    <polyline points="23 4 23 10 17 10"/>
+    <polyline points="1 20 1 14 7 14"/>
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  </svg>
+);
+
+// Filter-pills voor avail-bucket. 'all' is geen bucket maar reset-keuze.
+const BUCKET_ORDER = ['all', 'now', 'soon', 'later'];
+const BUCKET_LABEL = {
+  all: 'Alle',
+  now: 'Nu beschikbaar',
+  soon: 'Bijna beschikbaar',
+  later: 'Bezet',
+};
+
 export default function TeamManager() {
   const [members, setMembers] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -23,6 +97,8 @@ export default function TeamManager() {
   const [parseStatus, setParseStatus] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [embedStatus, setEmbedStatus] = useState(null);
+  const [filterBucket, setFilterBucket] = useState('all');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -34,6 +110,27 @@ export default function TeamManager() {
 
   useEffect(() => { refresh(); }, []);
 
+  // ─── Aggregaat-tellingen ─────────────────────────────────────────────
+  // Bucketcounts: hoeveel team-leden per beschikbaarheids-bucket. Specs:
+  // hoeveel per role_code (uit specializations-tabel; null = onbekend).
+  const stats = useMemo(() => {
+    const buckets = { now: 0, soon: 0, later: 0 };
+    const specs = {}; // code → count
+    for (const m of members) {
+      const b = getAvailabilityBucket(m);
+      buckets[b.bucket] = (buckets[b.bucket] || 0) + 1;
+      const code = m.role_code || '—';
+      specs[code] = (specs[code] || 0) + 1;
+    }
+    return { buckets, specs, total: members.length };
+  }, [members]);
+
+  const filteredMembers = useMemo(() => {
+    if (filterBucket === 'all') return members;
+    return members.filter(m => getAvailabilityBucket(m).bucket === filterBucket);
+  }, [members, filterBucket]);
+
+  // ─── Acties ──────────────────────────────────────────────────────────
   const startNew = () => {
     setEditingPrefill(null);
     setEditingId('new');
@@ -86,11 +183,12 @@ export default function TeamManager() {
     if (didSave) await refresh();
   };
 
-  // Backfill van semantic-embeddings — handmatige knop voor wanneer er
+  // Backfill van semantic-embeddings — handmatige actie voor wanneer er
   // profielen zonder embedding zijn (na de SQL-migratie of als ooit een
   // auto-embed faalde tijdens save). Default = alleen profielen zonder
   // embedding; force=true herrekent álle embeddings.
   const handleEmbedBackfill = async ({ force = false } = {}) => {
+    setShowAdvanced(false);
     setEmbedStatus({ kind: 'busy', message: force ? 'Alle profielen opnieuw embedden…' : 'Profielen zonder embedding ophalen + embedden…' });
     const res = await backfillTeamEmbeddings({ force });
     if (res?.error) {
@@ -124,62 +222,152 @@ export default function TeamManager() {
 
   return (
     <div className="team-manager">
-      <div className="team-actions">
-        <button type="button" className="btn-add-small" onClick={startFromCv} disabled={!!parseStatus}>
-          {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
-        </button>
-        <button type="button" className="btn-add-small" onClick={startNew} disabled={!!parseStatus}>
-          ＋ Nieuw teamlid
-        </button>
-      </div>
-      {parseError && (
-        <div className="team-parse-error">
-          ⚠️ {parseError}
+      {/* ─── Toolbar ──────────────────────────────────────────────────── */}
+      <div className="team-toolbar">
+        <div className="team-toolbar-left">
+          {BUCKET_ORDER.map(b => {
+            const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
+            return (
+              <button
+                key={b}
+                type="button"
+                className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
+                onClick={() => setFilterBucket(b)}
+              >
+                {BUCKET_LABEL[b]} ({count})
+              </button>
+            );
+          })}
         </div>
-      )}
-      {parseStatus && (
-        <div className="team-parse-status">
-          {parseStatus}
-        </div>
-      )}
-
-      {/* Embedding-onderhoud — collapsed sectie omdat 't een sporadische actie is.
-          Bij eerste setup: knop gebruiken om alle 12 profielen te embedden.
-          Daarna doen saves het zelf automatisch (fire-and-forget). */}
-      <details className="team-embed-bar">
-        <summary>🧠 Semantic embeddings (geavanceerd)</summary>
-        <div className="team-embed-bar-actions">
+        <div className="team-toolbar-right">
           <button
             type="button"
             className="btn-add-small"
-            onClick={() => handleEmbedBackfill({ force: false })}
-            disabled={embedStatus?.kind === 'busy'}
+            onClick={startFromCv}
+            disabled={!!parseStatus}
           >
-            {embedStatus?.kind === 'busy' ? '⏳ Bezig…' : 'Embed ontbrekende profielen'}
+            {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
           </button>
           <button
             type="button"
-            className="btn-add-small btn-add-small--secondary"
-            onClick={() => handleEmbedBackfill({ force: true })}
-            disabled={embedStatus?.kind === 'busy'}
-            title="Herrekent alle embeddings — gebruik na grote profiel-updates of model-wissel"
+            className="csm-btn-primary"
+            onClick={startNew}
+            disabled={!!parseStatus}
           >
-            Herbouw alle embeddings
+            ＋ Nieuw teamlid
           </button>
-          {embedStatus && (
-            <div className={`team-embed-status team-embed-status--${embedStatus.kind}`}>
-              {embedStatus.message}
-            </div>
-          )}
+          <div className="cert-advanced-wrap">
+            <button
+              type="button"
+              className="cert-advanced-trigger"
+              onClick={() => setShowAdvanced(v => !v)}
+              aria-expanded={showAdvanced}
+              aria-haspopup="menu"
+              aria-label="Geavanceerde acties"
+              title="Geavanceerde acties (semantic embeddings)"
+            >
+              <GearIcon />
+            </button>
+            {showAdvanced && (
+              <>
+                <div className="cert-advanced-backdrop" onClick={() => setShowAdvanced(false)} />
+                <div className="cert-advanced-menu" role="menu">
+                  <button
+                    type="button"
+                    className="cert-advanced-item"
+                    onClick={() => handleEmbedBackfill({ force: false })}
+                    disabled={embedStatus?.kind === 'busy'}
+                  >
+                    <span className="team-advanced-item-head">
+                      <DatabaseIcon /> Embed ontbrekende profielen
+                    </span>
+                    <small>Voor profielen zonder semantic embedding (na initial setup of als auto-embed faalde)</small>
+                  </button>
+                  <button
+                    type="button"
+                    className="cert-advanced-item cert-advanced-item--danger"
+                    onClick={() => handleEmbedBackfill({ force: true })}
+                    disabled={embedStatus?.kind === 'busy'}
+                  >
+                    <span className="team-advanced-item-head">
+                      <RefreshIcon /> Herbouw alle embeddings
+                    </span>
+                    <small>Herrekent álles — gebruik na grote profiel-updates of model-wissel</small>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <p className="team-embed-bar-hint">
-          Embeddings maken Nova's <em>semantic_query</em> mogelijk — voor soft-vragen
-          zoals "iemand die goed met klanten omgaat" of synoniemen die niet in de
-          kernskills-lijst staan. Nieuwe of gewijzigde profielen worden automatisch
-          ge-embed bij save; deze knoppen zijn voor backfill of reparatie.
-        </p>
-      </details>
+      </div>
 
+      {/* ─── Status-meldingen ─────────────────────────────────────────── */}
+      {parseError && (
+        <div className="team-parse-error">⚠️ {parseError}</div>
+      )}
+      {parseStatus && (
+        <div className="team-parse-status">{parseStatus}</div>
+      )}
+      {embedStatus && (
+        <div className={`team-embed-status team-embed-status--${embedStatus.kind}`} style={{ marginBottom: '0.85rem' }}>
+          {embedStatus.message}
+        </div>
+      )}
+
+      {/* ─── Aggregaat-cards ──────────────────────────────────────────── */}
+      <div className="cert-aggregate-grid">
+        <div className="cert-aggregate-card">
+          <div className="cert-aggregate-card-head">
+            <span className="cert-aggregate-card-label">Team-grootte</span>
+            <span className="cert-aggregate-card-percent">{stats.total}</span>
+          </div>
+          <div className="cert-aggregate-card-stats">
+            consultants in dit team
+          </div>
+        </div>
+
+        <div className="cert-aggregate-card">
+          <div className="cert-aggregate-card-head">
+            <span className="cert-aggregate-card-label">Beschikbaarheid</span>
+            <span className="cert-aggregate-card-percent" style={{ fontSize: '1rem' }}>
+              {stats.buckets.now} nu
+            </span>
+          </div>
+          <div className="team-bucket-row">
+            <span className="team-bucket-chip">
+              <span className="team-bucket-dot team-bucket-dot--now" />
+              <strong>{stats.buckets.now || 0}</strong> nu
+            </span>
+            <span className="team-bucket-chip">
+              <span className="team-bucket-dot team-bucket-dot--soon" />
+              <strong>{stats.buckets.soon || 0}</strong> binnenkort
+            </span>
+            <span className="team-bucket-chip">
+              <span className="team-bucket-dot team-bucket-dot--later" />
+              <strong>{stats.buckets.later || 0}</strong> bezet
+            </span>
+          </div>
+        </div>
+
+        <div className="cert-aggregate-card">
+          <div className="cert-aggregate-card-head">
+            <span className="cert-aggregate-card-label">Specialisaties</span>
+            <span className="cert-aggregate-card-percent" style={{ fontSize: '0.95rem', fontFamily: "'Consolas', monospace" }}>
+              {Object.entries(stats.specs)
+                .filter(([code]) => code !== '—')
+                .map(([code, n]) => `${code} ${n}`)
+                .join(' · ') || '—'}
+            </span>
+          </div>
+          <div className="cert-aggregate-card-stats">
+            {stats.specs['—']
+              ? `${stats.specs['—']} zonder specialisatie toegewezen`
+              : 'iedereen heeft een specialisatie'}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Team-cards ───────────────────────────────────────────────── */}
       {loading ? (
         <div className="team-empty">Laden…</div>
       ) : members.length === 0 ? (
@@ -188,73 +376,64 @@ export default function TeamManager() {
           Word-document (.docx) in te lezen — Nova haalt de velden er voor je uit.
           Of <strong>+ Nieuw teamlid</strong> voor handmatig invoeren.
         </div>
+      ) : filteredMembers.length === 0 ? (
+        <div className="team-empty">Geen teamleden in deze filter.</div>
       ) : (
-        <div className="team-list">
-          {members.map(m => (
-            <div
-              key={m.id}
-              className="team-row"
-              onClick={() => { setEditingPrefill(null); setEditingId(m.id); }}
-            >
-              <div className="team-row-main">
-                <div className="team-row-name">
-                  {m.name}
-                  {(() => {
-                    const b = getAvailabilityBucket(m);
-                    // bucket-key komt nu uit de gedeelde lib: 'now' | 'soon' | 'later'.
-                    return (
-                      <span className={`team-badge team-badge--${b.bucket}`}>{b.label}</span>
-                    );
-                  })()}
+        <div className="team-grid">
+          {filteredMembers.map(m => {
+            const b = getAvailabilityBucket(m);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                className="team-card"
+                onClick={() => { setEditingPrefill(null); setEditingId(m.id); }}
+              >
+                <div className="team-card-head">
+                  <span className="team-card-name">{m.name}</span>
+                  <span className={`team-badge team-badge--${b.bucket}`}>{b.label}</span>
                 </div>
-                <div className="team-row-role">
-                  {[m.seniority, m.role].filter(Boolean).join(' · ')}
+                <div className="team-card-role">
+                  {[m.seniority, m.role].filter(Boolean).join(' · ') || '—'}
                 </div>
                 {m.current_client && (
-                  <div className="team-row-client" title="Huidige klant / opdracht">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M3 21h18"/>
-                      <path d="M5 21V7l7-4 7 4v14"/>
-                      <path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>
-                    </svg>
+                  <div className="team-card-client" title="Huidige klant / opdracht">
+                    <ClientIcon />
                     <span>{m.current_client}</span>
                   </div>
                 )}
-                <div className="team-row-tags">
-                  {/* Skills + technologies in dezelfde teal-stijl — visueel
-                      lossen we 't onderscheid niet op want voor sales is 't
-                      één gecombineerde "wat kan deze persoon"-set. */}
-                  {[...(m.kernskills || []), ...(m.technologies || [])]
-                    .slice(0, 10)
-                    .map((tag, idx) => (
-                      <span key={`${tag}-${idx}`} className="team-tag">{tag}</span>
-                    ))}
-                </div>
-              </div>
-              <div className="team-row-actions">
-                {m.cv_pdf_path && (
-                  <span className="team-row-cv-icon" title="CV-PDF aanwezig">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
+                <div className="team-card-meta">
+                  <span className="team-card-cv">
+                    {m.cv_pdf_path ? (
+                      <><CvIcon /> CV-PDF</>
+                    ) : (
+                      <span className="team-card-cv-missing">Geen CV</span>
+                    )}
                   </span>
-                )}
-                <button
-                  type="button"
-                  className="team-row-del"
-                  onClick={(e) => { e.stopPropagation(); handleDelete(m.id, m.name); }}
-                  title="Verwijder profiel"
-                  aria-label="Verwijder profiel"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
+                  <span className="team-card-actions">
+                    <button
+                      type="button"
+                      className="team-icon-btn team-icon-btn--edit"
+                      onClick={(e) => { e.stopPropagation(); setEditingPrefill(null); setEditingId(m.id); }}
+                      title="Bewerken"
+                      aria-label="Bewerken"
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="team-icon-btn team-icon-btn--danger"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(m.id, m.name); }}
+                      title="Verwijder profiel"
+                      aria-label="Verwijder profiel"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

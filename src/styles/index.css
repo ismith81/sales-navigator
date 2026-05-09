@@ -3786,6 +3786,182 @@ body::before {
   background: var(--bg-soft, #F5F7FA);
   line-height: 1.5;
 }
+
+/* ─── Nieuwe Team-pagina (in lijn met Certificeringen) ─────────────── */
+/* Toolbar: filter-pills links, primary CTA + gear rechts. Hergebruikt
+   .cert-filter-btn + .cert-advanced-* uit Certificeringen voor cohesie. */
+.team-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.team-toolbar-left {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.team-toolbar-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Aggregaat-bucket-chips: gekleurde dot + count + label */
+.team-bucket-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.team-bucket-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  color: var(--text-light);
+}
+.team-bucket-chip strong { color: var(--text); font-weight: 700; }
+.team-bucket-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.team-bucket-dot--now { background: #2DAA73; }
+.team-bucket-dot--soon { background: #ED8936; }
+.team-bucket-dot--later { background: var(--muted); }
+
+/* Team-card-grid (3 kolommen op desktop, 1 op mobile) */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.7rem;
+}
+.team-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.95rem 1.05rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.team-card:hover {
+  border-color: var(--teal);
+  box-shadow: 0 2px 8px rgba(49,183,185,0.1);
+}
+.team-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.team-card-name {
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 1rem;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.team-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.team-badge--now {
+  background: rgba(45,170,115,0.12);
+  color: #2DAA73;
+}
+.team-badge--soon {
+  background: rgba(237,137,54,0.12);
+  color: #ED8936;
+}
+.team-badge--later {
+  background: rgba(138,149,168,0.15);
+  color: var(--muted);
+}
+.team-card-role {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+.team-card-client {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.team-card-client svg { color: var(--muted); flex-shrink: 0; }
+.team-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.4rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border);
+}
+.team-card-cv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+.team-card-cv svg { color: var(--teal-dim); }
+.team-card-cv-missing { color: var(--muted); font-style: italic; }
+.team-card-actions {
+  display: inline-flex;
+  gap: 0.2rem;
+}
+.team-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 0.3rem 0.45rem;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.team-icon-btn--edit:hover {
+  color: var(--teal);
+  border-color: rgba(49,183,185,0.3);
+  background: rgba(49,183,185,0.06);
+}
+.team-icon-btn--danger:hover {
+  color: var(--accent);
+  border-color: rgba(237,23,75,0.3);
+  background: rgba(237,23,75,0.06);
+}
+
+/* Geavanceerd-popover-item-head: SVG-icoon + label inline */
+.team-advanced-item-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .team-toolbar { flex-direction: column; align-items: stretch; }
+  .team-toolbar-right { justify-content: flex-end; }
+}
 .team-list {
   display: flex;
   flex-direction: column;
