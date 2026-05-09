@@ -285,19 +285,18 @@ function CertsSubview({ certs, activeSpecs, relevanceByCert, onTierChange, onRel
             <tr>
               <th>ID</th>
               <th>Naam</th>
-              <th>Vendor</th>
               <th>Tier</th>
               {activeSpecs.map(s => (
                 <th key={s.code} title={`Voor ${s.label}`}>{s.code}</th>
               ))}
               <th>Actief</th>
-              <th>Bewerken</th>
+              <th aria-label="Bewerken"></th>
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6 + activeSpecs.length} className="csm-empty">
+                <td colSpan={5 + activeSpecs.length} className="csm-empty">
                   Nog geen certificeringen — gebruik "Nieuwe certificering" om te beginnen, of "↻ Seed master-lijst" voor de standaard 14 vanuit JSON.
                 </td>
               </tr>
@@ -362,7 +361,6 @@ function CertCards({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevan
             ) : (
               <span className="csm-cert-name">{c.name}</span>
             )}
-            <div className="csm-cert-vendor">{c.vendor}</div>
           </div>
           <button
             type="button"
@@ -433,7 +431,7 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
     if (c.tier !== last) {
       blocks.push(
         <tr key={`hdr-${c.tier}`}>
-          <td colSpan={6 + activeSpecs.length} className="csm-tier-divider">
+          <td colSpan={5 + activeSpecs.length} className="csm-tier-divider">
             {tierLabel(c.tier)}
           </td>
         </tr>
@@ -454,7 +452,6 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
             )}
           </span>
         </td>
-        <td><span className="csm-cert-vendor">{c.vendor}</span></td>
         <td>
           <select
             className="csm-tier-select"
