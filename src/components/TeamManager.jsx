@@ -296,7 +296,7 @@ export default function TeamManager() {
         <div className="team-toolbar-actions">
           <button
             type="button"
-            className="btn-add-small"
+            className="csm-btn-secondary"
             onClick={startFromCv}
             disabled={!!parseStatus}
           >
