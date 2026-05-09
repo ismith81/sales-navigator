@@ -230,26 +230,25 @@ export default function TeamManager() {
   return (
     <div className="team-manager">
       {/* ─── Toolbar ──────────────────────────────────────────────────
-          Twee rijen: filters + tandwiel rechts boven (admin-actie,
-          visueel apart van de CTAs); CTA-knoppen op tweede rij. */}
+          Twee rijen: CTAs + tandwiel rechts boven, filter-pills onder. */}
       <div className="team-toolbar">
-        <div className="team-toolbar-filters">
-          {BUCKET_ORDER.map(b => {
-            const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
-            return (
-              <button
-                key={b}
-                type="button"
-                className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
-                onClick={() => setFilterBucket(b)}
-                title={BUCKET_TITLE[b]}
-              >
-                <span className="team-filter-mobile">{BUCKET[b].short}</span>
-                <span className="team-filter-desktop">{BUCKET[b].long}</span>
-                <span className="team-filter-count"> ({count})</span>
-              </button>
-            );
-          })}
+        <div className="team-toolbar-actions">
+          <button
+            type="button"
+            className="csm-btn-secondary"
+            onClick={startFromCv}
+            disabled={!!parseStatus}
+          >
+            {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
+          </button>
+          <button
+            type="button"
+            className="csm-btn-primary"
+            onClick={startNew}
+            disabled={!!parseStatus}
+          >
+            ＋ Nieuw teamlid
+          </button>
           <div className="cert-advanced-wrap team-toolbar-gear">
             <button
               type="button"
@@ -293,23 +292,23 @@ export default function TeamManager() {
             )}
           </div>
         </div>
-        <div className="team-toolbar-actions">
-          <button
-            type="button"
-            className="csm-btn-secondary"
-            onClick={startFromCv}
-            disabled={!!parseStatus}
-          >
-            {parseStatus ? '⏳ Bezig…' : '＋ CV uploaden'}
-          </button>
-          <button
-            type="button"
-            className="csm-btn-primary"
-            onClick={startNew}
-            disabled={!!parseStatus}
-          >
-            ＋ Nieuw teamlid
-          </button>
+        <div className="team-toolbar-filters">
+          {BUCKET_ORDER.map(b => {
+            const count = b === 'all' ? stats.total : (stats.buckets[b] || 0);
+            return (
+              <button
+                key={b}
+                type="button"
+                className={`cert-filter-btn ${filterBucket === b ? 'active' : ''}`}
+                onClick={() => setFilterBucket(b)}
+                title={BUCKET_TITLE[b]}
+              >
+                <span className="team-filter-mobile">{BUCKET[b].short}</span>
+                <span className="team-filter-desktop">{BUCKET[b].long}</span>
+                <span className="team-filter-count"> ({count})</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
