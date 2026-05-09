@@ -444,13 +444,15 @@ function CertRows({ rows, activeSpecs, relevanceByCert, onTierChange, onRelevanc
       <tr key={c.id} className={c.active ? '' : 'csm-deprecated'}>
         <td><span className="csm-cert-id">{c.id}</span></td>
         <td>
-          {c.url ? (
-            <a href={c.url} target="_blank" rel="noopener noreferrer" className="csm-cert-link">
-              {c.name} <span className="csm-link-icon">↗</span>
-            </a>
-          ) : (
-            <span className="csm-cert-name">{c.name}</span>
-          )}
+          <span className="csm-name-wrap" title={c.name}>
+            {c.url ? (
+              <a href={c.url} target="_blank" rel="noopener noreferrer" className="csm-cert-link">
+                {c.name} <span className="csm-link-icon">↗</span>
+              </a>
+            ) : (
+              <span className="csm-cert-name">{c.name}</span>
+            )}
+          </span>
         </td>
         <td><span className="csm-cert-vendor">{c.vendor}</span></td>
         <td>

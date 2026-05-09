@@ -3496,6 +3496,18 @@ body::before {
   font-weight: 700;
   color: var(--navy);
   font-size: 0.82rem;
+  white-space: nowrap; /* voorkomt wrap op hyphens (DBX-DE-A) */
+}
+
+/* Naam-cell met ellipsis: lange titels (DAMA, Databricks Pro) blijven
+   op één regel; volledige tekst zichtbaar via title-tooltip op hover.
+   Mobile gebruikt een ander DOM (.csm-cards), dus niet beïnvloed. */
+.csm-name-wrap {
+  display: block;
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .csm-cert-name {
   font-weight: 600;
