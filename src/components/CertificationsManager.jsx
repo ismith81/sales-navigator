@@ -122,15 +122,23 @@ export default function CertificationsManager() {
   }, [members, filterRole]);
 
   // ─── Aggregaten ──────────────────────────────────────────────────────
+  // Optie B: aggregeer over het hele team — totaal verwacht en totaal
+  // behaald. Eerlijker dan "consultants compleet" omdat de oude formule
+  // consultants zonder enige expected-cert (bv. AE-specialistisch) als
+  // by-default-compleet telde, wat een vals-rooskleurig beeld gaf.
   const teamCoverage = useMemo(() => {
-    const stats = { baselineComplete: 0, specialistComplete: 0, total: 0 };
+    const stats = {
+      baseline: { expected: 0, achieved: 0 },
+      specialist: { expected: 0, achieved: 0 },
+    };
     for (const m of filteredMembers) {
       if (!m.role_code) continue;
-      stats.total++;
       const base = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'baseline' });
       const spec = computeConsultantCoverage(m, certs, roleRelevance, consultantCerts, { tier: 'specialist' });
-      if (base.expected > 0 && base.achieved === base.expected) stats.baselineComplete++;
-      if (spec.expected === 0 || spec.achieved === spec.expected) stats.specialistComplete++;
+      stats.baseline.expected += base.expected;
+      stats.baseline.achieved += base.achieved;
+      stats.specialist.expected += spec.expected;
+      stats.specialist.achieved += spec.achieved;
     }
     return stats;
   }, [filteredMembers, certs, roleRelevance, consultantCerts]);
@@ -397,14 +405,16 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
 
       <div className="cert-aggregate-grid">
         <CoverageCard
-          label="Baseline compleet"
-          achieved={teamCoverage.baselineComplete}
-          total={teamCoverage.total}
+          label="Baseline"
+          achieved={teamCoverage.baseline.achieved}
+          total={teamCoverage.baseline.expected}
+          unit="verwachte certs"
         />
         <CoverageCard
-          label="Specialistisch compleet"
-          achieved={teamCoverage.specialistComplete}
-          total={teamCoverage.total}
+          label="Specialistisch"
+          achieved={teamCoverage.specialist.achieved}
+          total={teamCoverage.specialist.expected}
+          unit="verwachte certs"
         />
       </div>
 
@@ -514,7 +524,7 @@ function TeamView({ members, allMembers, certs, roleRelevance, consultantCerts, 
 // Desktop-versie: card met label, achieved/total + groot percentage en
 // progress-bar. Wordt zowel in Teamview-aggregaat als detail-coverage
 // gebruikt — homogene visuele taal voor coverage.
-function CoverageCard({ label, achieved, total, percentOverride }) {
+function CoverageCard({ label, achieved, total, percentOverride, unit }) {
   const safeTotal = total || 0;
   const percent = percentOverride !== undefined
     ? percentOverride
@@ -533,7 +543,7 @@ function CoverageCard({ label, achieved, total, percentOverride }) {
         />
       </div>
       <div className="cert-aggregate-card-stats">
-        <strong>{achieved}</strong> van <strong>{safeTotal}</strong>
+        <strong>{achieved}</strong> van <strong>{safeTotal}</strong>{unit ? ` ${unit}` : ''}
       </div>
     </div>
   );
