@@ -2681,15 +2681,20 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.6rem;
   margin-bottom: 1rem;
 }
-.cert-manager-toolbar-left,
-.cert-manager-toolbar-right {
+.cert-manager-toolbar-left {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.cert-manager-toolbar-right {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 .cert-tab-btn {
   border: 1px solid var(--border);
@@ -2699,6 +2704,7 @@ body::before {
   border-radius: 8px;
   font-size: 0.85rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 .cert-tab-btn.active {
   background: var(--teal);
@@ -2706,6 +2712,13 @@ body::before {
   border-color: var(--teal);
 }
 .cert-tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .cert-manager-toolbar-left { flex-wrap: nowrap; }
+  .cert-tab-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.74rem;
+  }
+}
 
 .cert-empty {
   padding: 2rem 1.2rem;
